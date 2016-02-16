@@ -26,7 +26,6 @@ trait Scenario[P, R] extends PartialFunctionWithDescription[P, R] {
 
 }
 
-
 case class FromSituationScenarioBuilder[P, R](situation: P) {
   def produces(result: R) = SituationAndResultScenario[P, R](situation, result)
 }

@@ -6,11 +6,20 @@ import org.cddcore.utilities.Lens
 object DecisionTree {
   def empty[P, R] = new UndecidedNode[P, R]
 
+  private def addScenarioToConclusionNode[P, R](cn: ConclusionNode[P, R], s: Scenario[P, R]) = {
+    (cn.mainScenario, s) match {
+      case (_: SituationAndResultScenario[P, R], _: SituationAndResultScenario[P, R]) | (_, _: SituationAndResultScenario[P, R]) =>
+        cn.copy(scenarios = cn.scenarios :+ s)
+      case (_: SituationAndResultScenario[P, R], _) =>
+        cn.copy(mainScenario = s, scenarios = cn.mainScenario :: cn.scenarios)
+    }
+  }
+
   def apply[P, R](dt: DecisionTree[P, R], s: Scenario[P, R]): DecisionTree[P, R] = dt match {
     case cn: ConclusionNode[P, R] =>
       if (cn.becauseIsTrue(s.situation)) {
         if (cn.mainScenario(s.situation) == s.expected)
-          cn.copy(scenarios = cn.scenarios :+ s)
+          addScenarioToConclusionNode(cn, s)
         else if (s.isDefinedAt(cn.mainScenario.situation))
           throw new RuntimeException("Cannot find reason")
         else
