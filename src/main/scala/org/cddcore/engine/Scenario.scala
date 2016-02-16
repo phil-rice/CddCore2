@@ -44,13 +44,13 @@ case class SituationAndResultScenario[P, R](situation: P, expected: R, addedExce
 
   def apply(p: P) = expected
 
-  def because(why: PartialFunction[P, R]) = {
-    val result = ScenarioWithBecause[P, R](situation, expected, why, addedException);
-    result.validate;
+  def because[RR >: R](why: PartialFunction[P, RR]) = {
+    val result = ScenarioWithBecause[P, RR](situation, expected, why, addedException);
+    result.validate
     result
   }
 
-  def why(because: P => Boolean) = {
+  def when(because: P => Boolean) = {
     val result = ScenarioWithWhen[P, R](situation, expected, because, addedException);
     result.validate;
     result

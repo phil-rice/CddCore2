@@ -30,7 +30,7 @@ class ScenarioBuilderSpec extends CddSpec {
   }
 
   "A <situation> produces <result> because < p=> Boolean>" should "make a ScenarioWithWhen" in {
-    val s: ScenarioWithWhen[Int, String] = 1 produces "result" why (_ == 1)
+    val s: ScenarioWithWhen[Int, String] = 1 produces "result" when (_ == 1)
     s.situation shouldBe 1
     s.expected shouldBe "result"
     s.when(0) shouldBe false
@@ -40,7 +40,7 @@ class ScenarioBuilderSpec extends CddSpec {
 
   "A ScenarioWithWhen" should "throw BecauseNotTrueException when the when is not true for the situation" in {
     intercept[ReasonInvalidException] {
-      1 produces "result" why (_ == 2)
+      1 produces "result" when (_ == 2)
     }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:43) cannot be added because the reason given isn't actually true"
   }
 }

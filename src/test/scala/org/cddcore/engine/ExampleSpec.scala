@@ -13,12 +13,10 @@ class ExampleSpec extends CddSpec {
         Person(100) produces "rejected"
       }
       useCase("Rich People are accepted")(
-        Person(1000) produces "accept" why (_.wealth >= 1000),
+        Person(1000) produces "accept" when (_.wealth >= 1000),
         Person(2000) produces "accept"
       )
     }
-
-    richPoor.builder.tree
     richPoor(Person(1000)) shouldBe "accept"
     richPoor(Person(2000)) shouldBe "accept"
     richPoor(Person(100)) shouldBe "rejected"

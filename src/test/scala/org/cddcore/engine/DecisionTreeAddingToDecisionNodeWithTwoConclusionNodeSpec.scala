@@ -5,7 +5,7 @@ class DecisionTreeAddingToDecisionNodeWithTwoConclusionNodeSpec extends CddSpec 
   import DecisionTreeBuilder._
   import Scenario._
 
-  val mainS = 1 produces "result 1" why (_ == 1)
+  val mainS = 1 produces "result 1" when (_ == 1)
   val falseS = 2 produces "result 2"
 
   val dn: DecisionNode[Int, String] = mainS ifFalse falseS

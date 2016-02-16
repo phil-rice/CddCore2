@@ -23,7 +23,7 @@ class DecisionTreeLensForSpec extends CddSpec {
   }
 
   "The decisiontree lensFor method called on a Decision Node, a Conclusion node on its truepath and a 'true path' scenario" should "return a lens pointing to the conclusion node on the true path" in {
-    val s1 = 1 produces "odd" why (_ % 2 == 1)
+    val s1 = 1 produces "odd" when (_ % 2 == 1)
     val s2 = 2 produces "even"
     val s3 = 3 produces "odd"
     val dt = s1 ifFalse s2
@@ -33,7 +33,7 @@ class DecisionTreeLensForSpec extends CddSpec {
   }
 
   it should "let the lens returned modify the reached condition once " in {
-    val s1 = 1 produces "odd" why (_ % 2 == 1)
+    val s1 = 1 produces "odd" when (_ % 2 == 1)
     val s2 = 2 produces "even"
     val s3 = 3 produces "odd"
     val s4 = 4 produces "even"
@@ -47,7 +47,7 @@ class DecisionTreeLensForSpec extends CddSpec {
   }
 
   "The decisiontree lensFor method called on a Decision Node, a Conclusion node on its falsePath and a 'false path' scenario" should "return a lens pointing to the conclusion node on the false path" in {
-    val s1 = 1 produces "odd" why (_ % 2 == 1)
+    val s1 = 1 produces "odd" when (_ % 2 == 1)
     val s2 = 2 produces "even"
     val s4 = 4 produces "even"
     val dt = s1 ifFalse s2
@@ -56,7 +56,7 @@ class DecisionTreeLensForSpec extends CddSpec {
     lensToDt.get(dt) shouldBe dt.falseNode
   }
   it should "let the lens returned modify the reached condition once " in {
-    val s1 = 1 produces "odd" why (_ % 2 == 1)
+    val s1 = 1 produces "odd" when (_ % 2 == 1)
     val s2 = 2 produces "even"
     val s3 = 3 produces "odd"
     val s4 = 4 produces "even"

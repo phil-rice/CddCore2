@@ -20,7 +20,7 @@ class DecisionTreeAddingToConclusionNodeSpec extends CddSpec {
 
   "A decision tree with two non confliciting  conclusions, one with a reason" should "be a single conclusion, with the scenario with the reason as the primary" in {
     val scenario1 = "situation1" produces "result"
-    val scenario2a = "situation2" produces "result" why (_.contains("situation"))
+    val scenario2a = "situation2" produces "result" when (_.contains("situation"))
     val scenario2b = "situation2" produces "result" because { case s if s.contains("situation") => "result" }
     DecisionTree(Seq(scenario1, scenario2a)) shouldBe ConclusionNode(scenario2a, List(scenario1))
     DecisionTree(Seq(scenario1, scenario2b)) shouldBe ConclusionNode(scenario2b, List(scenario1))
@@ -30,7 +30,7 @@ class DecisionTreeAddingToConclusionNodeSpec extends CddSpec {
 
   "A decision tree with different conclusions, second with a reason" should "form a decision tree" in {
     val scenario1 = "situation1" produces "result1"
-    val scenario2a = "situation2" produces "result2" why (_.contains("2"))
+    val scenario2a = "situation2" produces "result2" when (_.contains("2"))
     val scenario2b = "situation2" produces "result2" because { case s if s.contains("2") => "result2" }
 
     DecisionTree(Seq(scenario1, scenario2a)) shouldBe DecisionNode(scenario2a, falseNode = ConclusionNode(scenario1), trueNode = ConclusionNode(scenario2a))
@@ -47,7 +47,7 @@ class DecisionTreeAddingToConclusionNodeSpec extends CddSpec {
   }
 
   "A decision tree with three non confliciting scenarios and only one reason between them" should "be a single conclusion" in {
-    val scenario1 = "situation1" produces "result" why (_.contains("situation"))
+    val scenario1 = "situation1" produces "result" when (_.contains("situation"))
     val scenario2 = "situation2" produces "result"
     val scenario3 = "situation3" produces "result"
     DecisionTree(Seq(scenario1, scenario2, scenario3)) shouldBe ConclusionNode(scenario1, List(scenario2, scenario3))
@@ -59,7 +59,7 @@ class DecisionTreeAddingToConclusionNodeSpec extends CddSpec {
   "A decision tree with different conclusions, one with a reason" should "form a decision tree" in {
     val scenario1a = "situation1a" produces "result1"
     val scenario1b = "situation1b" produces "result1"
-    val scenario2a = "situation2a" produces "result2" why (_.contains("2"))
+    val scenario2a = "situation2a" produces "result2" when (_.contains("2"))
     val scenario2b = "situation2b" produces "result2" because { case s if s.contains("2") => "result2" }
     val scenario2c = "situation2c" produces "result2"
 
