@@ -1,6 +1,26 @@
 package org.cddcore.engine
 
-class DecisionTreeSpec extends CddSpec {
+import org.cddcore.utilities.Lens
+
+class DecisionTreeLensForSpec extends CddSpec {
+
+  import DecisionTreeBuilder._
+  import Scenario._
+
+  "The decisiontree lensFor method called on a Conclusion Node" should "return a lens pointing to the conclusion node" in {
+    val s1 = 1 produces "result"
+    val s2 = 1 produces "result
+    val cn1: ConclusionNode[Int, String] = s1
+    val lens = cn1.lensFor(s1)
+    lens.get(cn1) shouldBe cn1
+
+    lens.andThen(cn1.dtToConc).mod(cn => cn.withSc)
+
+
+  }
+}
+
+class DecisionTreeAddingToConclusionNodeSpec extends CddSpec {
 
   import Scenario._
 
@@ -68,9 +88,26 @@ class DecisionTreeSpec extends CddSpec {
 
     DecisionTree(Seq(scenario1a, scenario1b, scenario2b, scenario2c)) shouldBe
       DecisionNode(scenario2b, falseNode = ConclusionNode(scenario1a, List(scenario1b)), trueNode = ConclusionNode(scenario2b, List(scenario2c)))
-
-
   }
 
+}
+
+class DecisionTreeAddingToDecisionNodeWithTwoConclusionNodeSpec extends CddSpec {
+
+  import Scenario._
+  import DecisionTreeBuilder._
+
+  val mainS = 1 produces "result 1" when (_ == 1)
+  val falseS = 2 produces "result 2"
+
+  val dn: DecisionNode[Int, String] = mainS ifFalse falseS
+
+  "adding situations with reasons" should "just modify the conclusion nodes" in {
+    val s1 = 1 produces "result 1"
+    val s2 = 2 produces "result 2"
+    DecisionTree(dn, s1) shouldBe (mainS ifTrue(mainS, s1) ifFalse falseS)
+    DecisionTree(dn, s2) shouldBe (mainS ifTrue mainS ifFalse(falseS, s2))
+  }
 
 }
+

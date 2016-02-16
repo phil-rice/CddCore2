@@ -50,14 +50,16 @@ case class SituationAndResultScenario[P, R](situation: P, expected: R) extends S
   override def toString = s"Scenario($situation produces $expected)"
 }
 
-case class ScenarioWithBecause[P, R](situation: P, expected: R, because: PartialFunction[P, R]) extends Scenario[P, R] {
+trait ScenarioWithReason[P,R] extends Scenario[P,R]
+
+case class ScenarioWithBecause[P, R](situation: P, expected: R, because: PartialFunction[P, R]) extends ScenarioWithReason[P, R] {
   def isDefinedAt(p: P): Boolean = because.isDefinedAt(p)
 
   def apply(p: P) = because(p)
   override def toString = s"Scenario($situation produces $expected) because $because)"
 }
 
-case class ScenarioWithWhen[P, R](situation: P, expected: R, when: P => Boolean) extends Scenario[P, R] {
+case class ScenarioWithWhen[P, R](situation: P, expected: R, when: P => Boolean) extends ScenarioWithReason[P, R] {
   def isDefinedAt(p: P): Boolean = when(p)
 
   def apply(p: P) = expected
