@@ -32,7 +32,7 @@ object Engine {
   }
 }
 
-class Engine[P, R](initialTitle: String = "Untitled") extends Function[P, R] {
+class Engine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends EngineComponent[P, R] with Function[P, R] {
   var builder = EngineBuilder[P, R](initialTitle)
 
   def title: String = builder.title
@@ -53,6 +53,38 @@ class Engine[P, R](initialTitle: String = "Untitled") extends Function[P, R] {
 
   def apply(p: P): R = builder.tree(p)
 
+  def allScenarios: TraversableOnce[Scenario[P, R]] = builder.allScenarios
 }
+
+
+case class EngineBuilder2[P, R](title: String, components: List[EngineComponent[P, R]], currentUseCase: Option[UseCase[P, R]]) {
+  def allScenarios = components.flatMap(_.allScenarios)
+
+  lazy val tree = DecisionTree[P, R](allScenarios)
+}
+
+class Engine2[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends EngineComponent[P, R] with Function[P, R] {
+  def allUseCases = builder.components.collect { case uc: UseCase[P, R] => uc }
+
+  var builder = EngineBuilder2[P, R](initialTitle, List(), None)
+
+  def title: String = builder.title
+
+  protected def title(newTitle: String): Unit = builder = builder.copy(title = newTitle)
+
+  protected implicit def toPartial(r: R): PartialFunction[P, R] = Engine.toPartial(r)
+
+  implicit def pToScenarioBuilder(p: P) = Scenario.pToScenarioBuilder[P, R](p)
+
+  protected def useCase(title: String)(blockThatScenariosAreDefinedIn: => Unit): Unit = {
+  }
+
+
+  def apply(p: P): R = builder.tree(p)
+
+  def allScenarios: TraversableOnce[Scenario[P, R]] = builder.allScenarios
+}
+
+
 
 
