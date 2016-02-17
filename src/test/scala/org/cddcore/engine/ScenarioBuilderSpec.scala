@@ -7,7 +7,11 @@ class ScenarioBuilderSpec extends CddSpec {
   "A <situation> produces <result>" should "make a SituationAndResultScenario" in {
     val s = 1 produces "result"
     s shouldBe SituationAndResultScenario(situation = 1, expected = "result", "(ScenarioBuilderSpec.scala:8)")
+  }
 
+  it should "have allScenarios just including itself" in {
+    val s = (1 produces "result")
+    s.allScenarios.toList shouldBe List(s)
   }
 
   "A <situation> produces <result> because <pf>" should "make a ScenarioWithBecause" in {
@@ -18,12 +22,18 @@ class ScenarioBuilderSpec extends CddSpec {
     s.because.isDefinedAt(1) shouldBe true
     s.because(1) shouldBe "result"
   }
-  "A ScenarioWithBecause" should "throw BecauseNotTrueException when the because is not true for the situation" in {
+
+  it should "throw BecauseNotTrueException when the because is not true for the situation" in {
     intercept[ReasonInvalidException] {
       1 produces "result" because { case i if i == 2 => "result" }
-    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:23) cannot be added because the reason given isn't actually true"
+    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:28) cannot be added because the reason given isn't actually true"
   }
-  "A ScenarioWithBecause" should "throw WrongReasonProducesException when the apply method applied to the situation doesn't produce the expected" in {
+  it should "have allScenarios just including itself" in {
+    val s = (1 produces "result") because { case i if i == 1 => "result" }
+    s.allScenarios.toList shouldBe List(s)
+  }
+
+  it should "throw WrongReasonProducesException when the apply method applied to the situation doesn't produce the expected" in {
     intercept[WrongResultProducedException] {
       1 produces "result" because { case i if i == 1 => "wrongResult" }
     }
@@ -37,10 +47,14 @@ class ScenarioBuilderSpec extends CddSpec {
     s.when(1) shouldBe true
     s(1) shouldBe "result"
   }
+  it should "have allScenarios just including itself" in {
+    val s = (1 produces "result") when (_ == 1)
+    s.allScenarios.toList shouldBe List(s)
+  }
 
-  "A ScenarioWithWhen" should "throw BecauseNotTrueException when the when is not true for the situation" in {
+  it should "throw BecauseNotTrueException when the when is not true for the situation" in {
     intercept[ReasonInvalidException] {
       1 produces "result" when (_ == 2)
-    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:43) cannot be added because the reason given isn't actually true"
+    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:57) cannot be added because the reason given isn't actually true"
   }
 }

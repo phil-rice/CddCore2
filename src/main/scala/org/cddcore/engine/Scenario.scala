@@ -1,5 +1,7 @@
 package org.cddcore.engine
 
+import scala.language.implicitConversions
+
 
 object Scenario {
   implicit def pToScenarioBuilder[P, R](p: P) = FromSituationScenarioBuilder[P, R](p)
@@ -48,7 +50,7 @@ case class SituationAndResultScenario[P, R](situation: P, expected: R, definedIn
     result
   }
 
-  override def toString = s"Scenario($situation produces $expected)"
+  override def toString = s"Scenario($situation produces $expected)/$definedInSourceCodeAt"
 }
 
 trait ScenarioWithReason[P, R] extends Scenario[P, R]

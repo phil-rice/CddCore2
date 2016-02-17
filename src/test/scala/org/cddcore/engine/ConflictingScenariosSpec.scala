@@ -9,8 +9,8 @@ class ConflictingScenariosSpec extends CddSpec {
     val scenario2 = "situation2" produces "result2"
     intercept[CannotAddScenarioException](DecisionTree(Seq(scenario1, scenario2))).getMessage shouldBe
       "Scenario defined at (ConflictingScenariosSpec.scala:9) conflicts with (ConflictingScenariosSpec.scala:8)\n" +
-        "Scenario being added is Scenario(situation2 produces result2)\n" +
-        "Scenario already existing is Scenario(situation1 produces result1)"
+        "Scenario being added is Scenario(situation2 produces result2)/(ConflictingScenariosSpec.scala:9)\n" +
+        "Scenario already existing is Scenario(situation1 produces result1)/(ConflictingScenariosSpec.scala:8)"
   }
 
 }

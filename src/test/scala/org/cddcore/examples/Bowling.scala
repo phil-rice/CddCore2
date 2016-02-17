@@ -38,15 +38,15 @@ class BowlingSpec extends CddSpec {
     )
 
     useCase("Strike Frames are produced when the ith ball equals 10. They include the ith ball, and the next two balls")(
-      (List(7, 2, 5, 5, 3, 0, 10, 2, 4), 6) produces (StrikeFrame(10, 2, 4): Frame) because { case (rolls, i) if get(rolls, i) == 10 => StrikeFrame(get(rolls, i), get(rolls, i + 1), get(rolls, i + 2)) },
-      (List(10), 0) produces (StrikeFrame(10, 0, 0): Frame),
-      (List(10, 10), 0) produces (StrikeFrame(10, 10, 0): Frame),
-      (List(10, 10, 10), 0) produces (StrikeFrame(10, 10, 10): Frame)
+      (List(7, 2, 5, 5, 3, 0, 10, 2, 4), 6) produces StrikeFrame(10, 2, 4) because { case (rolls, i) if get(rolls, i) == 10 => StrikeFrame(get(rolls, i), get(rolls, i + 1), get(rolls, i + 2)) },
+      (List(10), 0) produces StrikeFrame(10, 0, 0),
+      (List(10, 10), 0) produces StrikeFrame(10, 10, 0),
+      (List(10, 10, 10), 0) produces StrikeFrame(10, 10, 10)
     )
 
     useCase("Spare Frames are produced when the two balls at and after the ith ball add up to 10. They include the two balls, and the next ball")(
-      (List(7, 2, 5, 5, 3, 0, 10, 2, 4), 2) produces (SpareFrame(5, 5, 3): Frame) because { case (rolls, i) if get(rolls, i) + get(rolls, i + 1) == 10 => SpareFrame(get(rolls, i), get(rolls, i + 1), get(rolls, i + 2)) },
-      (List(5, 5), 0) produces (SpareFrame(5, 5, 0): Frame)
+      (List(7, 2, 5, 5, 3, 0, 10, 2, 4), 2) produces SpareFrame(5, 5, 3) because { case (rolls, i) if get(rolls, i) + get(rolls, i + 1) == 10 => SpareFrame(get(rolls, i), get(rolls, i + 1), get(rolls, i + 2)) },
+      (List(5, 5), 0) produces SpareFrame(5, 5, 0)
     )
   }
 

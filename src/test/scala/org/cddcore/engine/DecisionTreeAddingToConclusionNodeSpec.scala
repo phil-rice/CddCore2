@@ -1,5 +1,7 @@
 package org.cddcore.engine
 
+import scala.language.implicitConversions
+
 class DecisionTreeAddingToConclusionNodeSpec extends CddSpec {
 
   import Scenario._

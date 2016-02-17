@@ -1,5 +1,7 @@
 package org.cddcore.engine
 
+import scala.language.implicitConversions
+
 
 trait PartialFunctionWithDescription[P, R] extends PartialFunction[P, R] {
   def becauseDescription: String
@@ -35,13 +37,14 @@ class Engine[P, R](initialTitle: String = "Untitled") extends Function[P, R] {
 
   def title: String = builder.title
 
-  protected implicit def toPartial[P, R](r: R): PartialFunction[P, R] = Engine.toPartial(r)
+  protected implicit def toPartial(r: R): PartialFunction[P, R] = Engine.toPartial(r)
 
-  implicit def pToScenarioBuilder[P, R](p: P) = Scenario.pToScenarioBuilder[P, R](p)
+  implicit def pToScenarioBuilder(p: P) = Scenario.pToScenarioBuilder[P, R](p)
 
   protected def useCase(title: String)(scenarios: Scenario[P, R]*): Unit = useCasePrim(title, None)(scenarios)
 
   protected def useCase(title: String, comment: String)(scenarios: Scenario[P, R]*): Unit = useCasePrim(title, Some(comment))(scenarios)
+
 
   private def useCasePrim(title: String, comment: Option[String] = None)(scenarios: Seq[Scenario[P, R]]): Unit =
     builder = builder.withNewUseCase(UseCase(title, scenarios.toList, comment, EngineComponent.definedInSourceCodeAt(3)))
@@ -51,4 +54,5 @@ class Engine[P, R](initialTitle: String = "Untitled") extends Function[P, R] {
   def apply(p: P): R = builder.tree(p)
 
 }
+
 

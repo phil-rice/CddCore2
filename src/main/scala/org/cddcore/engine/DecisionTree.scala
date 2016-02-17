@@ -2,6 +2,8 @@ package org.cddcore.engine
 
 import org.cddcore.utilities.Lens
 
+import scala.language.implicitConversions
+
 
 object DecisionTree {
 
@@ -69,7 +71,7 @@ case class DecisionTreeNodeAndIfTrue[P, R](dt: DecisionTree[P, R], ifTrue: Decis
   def ifFalse(falseNode: DecisionTree[P, R]) = DecisionNode(dt.mainScenario, trueNode = ifTrue, falseNode = falseNode)
 }
 
-trait DecisionTree[P, R] extends PartialFunction[P,R]{
+trait DecisionTree[P, R] extends EngineComponent[P, R] with PartialFunction[P, R] {
 
   def lensFor(s: Scenario[P, R]): Lens[DecisionTree[P, R], DecisionTree[P, R]]
 
@@ -78,6 +80,8 @@ trait DecisionTree[P, R] extends PartialFunction[P,R]{
   def isDefinedAt(p: P) = mainScenario.isDefinedAt(p)
 
   def apply(p: P): R
+
+  def definedInSourceCodeAt: String = mainScenario.definedInSourceCodeAt
 }
 
 object ConclusionNode {
@@ -93,6 +97,8 @@ case class ConclusionNode[P, R](mainScenario: Scenario[P, R], scenarios: List[Sc
   def lensFor(s: Scenario[P, R]) = identityLens
 
   def apply(p: P) = mainScenario(p)
+
+  def allScenarios: TraversableOnce[Scenario[P, R]] = mainScenario :: scenarios
 }
 
 case class DecisionNode[P, R](mainScenario: Scenario[P, R], falseNode: DecisionTree[P, R], trueNode: DecisionTree[P, R]) extends DecisionTree[P, R] {
@@ -105,5 +111,7 @@ case class DecisionNode[P, R](mainScenario: Scenario[P, R], falseNode: DecisionT
     case true => dtToDN.andThen(dtTrue[P, R]).andThen(trueNode.lensFor(s))
     case false => dtToDN.andThen(dtFalse[P, R]).andThen(falseNode.lensFor(s))
   }
+
+  def allScenarios: TraversableOnce[Scenario[P, R]] = trueNode.allScenarios.toIterator ++ falseNode.allScenarios
 }
 
