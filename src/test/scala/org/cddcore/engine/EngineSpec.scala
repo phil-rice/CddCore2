@@ -22,9 +22,9 @@ class EngineSpec extends CddSpec {
       useCase("usecase3")()
     }
     val List(uc1, uc2, uc3) = e.builder.useCases
-    uc1 shouldBe UseCase("some usecase1", List(), None)
-    uc2 shouldBe UseCase("some usecase2", List(), Some("comment"))
-    uc3 shouldBe UseCase("usecase3", List(), None)
+    uc1 shouldBe UseCase("some usecase1", List(), None, "(EngineSpec.scala:20)")
+    uc2 shouldBe UseCase("some usecase2", List(), Some("comment"), "(EngineSpec.scala:21)")
+    uc3 shouldBe UseCase("usecase3", List(), None, "(EngineSpec.scala:22)")
 
   }
   val e = new Engine[Person, String] {
@@ -40,8 +40,8 @@ class EngineSpec extends CddSpec {
 
   "Adding scenarios to a usecase" should "appear in the use case" in {
     val List(richUseCase, poorUsecase) = e.builder.useCases
-    val List(rich1000, rich2000) = richUseCase.scenarios
-    val List(poor100, poor200) = poorUsecase.scenarios
+    val List(rich1000, rich2000) = richUseCase.allScenarios
+    val List(poor100, poor200) = poorUsecase.allScenarios
     rich1000.situation shouldBe Person(1000)
     rich2000.situation shouldBe Person(2000)
     poor100.situation shouldBe Person(100)

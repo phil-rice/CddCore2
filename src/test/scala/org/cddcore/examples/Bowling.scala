@@ -33,8 +33,8 @@ class BowlingSpec extends CddSpec {
 
   val makeFrame = new Engine[(List[Int], Int), Frame]("Bowling") {
     useCase("NormalFrames are produced when the two balls at and after the ith ball don't add up to 10")(
-      (List(7, 2, 5, 5, 3, 0, 10, 2, 4), 0) produces (NormalFrame(7, 2): Frame) because { case (rolls, i) => NormalFrame(get(rolls, i), get(rolls, i + 1)) },
-      (List(7, 2, 5, 5, 3, 0, 10, 2, 4), 4) produces (NormalFrame(3, 0): Frame)
+      (List(7, 2, 5, 5, 3, 0, 10, 2, 4), 0) produces NormalFrame(7, 2) because { case (rolls, i) => NormalFrame(get(rolls, i), get(rolls, i + 1)) },
+      (List(7, 2, 5, 5, 3, 0, 10, 2, 4), 4) produces NormalFrame(3, 0)
     )
 
     useCase("Strike Frames are produced when the ith ball equals 10. They include the ith ball, and the next two balls")(

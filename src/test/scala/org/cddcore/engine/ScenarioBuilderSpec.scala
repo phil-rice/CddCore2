@@ -6,8 +6,8 @@ class ScenarioBuilderSpec extends CddSpec {
 
   "A <situation> produces <result>" should "make a SituationAndResultScenario" in {
     val s = 1 produces "result"
-    s shouldBe SituationAndResultScenario(situation = 1, expected = "result", addedException = s.addedException)
-    s.definedInSourceCodeAt shouldBe "(ScenarioBuilderSpec.scala:8)"
+    s shouldBe SituationAndResultScenario(situation = 1, expected = "result", "(ScenarioBuilderSpec.scala:8)")
+
   }
 
   "A <situation> produces <result> because <pf>" should "make a ScenarioWithBecause" in {
