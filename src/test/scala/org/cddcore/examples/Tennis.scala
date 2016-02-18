@@ -7,7 +7,7 @@ class TennisSpec extends CddSpec {
   val (leftWon, rightWon) = ("server won", "receiver won")
   val lookup = Map(0 -> "love", 1 -> "fifteen", 2 -> "thirty", 3 -> "forty")
   lazy val tennis = new Engine[(Int, Int), String]() {
-    title("Tennis Kata")
+//    title("Tennis Kata")
     useCase("Winning", "A game is won by the first player to have won at least four points in total and at least two points more than the opponent.")()
 
     //    reference("2", definition).
