@@ -3,7 +3,7 @@ package org.cddcore.engine
 class AddedFinderNotActuallAnException extends Exception
 
 object EngineComponent {
-  protected val defaultStackTraceOffset = 3
+  protected val defaultStackTraceOffset = 2
 
   def definedInSourceCodeAt(stackTraceOffset: Int = defaultStackTraceOffset) = {
     val st = new AddedFinderNotActuallAnException().getStackTrace()(stackTraceOffset).toString

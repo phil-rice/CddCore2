@@ -53,7 +53,7 @@ class Engine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt:
   protected def useCase(title: String, comment: String)(blockThatScenariosAreDefinedIn: => Unit) = useCasePrim(title, Some(comment))(blockThatScenariosAreDefinedIn)
 
   private def useCasePrim(title: String, comment: Option[String])(blockThatScenariosAreDefinedIn: => Unit): Unit = {
-    builder = builder.addNewParent(UseCase(title, comment = comment, definedInSourceCodeAt = EngineComponent.definedInSourceCodeAt()))
+    builder = builder.addNewParent(UseCase(title, comment = comment, definedInSourceCodeAt = EngineComponent.definedInSourceCodeAt(3)))
     blockThatScenariosAreDefinedIn
     builder = builder.popParent
   }

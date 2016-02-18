@@ -23,9 +23,9 @@ class EngineSpec extends CddSpec {
       useCase("usecase3")()
     }
     val List(uc3, uc2, uc1) = e.builder.holder.components
-    uc1 shouldBe UseCase("some usecase1", List(), None, "(EngineSpec.scala:20)")
-    uc2 shouldBe UseCase("some usecase2", List(), Some("comment"), "(EngineSpec.scala:21)")
-    uc3 shouldBe UseCase("usecase3", List(), None, "(EngineSpec.scala:22)")
+    uc1 shouldBe UseCase("some usecase1", List(), None, "(EngineSpec.scala:21)")
+    uc2 shouldBe UseCase("some usecase2", List(), Some("comment"), "(EngineSpec.scala:22)")
+    uc3 shouldBe UseCase("usecase3", List(), None, "(EngineSpec.scala:23)")
   }
 
   it should "be possible to nest use cases" in {
