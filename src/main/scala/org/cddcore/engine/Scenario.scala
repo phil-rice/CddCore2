@@ -1,11 +1,14 @@
 package org.cddcore.engine
 
+import org.cddcore.builder.ChildLifeCycle
+
 import scala.language.implicitConversions
 
 
 object Scenario {
   implicit def pToScenarioBuilder[P, R](p: P) = FromSituationScenarioBuilder[P, R](p)
-  implicit def scenarioToScenarioBuilder[P, R](s: Scenario[P,R]) = ScenarioBuilder[P, R](s)
+
+  implicit def scenarioToScenarioBuilder[P, R](s: Scenario[P, R]) = ScenarioBuilder[P, R](s)
 }
 
 case class Scenario[P, R](situation: P, expected: R, reason: ScenarioReason[P, R], definedInSourceCodeAt: String) extends EngineComponent[P, R] with PartialFunction[P, R] {
@@ -20,23 +23,30 @@ case class Scenario[P, R](situation: P, expected: R, reason: ScenarioReason[P, R
     val actual = apply(situation)
     if (actual != expected) throw new WrongResultProducedException(this, actual)
   }
+
   override def toString = s"Scenario($situation produces $expected because $reason)/$definedInSourceCodeAt"
 }
 
 case class FromSituationScenarioBuilder[P, R](situation: P) {
-  def produces(result: R) = Scenario[P, R](situation, result, SimpleReason(result), EngineComponent.definedInSourceCodeAt())
+  def produces(result: R)(implicit scl: ChildLifeCycle[Scenario[P, R]]) = {
+    val s = Scenario[P, R](situation, result, SimpleReason(result), EngineComponent.definedInSourceCodeAt())
+    scl.created(s)
+    s
+  }
 }
 
 case class ScenarioBuilder[P, R](scenario: Scenario[P, R]) {
-  def because[RR >: R](because: PartialFunction[P, RR]) = {
+  def because(because: PartialFunction[P, R])(implicit scl: ChildLifeCycle[Scenario[P, R]]) = {
     val result = scenario.copy(reason = BecauseReason(because))
+    scl.modified(scenario, result)
     result.validate
     result
   }
 
-  def when(when: P => Boolean) = {
+  def when(when: P => Boolean)(implicit scl: ChildLifeCycle[Scenario[P, R]]) = {
     val result = scenario.copy(reason = WhenReason[P, R](when, scenario.expected))
-    result.validate;
+    scl.modified(scenario, result)
+    result.validate
     result
   }
 }

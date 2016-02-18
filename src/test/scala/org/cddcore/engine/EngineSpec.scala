@@ -22,7 +22,7 @@ class EngineSpec extends CddSpec {
       useCase("some usecase2", "comment")()
       useCase("usecase3")()
     }
-    val List(uc3, uc2, uc1) = e.builder.holder.components
+    val List(uc3, uc2, uc1) = e.asUseCase.components
     uc1 shouldBe UseCase("some usecase1", List(), None, "(EngineSpec.scala:21)")
     uc2 shouldBe UseCase("some usecase2", List(), Some("comment"), "(EngineSpec.scala:22)")
     uc3 shouldBe UseCase("usecase3", List(), None, "(EngineSpec.scala:23)")
@@ -38,7 +38,7 @@ class EngineSpec extends CddSpec {
         useCase("usecase2b")()
       }
     }
-    val List(uc2: UC, uc1: UC) = e.builder.holder.components
+    val List(uc2: UC, uc1: UC) = e.asUseCase.components
     val (List(uc1a: UC)) = uc1.components
     val (List(uc2b: UC, uc2a: UC)) = uc2.components
     uc1.title shouldBe "usecase1"
@@ -59,7 +59,8 @@ class EngineSpec extends CddSpec {
   }
 
   "Adding scenarios to a usecase" should "appear in the use case" in {
-    val List(richUseCase, poorUsecase) = e.builder.holder.components
+    val List(poorUsecase: UC, richUseCase: UC) = e.asUseCase.components
+    richUseCase.title shouldBe "rich people"
     val List(rich1000, rich2000) = richUseCase.allScenarios
     val List(poor100, poor200) = poorUsecase.allScenarios
     rich1000.situation shouldBe Person(1000)
@@ -69,7 +70,7 @@ class EngineSpec extends CddSpec {
 
   }
   "Adding scenarios to a usecase" should "appear in allScenarios" in {
-    val List(rich1000, rich2000, poor100, poor200) = e.builder.holder.allScenarios
+    val List(rich1000, rich2000, poor100, poor200) = e.allScenarios
     rich1000.situation shouldBe Person(1000)
     rich2000.situation shouldBe Person(2000)
     poor100.situation shouldBe Person(100)

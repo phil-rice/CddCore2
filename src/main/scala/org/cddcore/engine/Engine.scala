@@ -1,6 +1,6 @@
 package org.cddcore.engine
 
-import org.cddcore.builder.HierarchyBuilder
+import org.cddcore.builder.{ChildLifeCycle, HierarchyBuilder}
 
 import scala.language.implicitConversions
 
@@ -12,20 +12,6 @@ trait PartialFunctionWithDescription[P, R] extends PartialFunction[P, R] {
 }
 
 
-case class EngineBuilder[P, R](title: String, useCases: List[UseCase[P, R]] = List()) {
-  def withNewUseCase(useCase: UseCase[P, R]) = copy(useCases = useCases :+ useCase)
-
-  //  def modifyCurrentUseCase(fn: UseCase[P, R] => UseCase[P, R]) = copy(useCases = useCases match {
-  //    case Nil => List(fn(UseCase("Untitled", List())))
-  //    case h :: tail => fn(h) :: tail
-  //  })
-
-  def allScenarios = useCases.flatMap(_.allScenarios)
-
-  lazy val tree = DecisionTree[P, R](allScenarios)
-}
-
-
 object Engine {
   implicit def toPartial[P, R](r: R): PartialFunction[P, R] = new PartialFunction[P, R] {
     override def isDefinedAt(x: P): Boolean = true
@@ -34,15 +20,32 @@ object Engine {
   }
 }
 
+class EngineBuilder[P, R](initialTitle: String, definedInSourceCodeAt: String) extends ChildLifeCycle[Scenario[P, R]] {
+  private var builder = HierarchyBuilder[UseCase[P, R], EngineComponent[P, R]](UseCase[P, R](initialTitle, definedInSourceCodeAt = definedInSourceCodeAt))
+
+  def mod(fn: HierarchyBuilder[UseCase[P, R], EngineComponent[P, R]] => HierarchyBuilder[UseCase[P, R], EngineComponent[P, R]]) =
+    builder = fn(builder)
+
+  def title = builder.holder.title
+
+  def created(child: Scenario[P, R]) = mod(builder => builder.addChild(child))
+
+  def modified(oldChild: Scenario[P, R], newChild: Scenario[P, R]) = mod(builder => builder.modCurrentChild(_ => newChild))
+
+  def seal {}
+
+  def allScenarios = builder.holder.allScenarios
+
+  def asUseCase = builder.holder
+}
+
 class Engine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends EngineComponent[P, R] with Function[P, R] {
-  var builder = HierarchyBuilder[UseCase[P, R], EngineComponent[P, R]](UseCase[P, R](initialTitle, definedInSourceCodeAt = definedInSourceCodeAt))
+  implicit val builder = new EngineBuilder[P, R](initialTitle, definedInSourceCodeAt)
 
+  def title: String = builder.title
 
-  def title: String = builder.holder.title
+  def title(newTitle: String) = builder.mod(b => b.copy(holder = b.holder.copy(title = newTitle)))
 
-  def title(newTitle: String): Unit = {
-    builder = builder.copy(holder = builder.holder.copy(title = newTitle))
-  }
 
   protected implicit def toPartial(r: R): PartialFunction[P, R] = Engine.toPartial(r)
 
@@ -52,16 +55,22 @@ class Engine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt:
 
   protected def useCase(title: String, comment: String)(blockThatScenariosAreDefinedIn: => Unit) = useCasePrim(title, Some(comment))(blockThatScenariosAreDefinedIn)
 
-  private def useCasePrim(title: String, comment: Option[String])(blockThatScenariosAreDefinedIn: => Unit): Unit = {
-    builder = builder.addNewParent(UseCase(title, comment = comment, definedInSourceCodeAt = EngineComponent.definedInSourceCodeAt(3)))
+  private def useCasePrim(title: String, comment: Option[String])(blockThatScenariosAreDefinedIn: => Unit) = {
+    val first = builder.mod(b => b.addNewParent(UseCase[P, R](title, comment = comment, definedInSourceCodeAt = EngineComponent.definedInSourceCodeAt(6))))
     blockThatScenariosAreDefinedIn
-    builder = builder.popParent
+    builder.mod(_.popParent)
   }
 
+  lazy val decisionTree = {
+    builder.seal
+    DecisionTree(allScenarios.toSeq)
+  }
 
-  def apply(p: P): R = ???
+  def apply(p: P): R = decisionTree(p)
 
-  def allScenarios: TraversableOnce[Scenario[P, R]] = builder.holder.allScenarios
+  def allScenarios: TraversableOnce[Scenario[P, R]] = builder.allScenarios
+
+  def asUseCase = builder.asUseCase
 }
 
 
