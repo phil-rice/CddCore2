@@ -39,7 +39,6 @@ class DecisionTreeLensForSpec extends CddSpec {
     val s4 = 4 produces "even"
     val dt = s1 ifFalse s2
 
-
     val lens = dt.lensFor(s3)
     lens.get(dt) shouldBe dt.trueNode
 

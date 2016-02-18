@@ -13,8 +13,8 @@ class DecisionTreeAddingToDecisionNodeWithTwoConclusionNodeSpec extends CddSpec 
   "adding situations with reasons" should "just modify the conclusion nodes" in {
     val s1 = 1 produces "result 1"
     val s2 = 2 produces "result 2"
-    DecisionTree(dn, s1) shouldBe (mainS ifTrue(mainS, s1) ifFalse falseS)
-    DecisionTree(dn, s2) shouldBe (mainS ifTrue mainS ifFalse(falseS, s2))
+    DecisionTree.addOne(dn, s1) shouldBe (mainS ifTrue(mainS, s1) ifFalse falseS)
+    DecisionTree.addOne(dn, s2) shouldBe (mainS ifTrue mainS ifFalse(falseS, s2))
   }
 
 }

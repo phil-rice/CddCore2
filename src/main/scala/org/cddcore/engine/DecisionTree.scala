@@ -11,12 +11,21 @@ object DecisionTree {
     (cn.mainScenario.reason, s.reason) match {
       case (_, _: SimpleReason[P, R]) =>
         cn.copy(scenarios = cn.scenarios :+ s)
-      case (_: SimpleReason[P, R], _: ScenarioReasonWithWhy[P, R]) =>
-        cn.copy(mainScenario = s, scenarios = cn.mainScenario :: cn.scenarios)
+      case (_: SimpleReason[P, R], _: ScenarioReasonWithWhy[P, R]) => {
+        if (cn.scenarios.forall(os => s.isDefinedAt(os.situation)))
+          cn.copy(mainScenario = s, scenarios = cn.mainScenario :: cn.scenarios)
+        else
+          makeDecisionNode(s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios)
+      }
     }
   }
 
-  def apply[P, R](dt: DecisionTree[P, R], s: Scenario[P, R]): DecisionTree[P, R] =
+  def makeDecisionNode[P, R](s: Scenario[P, R], trueAnchor: Scenario[P, R], falseAnchor: Scenario[P, R], otherScenarios: List[Scenario[P, R]]) = {
+    val (trueSituations, falseSituations) = otherScenarios.partition(os => s.isDefinedAt(os.situation))
+    DecisionNode(s, trueNode = ConclusionNode[P, R](trueAnchor, trueSituations), falseNode = ConclusionNode(falseAnchor, falseSituations))
+  }
+
+  def addOne[P, R](dt: DecisionTree[P, R], s: Scenario[P, R]): DecisionTree[P, R] =
     dt.lensFor(s).
       transform(dt, { case cn: ConclusionNode[P, R] =>
         if (cn.isDefinedAt(s.situation)) {
@@ -25,14 +34,14 @@ object DecisionTree {
           else if (s.isDefinedAt(cn.mainScenario.situation))
             throw new CannotAddScenarioException(s, cn.mainScenario)
           else
-            DecisionNode(s, trueNode = ConclusionNode(s), falseNode = cn)
+            makeDecisionNode(s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios)
         } else
-          DecisionNode(cn.mainScenario, trueNode = cn, falseNode = ConclusionNode(s))
+          makeDecisionNode(cn.mainScenario, trueAnchor = cn.mainScenario, falseAnchor = s, otherScenarios = cn.scenarios)
       })
 
   def apply[P, R](scenarios: Seq[Scenario[P, R]]): DecisionTree[P, R] = scenarios match {
     case h :: tail => tail.foldLeft[DecisionTree[P, R]](ConclusionNode(h)) {
-      (dt, s) => apply(dt, s)
+      (dt, s) => addOne(dt, s)
     }
   }
 }
@@ -99,6 +108,9 @@ case class ConclusionNode[P, R](mainScenario: Scenario[P, R], scenarios: List[Sc
   def apply(p: P) = mainScenario(p)
 
   def allScenarios: TraversableOnce[Scenario[P, R]] = mainScenario :: scenarios
+
+  override def toString = s"ConcNode(${mainScenario},supportedBy=${scenarios.mkString(";")})"
+
 }
 
 case class DecisionNode[P, R](mainScenario: Scenario[P, R], falseNode: DecisionTree[P, R], trueNode: DecisionTree[P, R]) extends DecisionTree[P, R] {
@@ -113,5 +125,8 @@ case class DecisionNode[P, R](mainScenario: Scenario[P, R], falseNode: DecisionT
   }
 
   def allScenarios: TraversableOnce[Scenario[P, R]] = trueNode.allScenarios.toIterator ++ falseNode.allScenarios
+
+  override def toString = s"DecisionNode(${mainScenario} ifTrue $trueNode ifFalse $falseNode"
+
 }
 

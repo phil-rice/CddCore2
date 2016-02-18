@@ -72,4 +72,18 @@ class DecisionTreeAddingToConclusionNodeSpec extends CddSpec {
       DecisionNode(scenario2b, falseNode = ConclusionNode(scenario1a, List(scenario1b)), trueNode = ConclusionNode(scenario2b, List(scenario2c)))
   }
 
+  "A decision tree with three non conflicting but different scenarios" should "have those scenarios split " in {
+    val s1 = 1 produces "result"
+    val s2 = 2 produces "result"
+    val s4 = 4 produces "result"
+    val s5 = 5 produces "result"
+    val raw = DecisionTree[Int, String](Seq(s1, s2, s4, s5))
+    raw shouldBe ConclusionNode(s1, List(s2, s4, s5))
+    val s3 = 3 produces "result" when (_ > 2)
+
+    DecisionTree.addOne(raw, s3) shouldBe
+      DecisionNode(s3, falseNode = ConclusionNode(s1, List(s2)), trueNode = ConclusionNode(s3, List(s4, s5)))
+
+  }
+
 }
