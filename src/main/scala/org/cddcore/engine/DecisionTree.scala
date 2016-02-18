@@ -8,10 +8,10 @@ import scala.language.implicitConversions
 object DecisionTree {
 
   private def addScenarioToConclusionNode[P, R](cn: ConclusionNode[P, R], s: Scenario[P, R]) = {
-    (cn.mainScenario, s) match {
-      case (_, _: SituationAndResultScenario[P, R]) =>
+    (cn.mainScenario.reason, s.reason) match {
+      case (_, _: SimpleReason[P, R]) =>
         cn.copy(scenarios = cn.scenarios :+ s)
-      case (_: SituationAndResultScenario[P, R], _: ScenarioWithReason[P, R]) =>
+      case (_: SimpleReason[P, R], _: ScenarioReasonWithWhy[P, R]) =>
         cn.copy(mainScenario = s, scenarios = cn.mainScenario :: cn.scenarios)
     }
   }

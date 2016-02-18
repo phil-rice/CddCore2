@@ -5,69 +5,39 @@ import scala.language.implicitConversions
 
 object Scenario {
   implicit def pToScenarioBuilder[P, R](p: P) = FromSituationScenarioBuilder[P, R](p)
-
-
+  implicit def scenarioToScenarioBuilder[P, R](s: Scenario[P,R]) = ScenarioBuilder[P, R](s)
 }
 
-
-trait Scenario[P, R] extends EngineComponent[P, R] with PartialFunctionWithDescription[P, R] {
-  def situation: P
-
-  def expected: R
-
-  def becauseDescription: String = "because"
-
-  def thenDescription: String = expected.toString
-
+case class Scenario[P, R](situation: P, expected: R, reason: ScenarioReason[P, R], definedInSourceCodeAt: String) extends EngineComponent[P, R] with PartialFunction[P, R] {
   def allScenarios = Seq(this)
+
+  def isDefinedAt(p: P) = reason.isDefinedAt(p)
+
+  def apply(p: P) = reason(p)
 
   def validate = {
     if (!isDefinedAt(situation)) throw new ReasonInvalidException(this)
     val actual = apply(situation)
     if (actual != expected) throw new WrongResultProducedException(this, actual)
   }
+  override def toString = s"Scenario($situation produces $expected because $reason)/$definedInSourceCodeAt"
 }
 
 case class FromSituationScenarioBuilder[P, R](situation: P) {
-  def produces(result: R) = SituationAndResultScenario[P, R](situation, result, EngineComponent.definedInSourceCodeAt())
+  def produces(result: R) = Scenario[P, R](situation, result, SimpleReason(result), EngineComponent.definedInSourceCodeAt())
 }
 
-case class SituationAndResultScenario[P, R](situation: P, expected: R, definedInSourceCodeAt: String) extends Scenario[P, R] {
-
-  def isDefinedAt(p: P): Boolean = true
-
-  def apply(p: P) = expected
-
-  def because[RR >: R](why: PartialFunction[P, RR]) = {
-    val result = ScenarioWithBecause[P, RR](situation, expected, why, definedInSourceCodeAt);
+case class ScenarioBuilder[P, R](scenario: Scenario[P, R]) {
+  def because[RR >: R](because: PartialFunction[P, RR]) = {
+    val result = scenario.copy(reason = BecauseReason(because))
     result.validate
     result
   }
 
-  def when(because: P => Boolean) = {
-    val result = ScenarioWithWhen[P, R](situation, expected, because, definedInSourceCodeAt);
+  def when(when: P => Boolean) = {
+    val result = scenario.copy(reason = WhenReason[P, R](when, scenario.expected))
     result.validate;
     result
   }
-
-  override def toString = s"Scenario($situation produces $expected)/$definedInSourceCodeAt"
-}
-
-trait ScenarioWithReason[P, R] extends Scenario[P, R]
-
-case class ScenarioWithBecause[P, R](situation: P, expected: R, because: PartialFunction[P, R], definedInSourceCodeAt: String) extends ScenarioWithReason[P, R] {
-  def isDefinedAt(p: P): Boolean = because.isDefinedAt(p)
-
-  def apply(p: P) = because(p)
-
-  override def toString = s"Scenario($situation produces $expected) because $because)"
-}
-
-case class ScenarioWithWhen[P, R](situation: P, expected: R, when: P => Boolean, definedInSourceCodeAt: String) extends ScenarioWithReason[P, R] {
-  def isDefinedAt(p: P): Boolean = when(p)
-
-  def apply(p: P) = expected
-
-  override def toString = s"Scenario($situation produces $expected) when $when)"
 }
 

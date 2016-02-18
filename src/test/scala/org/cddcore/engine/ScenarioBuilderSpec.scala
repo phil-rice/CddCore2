@@ -6,7 +6,12 @@ class ScenarioBuilderSpec extends CddSpec {
 
   "A <situation> produces <result>" should "make a SituationAndResultScenario" in {
     val s = 1 produces "result"
-    s shouldBe SituationAndResultScenario(situation = 1, expected = "result", "(ScenarioBuilderSpec.scala:8)")
+    s.situation shouldBe 1
+    s.expected shouldBe "result"
+    s.reason shouldBe SimpleReason[Int, String]("result")
+    s.definedInSourceCodeAt shouldBe "(ScenarioBuilderSpec.scala:8)"
+    s shouldBe Scenario[Int, String](situation = 1, expected = "result", reason = SimpleReason("result"), definedInSourceCodeAt = "(ScenarioBuilderSpec.scala:8)")
+
   }
 
   it should "have allScenarios just including itself" in {
@@ -15,18 +20,18 @@ class ScenarioBuilderSpec extends CddSpec {
   }
 
   "A <situation> produces <result> because <pf>" should "make a ScenarioWithBecause" in {
-    val s: ScenarioWithBecause[Int, String] = 1 produces "result" because { case i if i == 1 => "result" }
+    val s: Scenario[Int, String] = 1 produces "result" because { case i if i == 1 => "result" }
     s.situation shouldBe 1
     s.expected shouldBe "result"
-    s.because.isDefinedAt(0) shouldBe false
-    s.because.isDefinedAt(1) shouldBe true
-    s.because(1) shouldBe "result"
+    s.isDefinedAt(0) shouldBe false
+    s.isDefinedAt(1) shouldBe true
+    s(1) shouldBe "result"
   }
 
   it should "throw BecauseNotTrueException when the because is not true for the situation" in {
     intercept[ReasonInvalidException] {
       1 produces "result" because { case i if i == 2 => "result" }
-    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:28) cannot be added because the reason given isn't actually true"
+    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:33) cannot be added because the reason given isn't actually true"
   }
   it should "have allScenarios just including itself" in {
     val s = (1 produces "result") because { case i if i == 1 => "result" }
@@ -40,11 +45,11 @@ class ScenarioBuilderSpec extends CddSpec {
   }
 
   "A <situation> produces <result> because < p=> Boolean>" should "make a ScenarioWithWhen" in {
-    val s: ScenarioWithWhen[Int, String] = 1 produces "result" when (_ == 1)
+    val s: Scenario[Int, String] = 1 produces "result" when (_ == 1)
     s.situation shouldBe 1
     s.expected shouldBe "result"
-    s.when(0) shouldBe false
-    s.when(1) shouldBe true
+    s.isDefinedAt(0) shouldBe false
+    s.isDefinedAt(1) shouldBe true
     s(1) shouldBe "result"
   }
   it should "have allScenarios just including itself" in {
@@ -55,6 +60,6 @@ class ScenarioBuilderSpec extends CddSpec {
   it should "throw BecauseNotTrueException when the when is not true for the situation" in {
     intercept[ReasonInvalidException] {
       1 produces "result" when (_ == 2)
-    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:57) cannot be added because the reason given isn't actually true"
+    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:62) cannot be added because the reason given isn't actually true"
   }
 }
