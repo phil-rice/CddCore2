@@ -20,5 +20,6 @@ class TrafficLightSpec extends CddSpec {
   }
   it should "have 4 scenarios" in {
     decide.allScenarios.size shouldBe 4
+    decide.validate
   }
 }

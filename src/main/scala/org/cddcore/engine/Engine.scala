@@ -71,6 +71,11 @@ class Engine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt:
   def allScenarios: TraversableOnce[Scenario[P, R]] = builder.allScenarios
 
   def asUseCase = builder.asUseCase
+
+  def validate = DecisionTree.validate(decisionTree) match {
+    case Nil =>
+    case list => throw new ValidationException(list)
+  }
 }
 
 

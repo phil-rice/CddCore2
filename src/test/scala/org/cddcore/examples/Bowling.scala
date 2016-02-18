@@ -52,6 +52,7 @@ class BowlingSpec extends CddSpec {
 
   "it" should "do something" in {
     println(makeFrame(List(7, 2, 5, 5, 3, 0, 10, 2, 4), 6))
+    makeFrame.validate
   }
 }
 

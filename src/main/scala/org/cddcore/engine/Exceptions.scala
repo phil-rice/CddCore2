@@ -13,4 +13,5 @@ class WrongResultProducedException(s: Scenario[_, _], actual: Any) extends Excep
   s"Expected result: ${s.expected}\n" +
   s"Actual result :  $actual")
 
+class ValidationException(list: List[ValidationReport[_,_]]) extends Exception(s"Engine has validation issues:\n" + list.mkString("\n"))
 

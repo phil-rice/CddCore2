@@ -5,7 +5,55 @@ import org.cddcore.utilities.Lens
 import scala.language.implicitConversions
 
 
-object DecisionTree {
+class ScenarioValidationChecker[P, R](val fn: (DecisionTree[P, R], Scenario[P, R]) => Option[String])
+
+class ConclusionNodeValidationChecker[P, R](val fn: (DecisionTree[P, R], ConclusionNode[P, R], Scenario[P, R]) => Option[String])
+
+
+trait DecisionTreeValidator {
+
+
+  object ValidationIssues {
+    val lensReportsWrongScenario = "Lens reports wrong scenario"
+    val scenarioIsNotDefinedAtConclusionNode = "Scenario not defined at conclusion node"
+    val scenarioComesToWrongConclusionInNode = "Scenario comes to wrong conclusion in this node"
+    val scenarioComesToWrongConclusion = "Scenario comes to wrong conclusion"
+  }
+
+  protected def lensValidationChecker[P, R] = new ScenarioValidationChecker[P, R]((dt, s) => if (dt.lensFor(s).get(dt).allScenarios.toList.contains(s)) None else Some(ValidationIssues.lensReportsWrongScenario))
+
+  protected def scenarioInConclusionNodeChecker[P, R] =
+    new ConclusionNodeValidationChecker[P, R]((dt, cn, s) =>
+      if (cn.isDefinedAt(s.situation)) None
+      else
+        Some(ValidationIssues.scenarioIsNotDefinedAtConclusionNode))
+
+  protected def scenarioComesToCorrectAnswerWhenCheckedAgainstNodeChecker[P, R] =
+    new ConclusionNodeValidationChecker[P, R]((dt, cn, s) =>
+      if (cn.apply(s.situation) == s.expected) None
+      else
+        Some(ValidationIssues.scenarioComesToWrongConclusionInNode))
+
+  protected def scenarioComesToCorrectAnswer[P, R] = new ScenarioValidationChecker[P, R]((dt, s) =>
+    if (dt.apply(s.situation) == s.expected) None
+    else
+      Some(ValidationIssues.scenarioComesToWrongConclusion))
+
+  protected def scenarioValidators[P, R] = List[ScenarioValidationChecker[P, R]](lensValidationChecker, scenarioComesToCorrectAnswer)
+
+  protected def conclusionNodeValidators[P, R] = List[ConclusionNodeValidationChecker[P, R]](scenarioInConclusionNodeChecker, scenarioComesToCorrectAnswerWhenCheckedAgainstNodeChecker)
+
+  protected def validateScenarios[P, R](dt: DecisionTree[P, R], checker: ScenarioValidationChecker[P, R]) =
+    dt.allScenarios.flatMap { s => checker.fn(dt, s).map(msg => ValidationReport(msg, s)) }
+
+  protected def validateConclusionNodes[P, R](dt: DecisionTree[P, R], validator: ConclusionNodeValidationChecker[P, R]): TraversableOnce[ValidationReport[P, R]] =
+    dt.allConclusionNodes.flatMap(cn => cn.allScenarios.flatMap(s => validator.fn(dt, cn, s).map(ValidationReport(_, s))))
+
+
+  def validate[P, R](dt: DecisionTree[P, R]) = scenarioValidators[P, R].flatMap(validateScenarios(dt, _)) ::: conclusionNodeValidators[P, R].flatMap(validateConclusionNodes(dt, _))
+}
+
+object DecisionTree extends DecisionTreeValidator {
 
   private def addScenarioToConclusionNode[P, R](cn: ConclusionNode[P, R], s: Scenario[P, R]) = {
     (cn.mainScenario.reason, s.reason) match {
@@ -44,6 +92,8 @@ object DecisionTree {
       (dt, s) => addOne(dt, s)
     }
   }
+
+
 }
 
 object DecisionTreeLens {
@@ -80,6 +130,8 @@ case class DecisionTreeNodeAndIfTrue[P, R](dt: DecisionTree[P, R], ifTrue: Decis
   def ifFalse(falseNode: DecisionTree[P, R]) = DecisionNode(dt.mainScenario, trueNode = ifTrue, falseNode = falseNode)
 }
 
+case class ValidationReport[P, R](message: String, scenario: Scenario[P, R])
+
 trait DecisionTree[P, R] extends EngineComponent[P, R] with PartialFunction[P, R] {
 
   def lensFor(s: Scenario[P, R]): Lens[DecisionTree[P, R], DecisionTree[P, R]]
@@ -91,6 +143,9 @@ trait DecisionTree[P, R] extends EngineComponent[P, R] with PartialFunction[P, R
   def apply(p: P): R
 
   def definedInSourceCodeAt: String = mainScenario.definedInSourceCodeAt
+
+  def allConclusionNodes: TraversableOnce[ConclusionNode[P, R]]
+
 }
 
 object ConclusionNode {
@@ -111,6 +166,7 @@ case class ConclusionNode[P, R](mainScenario: Scenario[P, R], scenarios: List[Sc
 
   override def toString = s"ConcNode(${mainScenario},supportedBy=${scenarios.mkString(";")})"
 
+  override def allConclusionNodes: TraversableOnce[ConclusionNode[P, R]] = Seq(this)
 }
 
 case class DecisionNode[P, R](mainScenario: Scenario[P, R], falseNode: DecisionTree[P, R], trueNode: DecisionTree[P, R]) extends DecisionTree[P, R] {
@@ -128,5 +184,5 @@ case class DecisionNode[P, R](mainScenario: Scenario[P, R], falseNode: DecisionT
 
   override def toString = s"DecisionNode(${mainScenario} ifTrue $trueNode ifFalse $falseNode"
 
+  override def allConclusionNodes: TraversableOnce[ConclusionNode[P, R]] = trueNode.allConclusionNodes.toIterator ++ falseNode.allConclusionNodes
 }
-
