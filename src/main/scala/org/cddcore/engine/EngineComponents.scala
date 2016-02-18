@@ -21,8 +21,7 @@ trait EngineComponent[P, R] {
 }
 
 
-case class UseCase[P, R](title: String, components: List[EngineComponent[P, R]], comment: Option[String] = None, definedInSourceCodeAt: String) extends EngineComponent[P, R] {
+case class UseCase[P, R](title: String, components: List[EngineComponent[P, R]]=List(), comment: Option[String] = None, definedInSourceCodeAt: String) extends EngineComponent[P, R] {
   def allScenarios = components.flatMap(_.allScenarios)
 
-  def withComponents(components: List[EngineComponent[P, R]]) = copy(components = components)
 }

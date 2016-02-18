@@ -48,5 +48,4 @@ class UseCaseBuilderSpec extends CddSpec {
     holder3.depth shouldBe 2
   }
 
-
 }

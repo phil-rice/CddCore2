@@ -14,7 +14,6 @@ class Engine2Spec extends CddSpec {
     val e = new Engine2[Int, String]() {
       useCase("someUseCase") {}
     }
-   e.allUseCases shouldBe UseCase("someUseCase", List(), None, "")
   }
 
 }

@@ -64,25 +64,25 @@ case class EngineBuilder2[P, R](title: String, components: List[EngineComponent[
 }
 
 class Engine2[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends EngineComponent[P, R] with Function[P, R] {
-  def allUseCases = builder.components.collect { case uc: UseCase[P, R] => uc }
+  var useCaseBuilder = UseCaseBuilder[P, R](UseCase[P, R](initialTitle, definedInSourceCodeAt = definedInSourceCodeAt))
 
-  var builder = EngineBuilder2[P, R](initialTitle, List(), None)
 
-  def title: String = builder.title
-
-  protected def title(newTitle: String): Unit = builder = builder.copy(title = newTitle)
+  def title: String = useCaseBuilder.useCase.title
 
   protected implicit def toPartial(r: R): PartialFunction[P, R] = Engine.toPartial(r)
 
   implicit def pToScenarioBuilder(p: P) = Scenario.pToScenarioBuilder[P, R](p)
 
   protected def useCase(title: String)(blockThatScenariosAreDefinedIn: => Unit): Unit = {
+    useCaseBuilder = useCaseBuilder.addNewParent(UseCase(title, definedInSourceCodeAt = EngineComponent.definedInSourceCodeAt()))
+    blockThatScenariosAreDefinedIn
+    useCaseBuilder.popParent
   }
 
 
-  def apply(p: P): R = builder.tree(p)
+  def apply(p: P): R = ???
 
-  def allScenarios: TraversableOnce[Scenario[P, R]] = builder.allScenarios
+  def allScenarios: TraversableOnce[Scenario[P, R]] = useCaseBuilder.useCase.allScenarios
 }
 
 

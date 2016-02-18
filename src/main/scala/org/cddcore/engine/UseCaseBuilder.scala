@@ -12,7 +12,7 @@ case class UseCaseBuilder[P, R](useCase: UseCase[P, R], depth: Int = 0) {
 
   def addNewParent(c: UseCase[P, R]): UseCaseBuilder[P, R] = addChild(c).copy(depth = depth + 1)
 
-  def popParent: UseCaseBuilder[P,R] = copy(depth = depth - 1)
+  def popParent: UseCaseBuilder[P, R] = copy(depth = depth - 1)
 
   def modCurrentChild(fn: EngineComponent[P, R] => EngineComponent[P, R]) = depthToUseCaseChild.transform(this, fn)
 
@@ -21,14 +21,14 @@ case class UseCaseBuilder[P, R](useCase: UseCase[P, R], depth: Int = 0) {
   protected def useCaseToHeadUseCaseLens = Lens[UseCase[P, R], UseCase[P, R]](
     ch => ch.components.head.asInstanceOf[UseCase[P, R]],
     (ech, head) => ech.components match {
-      case h :: tail => ech.withComponents(head.asInstanceOf[EngineComponent[P, R]] :: tail)
+      case h :: tail => ech.copy(components = head.asInstanceOf[EngineComponent[P, R]] :: tail)
     }
   )
 
   protected def useCaseToHeadLens = Lens[UseCase[P, R], EngineComponent[P, R]](
     ch => ch.components.head,
     (ech, head) => ech.components match {
-      case h :: tail => ech.withComponents(head :: tail)
+      case h :: tail => ech.copy(components = head :: tail)
     }
   )
 
