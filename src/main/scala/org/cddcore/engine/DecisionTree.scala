@@ -18,7 +18,7 @@ object DecisionTree {
 
   def apply[P, R](dt: DecisionTree[P, R], s: Scenario[P, R]): DecisionTree[P, R] =
     dt.lensFor(s).
-      mod(dt, { case cn: ConclusionNode[P, R] =>
+      transform(dt, { case cn: ConclusionNode[P, R] =>
         if (cn.isDefinedAt(s.situation)) {
           if (cn.mainScenario(s.situation) == s.expected)
             addScenarioToConclusionNode(cn, s)

@@ -19,7 +19,7 @@ class DecisionTreeLensForSpec extends CddSpec {
 
     val lensToCn = cn1.lensFor(s)
     lensToCn.get(cn1) shouldBe cn1
-    lensToCn.mod(cn1, x => if (x != cn1) throw new RuntimeException else cn2) shouldBe cn2
+    lensToCn.transform(cn1, x => if (x != cn1) throw new RuntimeException else cn2) shouldBe cn2
   }
 
   "The decisiontree lensFor method called on a Decision Node, a Conclusion node on its truepath and a 'true path' scenario" should "return a lens pointing to the conclusion node on the true path" in {
@@ -43,7 +43,7 @@ class DecisionTreeLensForSpec extends CddSpec {
     val lens = dt.lensFor(s3)
     lens.get(dt) shouldBe dt.trueNode
 
-    lens.mod(dt, { case cn: ConclusionNode[Int, String] => if (cn != dt.trueNode) throw new RuntimeException else cn.withScenario(s3) }) shouldBe (s1 ifTrue(s1, s3) ifFalse s2)
+    lens.transform(dt, { case cn: ConclusionNode[Int, String] => if (cn != dt.trueNode) throw new RuntimeException else cn.withScenario(s3) }) shouldBe (s1 ifTrue(s1, s3) ifFalse s2)
   }
 
   "The decisiontree lensFor method called on a Decision Node, a Conclusion node on its falsePath and a 'false path' scenario" should "return a lens pointing to the conclusion node on the false path" in {
@@ -64,7 +64,7 @@ class DecisionTreeLensForSpec extends CddSpec {
 
     val lens = dt.lensFor(s4)
     lens.get(dt) shouldBe dt.falseNode
-    lens.mod(dt, { case cn: ConclusionNode[Int, String] => if (cn != dt.falseNode) throw new RuntimeException else cn.withScenario(s4) }) shouldBe (s1 ifFalse(s2, s4))
+    lens.transform(dt, { case cn: ConclusionNode[Int, String] => if (cn != dt.falseNode) throw new RuntimeException else cn.withScenario(s4) }) shouldBe (s1 ifFalse(s2, s4))
   }
 
 }
