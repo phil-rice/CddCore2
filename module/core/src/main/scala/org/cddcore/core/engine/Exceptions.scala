@@ -3,10 +3,11 @@ package org.cddcore.core.engine
 class ReasonInvalidException(s: Scenario[_, _])
   extends Exception(s"Scenario defined at ${s.definedInSourceCodeAt} cannot be added because the reason given isn't actually true")
 
-class CannotAddScenarioException(s: Scenario[_, _], existing: Scenario[_, _]) extends Exception(
+class CannotAddScenarioException(s: Scenario[_, _], existing: Scenario[_, _], actual: Any) extends Exception(
   s"Scenario defined at ${s.definedInSourceCodeAt} conflicts with ${existing.definedInSourceCodeAt}\n" +
     s"Scenario being added is $s\n" +
-    s"Scenario already existing is $existing"
+    s"Scenario already existing is $existing\n" +
+    s"If it was added, would come to result $actual"
 )
 
 object AssertionInvalidException {

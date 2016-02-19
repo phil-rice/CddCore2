@@ -28,12 +28,15 @@ trait DecisionTreeValidator {
         Some(ValidationIssues.scenarioIsNotDefinedAtConclusionNode))
 
   protected def scenarioComesToCorrectAnswerWhenCheckedAgainstNodeChecker[P, R] =
-    new ConclusionNodeValidationChecker[P, R]((dt, cn, s) =>
-      if (s.calcuateAssertionFor(s.situation)) None
+    new ConclusionNodeValidationChecker[P, R]((dt, cn, s) => {
+      //      if (cn.apply(s.situation) == s.expected) None
+      val result = cn.apply(s.situation)
+      if (s.assertion.valid(s.situation, result)) None
       else s.assertion match {
         case EqualsAssertion(_) => Some(ValidationIssues.scenarioComesToWrongConclusionInNode)
         //TODO Need tests for other assertions
-      })
+      }
+    })
 
 
   //TODO rename this to cover asserions
@@ -63,9 +66,9 @@ object DecisionTree extends DecisionTreeValidator {
 
   private def addScenarioToConclusionNode[P, R](cn: ConclusionNode[P, R], s: Scenario[P, R]) = {
     (cn.mainScenario.reason, s.reason) match {
-      case (_, _: SimpleReason[P, R]) =>
+      case (_, _: ScenarioReasonWithoutWhy[P, R]) =>
         cn.copy(scenarios = cn.scenarios :+ s)
-      case (_: SimpleReason[P, R], _: ScenarioReasonWithWhy[P, R]) => {
+      case (_: ScenarioReasonWithoutWhy[P, R], _: ScenarioReasonWithWhy[P, R]) => {
         if (cn.scenarios.forall(os => s.isDefinedAt(os.situation)))
           cn.copy(mainScenario = s, scenarios = cn.mainScenario :: cn.scenarios)
         else
@@ -83,10 +86,11 @@ object DecisionTree extends DecisionTreeValidator {
     dt.lensFor(s).
       transform(dt, { case cn: ConclusionNode[P, R] =>
         if (cn.isDefinedAt(s.situation)) {
-          if (cn.mainScenario.calcuateAssertionFor(s.situation))
+          val actual = cn.mainScenario(s.situation)
+          if (s.assertion.valid(s.situation, actual))
             addScenarioToConclusionNode(cn, s)
           else if (s.isDefinedAt(cn.mainScenario.situation))
-            throw new CannotAddScenarioException(s, cn.mainScenario)
+            throw new CannotAddScenarioException(s, cn.mainScenario, actual)
           else
             makeDecisionNode(s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios)
         } else

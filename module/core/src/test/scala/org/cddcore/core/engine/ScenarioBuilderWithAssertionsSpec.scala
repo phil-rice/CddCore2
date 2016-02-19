@@ -1,12 +1,18 @@
 package org.cddcore.core.engine
 
+import org.cddcore.core.builder.NullLifeCycle
+
 
 class ScenarioBuilderWithAssertionsSpec extends CddSpec {
 
-  import Scenario._
+  implicit val pToScenario = Scenario.pToScenarioBuilder[Int, String] _
+
+  implicit val lifeCycle = new NullLifeCycle[Scenario[Int, String]]
+  val something = Scenario.something[String]
 
   "A scenario" should "be able to express a result assertion instead of just equality" in {
-//    1 produces something[String] where(_.contains("R"))
-    fail
+    val fn = (s: String) => s.contains("result")
+    val s = 1 produces something where fn
+    s.assertion shouldBe ResultAssertion(fn)
   }
 }

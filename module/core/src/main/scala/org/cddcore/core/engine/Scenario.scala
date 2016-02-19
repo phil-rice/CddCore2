@@ -15,7 +15,6 @@ object Scenario {
 
   def something[R] = new SomethingMarker[R]
 
-
 }
 
 case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: String) extends EngineComponent[P, R] with PartialFunction[P, R] {
@@ -61,6 +60,7 @@ case class FromSituationScenarioBuilder[P, R](situation: P) {
     producesPrim(definedAt, NotYetValid(definedAt), new UnknownAssertion)
   }
 
+
 }
 
 case class ScenarioBuilder[P, R](scenario: Scenario[P, R]) {
@@ -71,13 +71,6 @@ case class ScenarioBuilder[P, R](scenario: Scenario[P, R]) {
     result
   }
 
-  //TODO write test for this
-  def where(where: R => Boolean)(implicit scl: ChildLifeCycle[Scenario[P, R]]) = {
-    val result = scenario.copy(assertion = ResultAssertion[P, R](where))
-    scl.modified(scenario, result)
-    result.validate
-    result
-  }
 
   def when(when: P => Boolean)(implicit scl: ChildLifeCycle[Scenario[P, R]]) = {
     val expected = scenario.expectedOption match {
@@ -89,5 +82,22 @@ case class ScenarioBuilder[P, R](scenario: Scenario[P, R]) {
     result.validate
     result
   }
+
+  def where(where: R => Boolean)(implicit scl: ChildLifeCycle[Scenario[P, R]]) = {
+    val result = scenario.copy(assertion = ResultAssertion[P, R](where))
+    scl.modified(scenario, result)
+    result
+  }
+
+  def by(fn: P => R)(implicit scl: ChildLifeCycle[Scenario[P, R]]) = {
+    val result = scenario.reason match {
+      case SimpleReason(result: R) => scenario.copy(reason = SimpleReasonWithBy(fn))
+      case WhenReason(when, _) => scenario.copy(reason = WhenByReason(when, fn))
+    }
+    scl.modified(scenario, result)
+    result
+  }
+
+
 }
 

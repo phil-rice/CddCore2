@@ -27,11 +27,11 @@ class Tennis {
       useCase("different scorts") {
         (2, 3) produces "thirty, forty" because { case (l, r) if l < 4 && r < 4 => s"${lookup(l)}, ${lookup(r)}" }
         (2, 1) produces "thirty, fifteen"
-        (3, 2) produces something[String] where (_.contains("thirty"))
+        //        (3, 2) produces something where (_.contains("thirty"))
       }
 
       useCase("When both have the same running score", "The running score, if both scores are the same, is called xx all") {
-        (0, 0) produces "love all" because { case (l, r) if l == r && l < 3 => s"${lookup(l)} all" }
+        (0, 0) produces "love all" when { case (l, r) => l == r && l < 3 } by (x=> s"${lookup(x._1)} all")
         (2, 2) produces "thirty all"
       }
     }
@@ -51,4 +51,5 @@ class Tennis {
       }
     }
   }
+
 }
