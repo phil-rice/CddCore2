@@ -12,7 +12,6 @@ class ConclusionNodeValidationChecker[P, R](val fn: (DecisionTree[P, R], Conclus
 
 trait DecisionTreeValidator {
 
-
   object ValidationIssues {
     val lensReportsWrongScenario = "Lens reports wrong scenario"
     val scenarioIsNotDefinedAtConclusionNode = "Scenario not defined at conclusion node"
@@ -30,14 +29,21 @@ trait DecisionTreeValidator {
 
   protected def scenarioComesToCorrectAnswerWhenCheckedAgainstNodeChecker[P, R] =
     new ConclusionNodeValidationChecker[P, R]((dt, cn, s) =>
-      if (cn.apply(s.situation) == s.expected) None
-      else
-        Some(ValidationIssues.scenarioComesToWrongConclusionInNode))
+      if (s.calcuateAssertionFor(s.situation)) None
+      else s.assertion match {
+        case EqualsAssertion(_) => Some(ValidationIssues.scenarioComesToWrongConclusionInNode)
+        //TODO Need tests for other assertions
+      })
 
-  protected def scenarioComesToCorrectAnswer[P, R] = new ScenarioValidationChecker[P, R]((dt, s) =>
-    if (dt.apply(s.situation) == s.expected) None
-    else
-      Some(ValidationIssues.scenarioComesToWrongConclusion))
+
+  //TODO rename this to cover asserions
+  protected def scenarioComesToCorrectAnswer[P, R] = new ScenarioValidationChecker[P, R]((dt, s) => {
+    val actual = dt.apply(s.situation)
+    if (s.assertion.valid(s.situation, actual)) None
+    else s.assertion match {
+      case EqualsAssertion(_) => Some(ValidationIssues.scenarioComesToWrongConclusion)
+    }
+  })
 
   protected def scenarioValidators[P, R] = List[ScenarioValidationChecker[P, R]](lensValidationChecker, scenarioComesToCorrectAnswer)
 
@@ -77,7 +83,7 @@ object DecisionTree extends DecisionTreeValidator {
     dt.lensFor(s).
       transform(dt, { case cn: ConclusionNode[P, R] =>
         if (cn.isDefinedAt(s.situation)) {
-          if (cn.mainScenario(s.situation) == s.expected)
+          if (cn.mainScenario.calcuateAssertionFor(s.situation))
             addScenarioToConclusionNode(cn, s)
           else if (s.isDefinedAt(cn.mainScenario.situation))
             throw new CannotAddScenarioException(s, cn.mainScenario)
@@ -92,8 +98,6 @@ object DecisionTree extends DecisionTreeValidator {
       (dt, s) => addOne(dt, s)
     }
   }
-
-
 }
 
 object DecisionTreeLens {

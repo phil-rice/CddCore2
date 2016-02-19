@@ -2,10 +2,9 @@ package org.cddcore.core.engine
 
 class DecisionTreeValidationSpec extends CddSpec with DecisionTreeValidator {
 
-  import Scenario._
   import DecisionTree.ValidationIssues._
-
-  implicit def toSeq[X](x: X) = Seq(x)
+  import Scenario._
+   implicit def toSeq[X](x: X) = Seq(x)
 
   val s1 = 1 produces "result"
   val s2 = 2 produces "result" when (_ == 2)

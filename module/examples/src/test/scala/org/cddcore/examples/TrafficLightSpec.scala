@@ -1,6 +1,6 @@
 package org.cddcore.examples
 
-import org.cddcore.core.engine.{Engine, CddSpec}
+import org.cddcore.core.engine.CddSpec
 
 class TrafficLightSpec extends CddSpec {
 

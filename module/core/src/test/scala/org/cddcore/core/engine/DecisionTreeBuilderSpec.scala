@@ -1,7 +1,6 @@
 package org.cddcore.core.engine
 
 
-
 class DecisionTreeBuilderSpec extends CddSpec {
 
   import DecisionTreeBuilder._

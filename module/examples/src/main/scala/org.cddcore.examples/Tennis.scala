@@ -3,7 +3,6 @@ package org.cddcore.examples
 import org.cddcore.core.engine.Engine
 
 
-
 class Tennis {
   val (serverWon, receiverWon) = ("server won", "receiver won")
   val lookup = Map(0 -> "love", 1 -> "fifteen", 2 -> "thirty", 3 -> "forty")
@@ -28,6 +27,7 @@ class Tennis {
       useCase("different scorts") {
         (2, 3) produces "thirty, forty" because { case (l, r) if l < 4 && r < 4 => s"${lookup(l)}, ${lookup(r)}" }
         (2, 1) produces "thirty, fifteen"
+        (3, 2) produces something[String] where (_.contains("thirty"))
       }
 
       useCase("When both have the same running score", "The running score, if both scores are the same, is called xx all") {

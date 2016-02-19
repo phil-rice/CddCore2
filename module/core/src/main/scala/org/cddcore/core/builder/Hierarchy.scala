@@ -1,6 +1,6 @@
 package org.cddcore.core.builder
 
-import org.cddcore.core.engine.{UseCase, EngineComponent}
+import org.cddcore.core.engine.{EngineComponent, UseCase}
 import org.cddcore.core.utilities.Lens
 
 

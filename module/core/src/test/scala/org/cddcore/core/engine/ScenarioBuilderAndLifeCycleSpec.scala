@@ -10,7 +10,7 @@ class ScenarioBuilderAndLifeCycleSpec extends CddSpec {
     var created = List[S]()
     var modified = List[String]()
 
-    def asString(s: S) = s.situation + "/" + s.expected + "/" + s.reason.getClass.getSimpleName
+    def asString(s: S) = s.situation + "/" + s.assertion + "/" + s.reason.getClass.getSimpleName
 
     def created(child: S) = created = created :+ child
 

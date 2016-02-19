@@ -2,6 +2,13 @@ package org.cddcore.core.engine
 
 sealed trait ScenarioReason[P, R] extends PartialFunction[P, R]
 
+
+case class NotYetValid[P, R](scenarioDefinedAt: String) extends ScenarioReason[P, R] {
+  def apply(p: P) = throw new CalculatorNotGivenException(scenarioDefinedAt)
+
+  def isDefinedAt(p: P) = true
+}
+
 case class SimpleReason[P, R](result: R) extends ScenarioReason[P, R] {
   def apply(p: P) = result
 
@@ -10,7 +17,7 @@ case class SimpleReason[P, R](result: R) extends ScenarioReason[P, R] {
   override def toString = s"SimpleReason($result)"
 }
 
-trait ScenarioReasonWithWhy[P,R] extends ScenarioReason[P,R]
+trait ScenarioReasonWithWhy[P, R] extends ScenarioReason[P, R]
 
 case class WhenReason[P, R](when: P => Boolean, result: R) extends ScenarioReasonWithWhy[P, R] {
   def apply(p: P) = result

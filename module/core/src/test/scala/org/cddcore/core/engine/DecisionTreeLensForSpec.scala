@@ -5,7 +5,6 @@ class DecisionTreeLensForSpec extends CddSpec {
 
   import DecisionTreeBuilder._
   import Scenario._
-
   "The decisiontree lensFor method called on a Conclusion Node" should "return a lens pointing to the conclusion node" in {
     val s1 = 1 produces "result"
     val cn1: ConclusionNode[Int, String] = s1

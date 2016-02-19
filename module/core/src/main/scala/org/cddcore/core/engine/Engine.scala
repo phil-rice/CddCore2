@@ -39,13 +39,12 @@ class EngineBuilder[P, R](initialTitle: String, definedInSourceCodeAt: String) e
   def asUseCase = builder.holder
 }
 
-class Engine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends EngineComponent[P, R] with Function[P, R] {
+abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends EngineComponent[P, R] {
   implicit val builder = new EngineBuilder[P, R](initialTitle, definedInSourceCodeAt)
 
   def title: String = builder.title
 
   def title(newTitle: String) = builder.mod(b => b.copy(holder = b.holder.copy(title = newTitle)))
-
 
   protected implicit def toPartial(r: R): PartialFunction[P, R] = Engine.toPartial(r)
 
@@ -66,6 +65,8 @@ class Engine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt:
     DecisionTree(allScenarios.toSeq)
   }
 
+  def something = Scenario.something[R]
+
   def apply(p: P): R = decisionTree(p)
 
   def allScenarios: TraversableOnce[Scenario[P, R]] = builder.allScenarios
@@ -78,6 +79,13 @@ class Engine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt:
   }
 }
 
+class Engine[P, R](initialTitle: String = "Untitled", definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends AbstractEngine[P, R](initialTitle, definedInSourceCodeAt) with Function[P, R]
+
+class Engine2[P1, P2, R](initialTitle: String = "Untitled", definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends AbstractEngine[(P1, P2), R](initialTitle, definedInSourceCodeAt) with Function2[P1, P2, R] {
+  def apply(p1: P1, p2: P2): R = apply((p1, p2))
+}
+
+class FoldLeftEngine[Acc, V] extends Engine2[Acc, V, Acc]
 
 
 
