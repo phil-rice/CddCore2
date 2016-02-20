@@ -1,5 +1,6 @@
 package org.cddcore.engine
 
+import org.cddcore.engine.enginecomponents.Scenario
 import org.cddcore.utilities.CddSpec
 
 class EngineLastResultSpec extends CddSpec {
@@ -20,6 +21,17 @@ class EngineLastResultSpec extends CddSpec {
     }
     remembered1 shouldBe "1"
     remembered77 shouldBe "77"
+  }
+
+  it should "be usable in a scenario" in {
+    var remembered: Option[Scenario[String, String]] = None
+    new Engine[String, String] {
+      useCase("1") {
+        "0" produces "1"
+        remembered = Some(last produces "2")
+      }
+    }
+    remembered.map(_.situation) shouldBe Some("1")
   }
 
   it should "throw NoLastException if at the start of an engine" in {
