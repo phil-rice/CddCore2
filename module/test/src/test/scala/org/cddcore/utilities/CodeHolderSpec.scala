@@ -32,7 +32,7 @@ class CodeHolderSpec extends CddSpec {
   }
 
   it should "turn horrible toStrings of partial functions into nice ones" in {
-    CodeHolder.partialFnToStringToNiceToString(horribleToString) shouldBe Some("case (x @ (_: String)) => x.toString()")
+    CodeHolder.partialFnToStringToNiceToString(horribleToString) shouldBe Some("{case (x @ (_: String)) => x.toString()}")
   }
 
   it should "have a decent prettyDescription for partial functions" in {

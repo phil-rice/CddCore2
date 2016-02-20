@@ -23,7 +23,7 @@ object CodeHolder {
       if (secondIndex == -1)
         None
       else
-        Some(s.substring(firstIndex, secondIndex).trim)
+        Some("{"+s.substring(firstIndex, secondIndex).trim +"}")
     }
   }
 
@@ -37,6 +37,8 @@ case class CodeHolder[Fn](val fn: Fn, val description: String, val comment: Stri
   }
 
   def prettyDescription = description match {
+    case d if description.contains(
+      "SerialVersionUID(value = 0) final <synthetic> class $anonfun extends scala.runtime.AbstractPartialFunction[") => CodeHolder.partialFnToStringToNiceToString(d).getOrElse(d)
     case d if description.startsWith("((") && description.endsWith("})") && description.contains("match") => {
       Strings.from("case")(d).map(Strings.removeLast(2)).map(_.trim).getOrElse(d)
     }

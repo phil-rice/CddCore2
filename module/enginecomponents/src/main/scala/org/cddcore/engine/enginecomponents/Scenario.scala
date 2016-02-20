@@ -41,7 +41,7 @@ case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion:
     if (assertion.valid(situation, actual) == false) throw AssertionInvalidException(this, actual)
   }
 
-  override def toString = s"Scenario($situation produces $assertion because $reason)/$definedInSourceCodeAt"
+  override def toString = s"Scenario($situation produces $assertion $reason)/$definedInSourceCodeAt"
 }
 
 case class FromSituationScenarioBuilder[P, R](situation: P) {
@@ -81,7 +81,7 @@ object ScenarioBuilder {
 
   protected def becauseHolder[P, R](scenarioBuilder: ScenarioBuilder[P, R], because: CodeHolder[PartialFunction[P, R]]): Scenario[P, R] = {
     val scenario = scenarioBuilder.scenario
-    val result = scenario.copy(reason = BecauseReason(because.fn))
+    val result = scenario.copy(reason = BecauseReason[P,R](because))
     scenarioBuilder.scl.modified(scenario, result)
     result.validate
     result

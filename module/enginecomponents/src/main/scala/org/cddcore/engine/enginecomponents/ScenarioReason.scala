@@ -1,5 +1,7 @@
 package org.cddcore.engine.enginecomponents
 
+import org.cddcore.utilities.CodeHolder
+
 sealed trait ScenarioReason[P, R] extends PartialFunction[P, R]
 
 
@@ -47,10 +49,10 @@ case class WhenByReason[P, R](when: P => Boolean, fn: P => R) extends ScenarioRe
   override def toString = s"WhenByReason()"
 }
 
-case class BecauseReason[P, R](pf: PartialFunction[P, R]) extends ScenarioReasonWithWhy[P, R] {
-  def apply(p: P) = pf(p)
+case class BecauseReason[P, R](pf: CodeHolder[PartialFunction[P, R]]) extends ScenarioReasonWithWhy[P, R] {
+  def apply(p: P) = pf.fn(p)
 
-  def isDefinedAt(p: P) = pf.isDefinedAt(p)
+  def isDefinedAt(p: P) = pf.fn.isDefinedAt(p)
 
-  override def toString = s"BecauseReason()"
+  override def toString = s"because ${pf.prettyDescription}"
 }

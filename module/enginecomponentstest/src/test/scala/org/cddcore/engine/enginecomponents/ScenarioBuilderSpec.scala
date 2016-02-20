@@ -65,6 +65,10 @@ class ScenarioBuilderSpec extends CddSpec {
     s(1) shouldBe "result"
     s.expectedOption shouldBe Some("result")
   }
+  it should "have a nice toString" in {
+    (1 produces "1" because {case x => x.toString}).toString shouldBe "Scenario(1 produces EqualsAssertion(1) because {case (x @ _) => x.toString()})/(ScenarioBuilderSpec.scala:69)"
+  }
+
   it should "have allScenarios just including itself" in {
     val s = 1 produces "result" when (_ == 1)
     s.allScenarios.toList shouldBe List(s)
@@ -73,7 +77,7 @@ class ScenarioBuilderSpec extends CddSpec {
   it should "throw BecauseNotTrueException when the when is not true for the situation" in {
     intercept[ReasonInvalidException] {
       1 produces "result" when (_ == 2)
-    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:75) cannot be added because the reason given isn't actually true"
+    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:79) cannot be added because the reason given isn't actually true"
   }
 
   it should "allow the 'by' word to have code generate the result" in {
