@@ -38,6 +38,11 @@ class EngineBuilder[P, R](initialTitle: String, definedInSourceCodeAt: String) e
   def allScenarios = builder.holder.allScenarios
 
   def asUseCase = builder.holder
+
+  def last = builder.getCurrentChild match {
+    case Some(s: Scenario[P, R]) => s.expectedOption.getOrElse(throw new NoLastException("No result specified"))
+    case None => throw new NoLastException
+  }
 }
 
 abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends EngineComponent[P, R] {
@@ -78,6 +83,12 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
     case Nil =>
     case list => throw new ValidationException(list)
   }
+
+  def ifThenString = {
+    s"Engine()"
+  }
+
+  def last = builder.last
 }
 
 class Engine[P, R](initialTitle: String = "Untitled", definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends AbstractEngine[P, R](initialTitle, definedInSourceCodeAt) with Function[P, R]

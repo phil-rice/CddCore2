@@ -5,7 +5,9 @@ import org.cddcore.utilities.{Hierarchy, HierarchyBuilder}
 
 class HierarchySpec extends CddSpec {
 
-  class Thing(name: String)
+  class Thing(name: String) {
+    override def toString = s"Thing($name)"
+  }
 
   case class ThingHolder(name: String, list: List[Thing]) extends Thing(name)
 
@@ -13,7 +15,7 @@ class HierarchySpec extends CddSpec {
   implicit object ThingHierarcy extends Hierarchy[ThingHolder, Thing] {
     def withNewChild(h: ThingHolder, child: Thing): ThingHolder = h.copy(list = child :: h.list)
 
-    def currentChild(h: ThingHolder): Thing = h.list.head
+    def currentChild(h: ThingHolder) = h.list.headOption
 
     def childToHolder(child: Thing): ThingHolder = child.asInstanceOf[ThingHolder]
 
@@ -21,7 +23,6 @@ class HierarchySpec extends CddSpec {
       case (oldHead :: tail) => h.copy(list = fn(oldHead) :: tail)
     }
   }
-
 
   def holder(s: String, children: Thing*) = ThingHolder(s, children.toList)
 
@@ -39,6 +40,7 @@ class HierarchySpec extends CddSpec {
     val builder = new HierarchyBuilder[ThingHolder, Thing](holder1)
     builder.holder shouldBe holder1
     builder.depth shouldBe 0
+    builder.getCurrentChild shouldBe None
   }
 
   "A HierarcyBuilder addChild method with depth 0" should "add children to the holder and not mess with depth" in {
@@ -46,18 +48,21 @@ class HierarchySpec extends CddSpec {
     val builder2 = builder1.addChild(t1).addChild(t2).addChild(t3)
     builder2.holder shouldBe holder1.copy(list = List(t3, t2, t1))
     builder2.depth shouldBe 0
+    builder2.getCurrentChild shouldBe Some(t3)
   }
   "A HierarcyBuilder addNewParent method " should "nest children with new holders increasing depth" in {
     val builder1 = new HierarchyBuilder[ThingHolder, Thing](holder1)
     val builder2 = builder1.addNewParent(holder2).addNewParent(holder3)
     builder2.holder shouldBe holder("useCase1", holder("useCase2", holder("useCase3")))
     builder2.depth shouldBe 2
+    builder2.getCurrentChild shouldBe None
   }
   it should "allow scenarios to be added to current use case" in {
     val builder1 = new HierarchyBuilder[ThingHolder, Thing](holder1)
     val builder2 = builder1.addNewParent(holder2).addNewParent(holder3).addChild(t1).addChild(t2).addChild(t3)
     builder2.holder shouldBe holder("useCase1", holder("useCase2", holder("useCase3", t3, t2, t1)))
     builder2.depth shouldBe 2
+    builder2.getCurrentChild shouldBe Some(t3)
   }
   it should "allow scenarios to be added to current uholders, then a pop and another use case added" in {
     val builder1 = new HierarchyBuilder[ThingHolder, Thing](holder1)
@@ -67,6 +72,7 @@ class HierarchySpec extends CddSpec {
     val builder3 = builder2.addNewParent(holder4).addChild(t2).addChild(t3)
     builder3.holder shouldBe holder("useCase1", holder("useCase2", holder("useCase4", t3, t2), holder("useCase3", t1)))
     builder3.depth shouldBe 2
+    builder3.getCurrentChild shouldBe Some(t3)
   }
 
 }
