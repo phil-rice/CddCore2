@@ -42,8 +42,8 @@ class ScenarioToStringSpec extends CddSpec {
   }
 
   "<situation> produces <result> when <when> by <by>" should "have a nice toString" in {
-    (oneProducesOne when (_ == 1) by (_.toString)).toString shouldBe "Scenario(1 produces 1 when ((x$6: Int) => x$6.==(1)) by <function1>)/(ScenarioToStringSpec.scala:9)"
-    (oneProducesOne when (x => x == 1) by { x => x.toString }).toString shouldBe "Scenario(1 produces 1 when ((x: Int) => x.==(1)) by <function1>)/(ScenarioToStringSpec.scala:9)"
-    (oneProducesOne when { case x => true } by { case x: Int => x.toString }).toString shouldBe "Scenario(1 produces 1 when case (x @ _) => true by <function1>)/(ScenarioToStringSpec.scala:9)"
+    (oneProducesOne when (_ == 1) by (_.toString)).toString shouldBe "Scenario(1 produces 1 when ((x$6: Int) => x$6.==(1)) by ((x$7: Int) => x$7.toString()))/(ScenarioToStringSpec.scala:9)"
+    (oneProducesOne when (x => x == 1) by { x => x.toString }).toString shouldBe "Scenario(1 produces 1 when ((x: Int) => x.==(1)) by ((x: Int) => x.toString()))/(ScenarioToStringSpec.scala:9)"
+    (oneProducesOne when { case x => true } by { case x: Int => x.toString }).toString shouldBe "Scenario(1 produces 1 when case (x @ _) => true by case (x @ (_: Int)) => x.toString())/(ScenarioToStringSpec.scala:9)"
   }
 }

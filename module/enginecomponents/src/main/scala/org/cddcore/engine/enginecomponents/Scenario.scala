@@ -87,6 +87,15 @@ object ScenarioBuilder {
     }
   }
 
+  def byImpl[P: c.WeakTypeTag, R: c.WeakTypeTag](c: blackbox.Context)(fn: c.Expr[P => R]): c.Expr[Scenario[P, R]] = {
+    import c.universe._
+    reify {
+      val ch = CodeHolder[P => R](fn.splice, c.literal(show(fn.tree)).splice)
+      val scenarioBuilder = (c.Expr[ScenarioBuilder[P, R]](c.prefix.tree)).splice
+      byHolder(scenarioBuilder, ch)
+    }
+  }
+
   protected def becauseHolder[P, R](scenarioBuilder: ScenarioBuilder[P, R], because: CodeHolder[PartialFunction[P, R]]): Scenario[P, R] = {
     val scenario = scenarioBuilder.scenario
     scenario.reason match {
@@ -122,6 +131,18 @@ object ScenarioBuilder {
     }
   }
 
+  protected def byHolder[P, R](scenarioBuilder: ScenarioBuilder[P, R], by: CodeHolder[P => R]) = {
+    val scenario = scenarioBuilder.scenario
+    val result = scenario.reason match {
+      case _: BecauseReason[_, _] => throw new ScenarioCannotHaveByAndBecauseException(scenario)
+      case SimpleReason(result: R) => scenario.copy(reason = SimpleReasonWithBy(by))
+      case WhenReason(when, _) => scenario.copy(reason = WhenByReason(when, by))
+      case WhenByReason(when, _) => throw new ScenarioCannotHaveSecondByException(scenario)
+    }
+    scenarioBuilder.scl.modified(scenario, result)
+    result
+  }
+
 }
 
 
@@ -136,16 +157,7 @@ case class ScenarioBuilder[P, R](scenario: Scenario[P, R])(implicit val scl: Chi
     result
   }
 
-  def by(fn: P => R) = {
-    val result = scenario.reason match {
-      case _: BecauseReason[_, _] => throw new ScenarioCannotHaveByAndBecauseException(scenario)
-      case SimpleReason(result: R) => scenario.copy(reason = SimpleReasonWithBy(fn))
-      case WhenReason(when, _) => scenario.copy(reason = WhenByReason(when, fn))
-      case WhenByReason(when, _) => throw new ScenarioCannotHaveSecondByException(scenario)
-    }
-    scl.modified(scenario, result)
-    result
-  }
+  def by(fn: P => R) = macro ScenarioBuilder.byImpl[P, R]
 
 
 }

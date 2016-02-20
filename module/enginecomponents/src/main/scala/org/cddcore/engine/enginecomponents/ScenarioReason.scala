@@ -27,8 +27,8 @@ case class SimpleReason[P, R](result: R) extends ScenarioReasonWithoutWhy[P, R] 
   def prettyDescription: String = "JustBecause"
 }
 
-case class SimpleReasonWithBy[P, R](fn: P => R) extends ScenarioReasonWithoutWhy[P, R] {
-  def apply(p: P) = fn(p)
+case class SimpleReasonWithBy[P, R](fn: CodeHolder[P => R]) extends ScenarioReasonWithoutWhy[P, R] {
+  def apply(p: P) = fn.fn(p)
 
   def isDefinedAt(x: P): Boolean = true
 
@@ -52,12 +52,12 @@ case class WhenReason[P, R](when: CodeHolder[P => Boolean], result: R) extends S
 
 }
 
-case class WhenByReason[P, R](when: CodeHolder[P => Boolean], fn: P => R) extends ScenarioReasonWithWhy[P, R] {
-  def apply(p: P) = fn(p)
+case class WhenByReason[P, R](when: CodeHolder[P => Boolean], fn: CodeHolder[P => R]) extends ScenarioReasonWithWhy[P, R] {
+  def apply(p: P) = fn.fn(p)
 
   def isDefinedAt(p: P): Boolean = when.fn(p)
 
-  override def toString = s"when ${when.prettyDescription} by ${fn}"
+  override def toString = s"when ${when.prettyDescription} by ${fn.prettyDescription}"
 
   def prettyDescription: String = toString
 }
