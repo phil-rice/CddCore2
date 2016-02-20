@@ -1,6 +1,6 @@
 package org.cddcore.examples
 
-import org.cddcore.core.engine.FoldLeftEngine
+import org.cddcore.engine.FoldLeftEngine
 
 
 object FoldLeft {

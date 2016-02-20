@@ -1,6 +1,6 @@
 package org.cddcore.examples
 
-import org.cddcore.core.engine.Engine
+import org.cddcore.engine.Engine
 
 case class TrafficLight(red: Boolean = false, orange: Boolean = false, green: Boolean = false)
 

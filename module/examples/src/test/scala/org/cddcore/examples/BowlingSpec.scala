@@ -1,6 +1,6 @@
 package org.cddcore.examples
 
-import org.cddcore.core.engine.CddSpec
+import org.cddcore.utilities.CddSpec
 
 class BowlingSpec extends CddSpec {
 
