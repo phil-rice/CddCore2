@@ -89,7 +89,8 @@ class DecisionTreeAddingToConclusionNodeSpec extends CddSpec {
   }
 
   "A decistion three with different simple reasons, one of them with a by" should "use the by as the main scenario" in {
-    fail
+    if (FutureWorkFlags.noticingScenariosWithBy) fail
+
   }
 
 
