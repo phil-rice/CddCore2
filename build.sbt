@@ -51,5 +51,7 @@ lazy val test = (project in file("module/test")).
   settings(commonSettings: _*).
   dependsOn(enginecomponentstest % "test->test").
   aggregate(enginecomponentstest).
+  dependsOn(examples % "test->test").
+  aggregate(examples).
   dependsOn(engine).
   aggregate(engine)

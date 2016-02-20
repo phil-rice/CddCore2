@@ -36,7 +36,8 @@ class ScenarioBuilderAndLifeCycleSpec extends CddSpec {
   }
   it should "tell the implicit life cycle when a scenario is modified using because" in {
     implicit val lc = new RememberingLifeCycle
-    val s1 = 1 produces "one" because { case _ => "one" }
+    val s1 = (1 produces "one")
+    val s2 = new ScenarioBuilder(s1).because { case _ => "one" }
     lc.modified shouldBe List("1/EqualsAssertion(one)/SimpleReason==>1/EqualsAssertion(one)/BecauseReason")
   }
 }
