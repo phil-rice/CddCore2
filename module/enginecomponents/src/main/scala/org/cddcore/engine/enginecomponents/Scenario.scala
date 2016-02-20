@@ -41,7 +41,7 @@ case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion:
     if (assertion.valid(situation, actual) == false) throw AssertionInvalidException(this, actual)
   }
 
-  override def toString = s"Scenario($situation produces $assertion $reason)/$definedInSourceCodeAt"
+  override def toString = s"Scenario($situation ${assertion.prettyDescription} ${reason.prettyDescription})/$definedInSourceCodeAt"
 }
 
 case class FromSituationScenarioBuilder[P, R](situation: P) {
@@ -69,8 +69,7 @@ import scala.language.experimental.macros
 
 object ScenarioBuilder {
 
-  def becauseImpl[P: c.WeakTypeTag, R: c.WeakTypeTag](c: blackbox.Context)
-                                                     (because: c.Expr[PartialFunction[P, R]]): c.Expr[Scenario[P, R]] = {
+  def becauseImpl[P: c.WeakTypeTag, R: c.WeakTypeTag](c: blackbox.Context)(because: c.Expr[PartialFunction[P, R]]): c.Expr[Scenario[P, R]] = {
     import c.universe._
     reify {
       val ch = CodeHolder[PartialFunction[P, R]](because.splice, c.literal(show(because.tree)).splice)
@@ -79,29 +78,57 @@ object ScenarioBuilder {
     }
   }
 
+  def whenImpl[P: c.WeakTypeTag, R: c.WeakTypeTag](c: blackbox.Context)(when: c.Expr[P => Boolean]): c.Expr[Scenario[P, R]] = {
+    import c.universe._
+    reify {
+      val ch = CodeHolder[P => Boolean](when.splice, c.literal(show(when.tree)).splice)
+      val scenarioBuilder = (c.Expr[ScenarioBuilder[P, R]](c.prefix.tree)).splice
+      whenHolder(scenarioBuilder, ch)
+    }
+  }
+
   protected def becauseHolder[P, R](scenarioBuilder: ScenarioBuilder[P, R], because: CodeHolder[PartialFunction[P, R]]): Scenario[P, R] = {
     val scenario = scenarioBuilder.scenario
-    val result = scenario.copy(reason = BecauseReason[P,R](because))
-    scenarioBuilder.scl.modified(scenario, result)
-    result.validate
-    result
+    scenario.reason match {
+      case _: BecauseReason[_, _] => throw new ScenarioCannotHaveSecondBecauseException(scenario)
+      case _: SimpleReasonWithBy[_, _] => throw new ScenarioCannotHaveByAndBecauseException(scenario)
+      case _: WhenReason[_, _] => throw new ScenarioCannotHaveWhenAndBecauseException(scenario)
+      case _: WhenByReason[_, _] => throw new ScenarioCannotHaveWhenAndBecauseException(scenario)
+      case _: SimpleReason[_, _] => {
+        val result = scenario.copy(reason = BecauseReason[P, R](because))
+        scenarioBuilder.scl.modified(scenario, result)
+        result.validate
+        result
+      }
+      case _ => throw new MatchError(s"Don't know how to deal with ${scenario.reason.getClass.getSimpleName} in $scenario")
+    }
   }
+
+  protected def whenHolder[P, R](scenarioBuilder: ScenarioBuilder[P, R], when: CodeHolder[P => Boolean]) = {
+    val scenario = scenarioBuilder.scenario
+    scenario.reason match {
+      case _: WhenReason[_, _] => throw new ScenarioCannotHaveSecondWhenException(scenario)
+      case _: WhenByReason[_, _] => throw new ScenarioCannotHaveSecondWhenException(scenario)
+      case _ => {
+        val expected = scenario.expectedOption match {
+          case Some(expected) => expected
+          case _ => throw new CalculatorNotGivenException(scenario.definedInSourceCodeAt)
+        }
+        val result = scenario.copy(reason = WhenReason[P, R](when, expected))
+        scenarioBuilder.scl.modified(scenario, result)
+        result.validate
+        result
+      }
+    }
+  }
+
 }
 
 
 case class ScenarioBuilder[P, R](scenario: Scenario[P, R])(implicit val scl: ChildLifeCycle[Scenario[P, R]]) {
   def because(because: PartialFunction[P, R]): Scenario[P, R] = macro ScenarioBuilder.becauseImpl[P, R]
 
-  def when(when: P => Boolean)(implicit scl: ChildLifeCycle[Scenario[P, R]]) = {
-    val expected = scenario.expectedOption match {
-      case Some(expected) => expected
-      case _ => throw new CalculatorNotGivenException(scenario.definedInSourceCodeAt)
-    }
-    val result = scenario.copy(reason = WhenReason[P, R](when, expected))
-    scl.modified(scenario, result)
-    result.validate
-    result
-  }
+  def when(when: P => Boolean): Scenario[P, R] = macro ScenarioBuilder.whenImpl[P, R]
 
   def where(where: R => Boolean) = {
     val result = scenario.copy(assertion = ResultAssertion[P, R](where))
@@ -111,8 +138,10 @@ case class ScenarioBuilder[P, R](scenario: Scenario[P, R])(implicit val scl: Chi
 
   def by(fn: P => R) = {
     val result = scenario.reason match {
+      case _: BecauseReason[_, _] => throw new ScenarioCannotHaveByAndBecauseException(scenario)
       case SimpleReason(result: R) => scenario.copy(reason = SimpleReasonWithBy(fn))
       case WhenReason(when, _) => scenario.copy(reason = WhenByReason(when, fn))
+      case WhenByReason(when, _) => throw new ScenarioCannotHaveSecondByException(scenario)
     }
     scl.modified(scenario, result)
     result

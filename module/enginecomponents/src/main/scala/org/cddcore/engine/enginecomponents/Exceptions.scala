@@ -24,3 +24,12 @@ class AssertionInvalidException(s: Scenario[_, _], actual: Any, msg: String) ext
 
 class CalculatorNotGivenException(scenarioDefinedAt: String) extends Exception(s"Scenario defined at $scenarioDefinedAt has not been given a way of calculating a result")
 
+class ScenarioCannotHaveByAndBecauseException(s: Scenario[_, _]) extends Exception(s"Scenario defined at ${s.definedInSourceCodeAt}")
+
+class ScenarioCannotHaveSecondByException(s: Scenario[_, _]) extends Exception(s"Scenario defined at ${s.definedInSourceCodeAt}")
+
+class ScenarioCannotHaveWhenAndBecauseException(s: Scenario[_, _]) extends Exception(s"Scenario defined at ${s.definedInSourceCodeAt}")
+
+class ScenarioCannotHaveSecondBecauseException(s: Scenario[_, _]) extends Exception(s"Scenario defined at ${s.definedInSourceCodeAt}")
+
+class ScenarioCannotHaveSecondWhenException(s: Scenario[_, _]) extends Exception(s"Scenario defined at ${s.definedInSourceCodeAt}")

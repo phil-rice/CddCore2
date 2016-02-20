@@ -25,6 +25,7 @@ class ScenarioBuilderSpec extends CddSpec {
     sb.copy(reason = sa.reason) shouldBe sa
   }
 
+
   it should "have allScenarios just including itself" in {
     val s = (1 produces "result")
     s.allScenarios.toList shouldBe List(s)
@@ -43,8 +44,9 @@ class ScenarioBuilderSpec extends CddSpec {
   it should "throw BecauseNotTrueException when the because is not true for the situation" in {
     intercept[ReasonInvalidException] {
       1 produces "result" because { case i if i == 2 => "result" }
-    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:45) cannot be added because the reason given isn't actually true"
+    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:46) cannot be added because the reason given isn't actually true"
   }
+
   it should "have allScenarios just including itself" in {
     val s = (1 produces "result") because { case i if i == 1 => "result" }
     s.allScenarios.toList shouldBe List(s)
@@ -56,7 +58,7 @@ class ScenarioBuilderSpec extends CddSpec {
     }
   }
 
-  "A <situation> produces <result> because < p=> Boolean>" should "make a ScenarioWithWhen" in {
+  "A <situation> produces <result> when < p=> Boolean>" should "make a ScenarioWithWhen" in {
     val s: Scenario[Int, String] = 1 produces "result" when (_ == 1)
     s.situation shouldBe 1
     s.assertion shouldBe EqualsAssertion("result")
@@ -65,9 +67,7 @@ class ScenarioBuilderSpec extends CddSpec {
     s(1) shouldBe "result"
     s.expectedOption shouldBe Some("result")
   }
-  it should "have a nice toString" in {
-    (1 produces "1" because {case x => x.toString}).toString shouldBe "Scenario(1 produces EqualsAssertion(1) because {case (x @ _) => x.toString()})/(ScenarioBuilderSpec.scala:69)"
-  }
+
 
   it should "have allScenarios just including itself" in {
     val s = 1 produces "result" when (_ == 1)

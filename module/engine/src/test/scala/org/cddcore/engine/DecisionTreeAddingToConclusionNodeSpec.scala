@@ -11,7 +11,7 @@ class DecisionTreeAddingToConclusionNodeSpec extends CddSpec {
 
   implicit def toSeq[X](x: X) = Seq(x)
 
-   "A decision tree with one scenario" should "be a single conclusion" in {
+  "A decision tree with one scenario" should "be a single conclusion" in {
     val scenario = "situation" produces "result"
     DecisionTree(scenario) shouldBe ConclusionNode(scenario)
   }
@@ -87,5 +87,10 @@ class DecisionTreeAddingToConclusionNodeSpec extends CddSpec {
       DecisionNode(s3, falseNode = ConclusionNode(s1, List(s2)), trueNode = ConclusionNode(s3, List(s4, s5)))
 
   }
+
+  "A decistion three with different simple reasons, one of them with a by" should "use the by as the main scenario" in {
+    fail
+  }
+
 
 }
