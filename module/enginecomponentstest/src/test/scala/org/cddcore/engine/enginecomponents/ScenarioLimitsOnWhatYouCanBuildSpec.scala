@@ -16,19 +16,19 @@ class ScenarioLimitsOnWhatYouCanBuildSpec extends CddSpec {
   val oneProducesOneBecause = oneProducesOne because { case x => x.toString }
 
   "oneProducesOneBy" should "not allow because" in {
-    intercept[ScenarioCannotHaveByAndBecauseException] {
+    intercept[ScenarioCannotHaveWhenByAndBecauseException] {
       oneProducesOneBy because { case x => x.toString }
     }.getMessage shouldBe oneProducesOneMessage
   }
 
   it should "not allow second by" in {
-    intercept[ScenarioCannotHaveByAndBecauseException] {
+    intercept[ScenarioCannotHaveWhenByAndBecauseException] {
       oneProducesOneBy because { case x => x.toString }
     }.getMessage shouldBe oneProducesOneMessage
   }
 
   "oneProducesOneWhen" should "not allow because" in {
-    intercept[ScenarioCannotHaveWhenAndBecauseException] {
+    intercept[ScenarioCannotHaveWhenByAndBecauseException] {
       oneProducesOneWhen because { case x => x.toString }
     }.getMessage shouldBe oneProducesOneMessage
   }
@@ -40,7 +40,7 @@ class ScenarioLimitsOnWhatYouCanBuildSpec extends CddSpec {
   }
 
   "oneProducesOneWhenBy" should "not allow because" in {
-    intercept[ScenarioCannotHaveWhenAndBecauseException] {
+    intercept[ScenarioCannotHaveWhenByAndBecauseException] {
       oneProducesOneWhenBy because { case x => x.toString }
     }.getMessage shouldBe oneProducesOneMessage
   }
@@ -58,7 +58,7 @@ class ScenarioLimitsOnWhatYouCanBuildSpec extends CddSpec {
   }
 
   "oneProducesOneBecause" should "not allow by" in {
-    intercept[ScenarioCannotHaveByAndBecauseException] {
+    intercept[ScenarioCannotHaveWhenByAndBecauseException] {
       oneProducesOneBecause by { case x => x.toString }
     }.getMessage shouldBe oneProducesOneMessage
   }

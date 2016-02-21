@@ -24,12 +24,10 @@ class AssertionInvalidException(s: Scenario[_, _], actual: Any, msg: String) ext
 
 class CalculatorNotGivenException(scenarioDefinedAt: String) extends Exception(s"Scenario defined at $scenarioDefinedAt has not been given a way of calculating a result")
 
-class ScenarioCannotHaveByAndBecauseException(s: Scenario[_, _]) extends Exception(s"Scenario defined at ${s.definedInSourceCodeAt}")
+class ScenarioCannotHaveWhenByAndBecauseException(definedInSourceCodeAt: String) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
 
-class ScenarioCannotHaveSecondByException(s: Scenario[_, _]) extends Exception(s"Scenario defined at ${s.definedInSourceCodeAt}")
+class ScenarioCannotHaveSecondByException(definedInSourceCodeAt: String) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
 
-class ScenarioCannotHaveWhenAndBecauseException(s: Scenario[_, _]) extends Exception(s"Scenario defined at ${s.definedInSourceCodeAt}")
+class ScenarioCannotHaveSecondBecauseException(definedInSourceCodeAt: String) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
 
-class ScenarioCannotHaveSecondBecauseException(s: Scenario[_, _]) extends Exception(s"Scenario defined at ${s.definedInSourceCodeAt}")
-
-class ScenarioCannotHaveSecondWhenException(s: Scenario[_, _]) extends Exception(s"Scenario defined at ${s.definedInSourceCodeAt}")
+class ScenarioCannotHaveSecondWhenException(definedInSourceCodeAt: String) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")

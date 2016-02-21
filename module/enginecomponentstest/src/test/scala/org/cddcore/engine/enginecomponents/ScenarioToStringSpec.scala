@@ -18,15 +18,15 @@ class ScenarioToStringSpec extends CddSpec {
   }
 
   "<situation> produces <result> by <by>" should "have a nice toString" in {
-    (oneProducesOne by (_.toString)).toString shouldBe "Scenario(1 produces 1 SimpleReasonWithBy())/(ScenarioToStringSpec.scala:9)"
-    (oneProducesOne by (x => x.toString)).toString shouldBe "Scenario(1 produces 1 SimpleReasonWithBy())/(ScenarioToStringSpec.scala:9)"
-    (oneProducesOne by { case x => x.toString }).toString shouldBe "Scenario(1 produces 1 SimpleReasonWithBy())/(ScenarioToStringSpec.scala:9)"
+    (oneProducesOne by (_.toString)).toString shouldBe "Scenario(1 produces 1 by ((x$2: Int) => x$2.toString()))/(ScenarioToStringSpec.scala:9)"
+    (oneProducesOne by (x => x.toString)).toString shouldBe "Scenario(1 produces 1 by ((x: Int) => x.toString()))/(ScenarioToStringSpec.scala:9)"
+    (oneProducesOne by { case x => x.toString }).toString shouldBe "Scenario(1 produces 1 by case (x @ _) => x.toString())/(ScenarioToStringSpec.scala:9)"
   }
 
   "<situation> produces <result> where <where> by" should "have a nice toString" in {
-    (oneProducesOne where (_ == 1) by (_.toString)).toString shouldBe "Scenario(1 produces something where <function1> SimpleReasonWithBy())/(ScenarioToStringSpec.scala:9)"
-    (oneProducesOne where (x => x == 1) by (x => x.toString)).toString shouldBe "Scenario(1 produces something where <function1> SimpleReasonWithBy())/(ScenarioToStringSpec.scala:9)"
-    (oneProducesOne where { case x => x == 1 } by { case x => x.toString }).toString shouldBe "Scenario(1 produces something where <function1> SimpleReasonWithBy())/(ScenarioToStringSpec.scala:9)"
+    (oneProducesOne where (_ == "1") by (_.toString)).toString shouldBe "Scenario(1 produces something where <function1> by ((x$4: Int) => x$4.toString()))/(ScenarioToStringSpec.scala:9)"
+    (oneProducesOne where (x => x == "1") by (x => x.toString)).toString shouldBe "Scenario(1 produces something where <function1> by ((x: Int) => x.toString()))/(ScenarioToStringSpec.scala:9)"
+    (oneProducesOne where { case x => x == "1" } by { case x => x.toString }).toString shouldBe "Scenario(1 produces something where <function1> by case (x @ _) => x.toString())/(ScenarioToStringSpec.scala:9)"
   }
 
 
