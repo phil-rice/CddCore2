@@ -19,6 +19,8 @@ trait EngineComponent[P, R] {
   def definedInSourceCodeAt: String
 
   def allScenarios: TraversableOnce[Scenario[P, R]]
+
+  def title: String
 }
 
 object UseCase{

@@ -11,7 +11,7 @@ class ScenarioBuilderSpec extends CddSpec {
   "A <situation> produces <result>" should "make a SituationAndResultScenario" in {
     val s = 1 produces "result"
     val expectedDefinedInSourceCodeAt = "(ScenarioBuilderSpec.scala:12)"
-    s shouldBe Scenario[Int, String](situation = 1, assertion = EqualsAssertion("result"), reason = SimpleReason("result", expectedDefinedInSourceCodeAt), definedInSourceCodeAt = expectedDefinedInSourceCodeAt)
+    s shouldBe Scenario[Int, String](situation = 1, assertion = EqualsAssertion("result"), reason = SimpleReason("result", expectedDefinedInSourceCodeAt), definedInSourceCodeAt = expectedDefinedInSourceCodeAt, title = "1")
     s.expectedOption shouldBe Some("result")
 
   }

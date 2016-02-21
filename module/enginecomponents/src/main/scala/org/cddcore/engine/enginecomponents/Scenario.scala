@@ -22,7 +22,7 @@ object Scenario {
 
 }
 
-case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: String) extends EngineComponent[P, R] with DefinedInSourceCodeAt {
+case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: String, title: String) extends EngineComponent[P, R] with DefinedInSourceCodeAt {
   def allScenarios = Seq(this)
 
   def apply(engine: P => R, p: P) = reason(engine, p)
@@ -56,7 +56,7 @@ case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion:
 
 case class FromSituationScenarioBuilder[P, R](situation: P) {
   private def producesPrim(definedAt: String, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R])(implicit scl: ChildLifeCycle[Scenario[P, R]]) = {
-    val s = Scenario[P, R](situation, reason, assertion, definedAt)
+    val s = Scenario[P, R](situation, reason, assertion, definedAt, situation.toString)
     scl.created(s)
     s
     //    new ScenarioBuilder[P,R](s)
@@ -115,13 +115,16 @@ object ScenarioBuilder {
     }
   }
 
-  protected def changeReason[P, R](scenarioBuilder: ScenarioBuilder[P, R], fn: ScenarioReason[P, R] => ScenarioReason[P, R]): Scenario[P, R] = {
+  protected def changeScenario[P, R](scenarioBuilder: ScenarioBuilder[P, R], fn: Scenario[P, R] => Scenario[P, R]): Scenario[P, R] = {
     val scenario = scenarioBuilder.scenario
-    val result = scenario.copy(reason = fn(scenario.reason))
+    val result = fn(scenario)
     scenarioBuilder.scl.modified(scenario, result)
     result.validate
     result
   }
+
+  protected def changeReason[P, R](scenarioBuilder: ScenarioBuilder[P, R], fn: ScenarioReason[P, R] => ScenarioReason[P, R]): Scenario[P, R] =
+    changeScenario(scenarioBuilder, s => s.copy(reason = fn(s.reason)))
 
 }
 
@@ -141,5 +144,6 @@ case class ScenarioBuilder[P, R](scenario: Scenario[P, R])(implicit val scl: Chi
 
   def byRecursion(fn: PartialFunction[(P => R, P), R]) = macro ScenarioBuilder.byRecursionImpl[P, R]
 
+  def title(title: String) = ScenarioBuilder.changeScenario[P,R](this, _.copy(title = title))
 }
 

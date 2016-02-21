@@ -54,7 +54,7 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
 
   def title: String = builder.title
 
-  def title(newTitle: String) = builder.mod(b => b.copy(holder = b.holder.copy(title = newTitle)))
+  def title(newTitle: String): Unit = builder.mod(b => b.copy(holder = b.holder.copy(title = newTitle)))
 
   protected implicit def toPartial(r: R): PartialFunction[P, R] = Engine.toPartial(r)
 

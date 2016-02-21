@@ -47,7 +47,7 @@ trait DecisionTreeValidator {
     if (s.assertion.valid(s.situation, actual)) None
     else s.assertion match {
       case EqualsAssertion(_) =>
-        Some(ValidationIssues.scenarioComesToWrongConclusion + "\nActual value is " + actual +"\n")
+        Some(ValidationIssues.scenarioComesToWrongConclusion + "\nActual value is " + actual + "\n")
     }
   })
 
@@ -177,6 +177,8 @@ case class ConclusionNode[P, R](mainScenario: Scenario[P, R], scenarios: List[Sc
 
   def allScenarios: TraversableOnce[Scenario[P, R]] = mainScenario :: scenarios
 
+  def title = "Conclusion: " + mainScenario
+
   override def toString = s"ConcNode(${mainScenario},supportedBy=${scenarios.mkString(";")})"
 
   override def allConclusionNodes: TraversableOnce[ConclusionNode[P, R]] = Seq(this)
@@ -185,6 +187,7 @@ case class ConclusionNode[P, R](mainScenario: Scenario[P, R], scenarios: List[Sc
 case class DecisionNode[P, R](mainScenario: Scenario[P, R], falseNode: DecisionTree[P, R], trueNode: DecisionTree[P, R]) extends DecisionTree[P, R] {
 
   import DecisionTreeLens._
+  def title = "Decision: " + mainScenario
 
   def apply(engine: P => R, p: P) = if (mainScenario.isDefinedAt(engine, p)) trueNode(engine, p) else falseNode(engine, p)
 
