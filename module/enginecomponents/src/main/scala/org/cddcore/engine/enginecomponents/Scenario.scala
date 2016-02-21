@@ -25,7 +25,7 @@ object Scenario {
 case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: String) extends EngineComponent[P, R] with DefinedInSourceCodeAt {
   def allScenarios = Seq(this)
 
-  def apply(engine: P=>R, p:P) = reason(engine, p)
+  def apply(engine: P => R, p: P) = reason(engine, p)
 
   def isDefinedAt(engine: P => R, p: P) = reason.isDefinedAt(engine, p)
 
@@ -106,6 +106,15 @@ object ScenarioBuilder {
     }
   }
 
+  def byRecursionImpl[P: c.WeakTypeTag, R: c.WeakTypeTag](c: blackbox.Context)(fn: c.Expr[PartialFunction[(P => R, P), R]]): c.Expr[Scenario[P, R]] = {
+    import c.universe._
+    reify {
+      val ch = CodeHolder[PartialFunction[(P => R, P), R]](fn.splice, c.literal(show(fn.tree)).splice)
+      val scenarioBuilder = (c.Expr[ScenarioBuilder[P, R]](c.prefix.tree)).splice
+      changeReason(scenarioBuilder, _.withByRecursion(ch))
+    }
+  }
+
   protected def changeReason[P, R](scenarioBuilder: ScenarioBuilder[P, R], fn: ScenarioReason[P, R] => ScenarioReason[P, R]): Scenario[P, R] = {
     val scenario = scenarioBuilder.scenario
     val result = scenario.copy(reason = fn(scenario.reason))
@@ -130,7 +139,7 @@ case class ScenarioBuilder[P, R](scenario: Scenario[P, R])(implicit val scl: Chi
 
   def by(fn: P => R): Scenario[P, R] = macro ScenarioBuilder.byImpl[P, R]
 
-  def byRecursion(fn: (P => R, P) => R) = scenario
+  def byRecursion(fn: PartialFunction[(P => R, P), R]) = macro ScenarioBuilder.byRecursionImpl[P, R]
 
 }
 

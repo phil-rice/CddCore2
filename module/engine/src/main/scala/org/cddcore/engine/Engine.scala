@@ -1,9 +1,10 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents.{Scenario, EngineComponent, UseCase}
+import org.cddcore.engine.enginecomponents.{ByRecursionReason, Scenario, EngineComponent, UseCase}
 import org.cddcore.utilities.{ChildLifeCycle, HierarchyBuilder}
 
 import scala.language.implicitConversions
+import scala.util.Try
 
 
 trait PartialFunctionWithDescription[P, R] extends PartialFunction[P, R] {
@@ -43,6 +44,9 @@ class EngineBuilder[P, R](initialTitle: String, definedInSourceCodeAt: String) e
     case Some(s: Scenario[P, R]) => s.expectedOption.getOrElse(throw new NoLastException("No result specified"))
     case None => throw new NoLastException
   }
+
+  lazy val mocks = allScenarios.foldLeft(Map[P, R]()) { (acc, s) => s.expectedOption.fold(acc)(expected => acc + (s.situation -> expected)) }
+
 }
 
 abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends EngineComponent[P, R] {
@@ -66,22 +70,35 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
     builder.mod(_.popParent)
   }
 
-  val mockEngineProhibitingRecursion: P=>R = _ => throw new RuntimeException("Recursion shouldn't occur")
 
   lazy val decisionTree = {
     builder.seal
-    DecisionTree(mockEngineProhibitingRecursion, allScenarios.toSeq)
+    val ss: List[Scenario[P, R]] = allScenarios.toList
+    val noMocks = allScenarios.filter { s => try {
+      s(mocks, s.situation)
+      false
+    } catch {
+      case e: MockValueNotFoundException => true
+    }
+    }.toList
+
+    if (!noMocks.isEmpty)
+      throw new RecursiveScenariosWithoutMocksException(builder.mocks.keySet, noMocks)
+    DecisionTree(mocks, ss)
   }
 
   def something = Scenario.something[R]
 
-  def apply(p: P): R = decisionTree(mockEngineProhibitingRecursion,p)
+  def apply(p: P): R = decisionTree(apply, p)
 
   def allScenarios: TraversableOnce[Scenario[P, R]] = builder.allScenarios
 
   def asUseCase = builder.asUseCase
 
-  def validate = DecisionTree.validate(mockEngineProhibitingRecursion, decisionTree) match {
+  def mocks = (p: P) => builder.mocks.getOrElse(p, throw new MockValueNotFoundException)
+
+
+  def validate = DecisionTree.validate(mocks, decisionTree) match {
     case Nil =>
     case list => throw new ValidationException(list)
   }
@@ -93,7 +110,8 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
   def last = builder.last
 }
 
-class Engine[P, R](initialTitle: String = "Untitled", definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends AbstractEngine[P, R](initialTitle, definedInSourceCodeAt) with Function[P, R]
+class Engine[P, R](initialTitle: String = "Untitled", definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends AbstractEngine[P, R](initialTitle, definedInSourceCodeAt) with Function[P, R] {
+}
 
 class Engine2[P1, P2, R](initialTitle: String = "Untitled", definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends AbstractEngine[(P1, P2), R](initialTitle, definedInSourceCodeAt) with Function2[P1, P2, R] {
   def apply(p1: P1, p2: P2): R = apply((p1, p2))

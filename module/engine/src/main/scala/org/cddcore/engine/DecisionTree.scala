@@ -46,7 +46,8 @@ trait DecisionTreeValidator {
     val actual = dt.apply(engine, s.situation)
     if (s.assertion.valid(s.situation, actual)) None
     else s.assertion match {
-      case EqualsAssertion(_) => Some(ValidationIssues.scenarioComesToWrongConclusion)
+      case EqualsAssertion(_) =>
+        Some(ValidationIssues.scenarioComesToWrongConclusion + "\nActual value is " + actual +"\n")
     }
   })
 
@@ -185,7 +186,7 @@ case class DecisionNode[P, R](mainScenario: Scenario[P, R], falseNode: DecisionT
 
   import DecisionTreeLens._
 
-  def apply(engine: P => R, p: P) = if (mainScenario.isDefinedAt(engine, p)) trueNode(engine,p) else falseNode(engine,p)
+  def apply(engine: P => R, p: P) = if (mainScenario.isDefinedAt(engine, p)) trueNode(engine, p) else falseNode(engine, p)
 
   def lensFor(mockEngine: P => R, s: Scenario[P, R]) = isDefinedAt(mockEngine, s.situation) match {
     case true => dtToDN.andThen(dtTrue[P, R]).andThen(trueNode.lensFor(mockEngine, s))

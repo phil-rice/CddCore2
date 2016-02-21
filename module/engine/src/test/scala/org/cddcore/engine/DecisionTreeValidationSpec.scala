@@ -58,7 +58,7 @@ class DecisionTreeValidationSpec extends CddNonRecursiveSpec[Int, String] with D
       trueNode = ConclusionNode(s1, List(sProblem, s3)),
       falseNode = ConclusionNode(s4))
     validateScenarios[Int, String](mockEngine, tree, scenarioComesToCorrectAnswer).toList shouldBe List(
-      ValidationReport(scenarioComesToWrongConclusion, sProblem))
+      ValidationReport(scenarioComesToWrongConclusion+"\nActual value is result\n", sProblem))
   }
 
   "A decision tree validate method" should "report all issues" in {
@@ -68,7 +68,7 @@ class DecisionTreeValidationSpec extends CddNonRecursiveSpec[Int, String] with D
     validate(mockEngine, tree) shouldBe List(
       ValidationReport(lensReportsWrongScenario, s1),
       ValidationReport(lensReportsWrongScenario, s3),
-      ValidationReport(scenarioComesToWrongConclusion, sProblem),
+      ValidationReport(scenarioComesToWrongConclusion+"\nActual value is result\n", sProblem),
       ValidationReport(scenarioIsNotDefinedAtConclusionNode, s1),
       ValidationReport(scenarioIsNotDefinedAtConclusionNode, s3),
       ValidationReport(scenarioComesToWrongConclusionInNode, sProblem))

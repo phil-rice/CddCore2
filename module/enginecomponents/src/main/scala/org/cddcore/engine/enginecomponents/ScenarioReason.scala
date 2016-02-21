@@ -69,7 +69,7 @@ case class SimpleReason[P, R](result: R, definedInSourceCodeAt: String) extends 
 
   def withWhen(when: CodeHolder[P => Boolean]) = new WhenByReason(Some(when), Right(result), definedInSourceCodeAt)
 
-  def withByRecursion(by: CodeHolder[PartialFunction[(P => R, P), R]]): ScenarioReason[P, R] = ???
+  def withByRecursion(by: CodeHolder[PartialFunction[(P => R, P), R]]): ScenarioReason[P, R] = new ByRecursionReason(by, definedInSourceCodeAt)
 }
 
 case class WhenByReason[P, R](when: Option[CodeHolder[P => Boolean]], byOrResult: Either[CodeHolder[P => R], R], definedInSourceCodeAt: String) extends ScenarioReasonThatIsntRecursive[P, R] {
