@@ -66,10 +66,10 @@ trait DecisionTreeValidator {
 object DecisionTree extends DecisionTreeValidator {
 
   private def addScenarioToConclusionNode[P, R](cn: ConclusionNode[P, R], s: Scenario[P, R]) = {
-    (cn.mainScenario.reason, s.reason) match {
-      case (_, _: ScenarioReasonWithoutWhy[P, R]) =>
+    (cn.mainScenario.reason.hasWhy, s.reason.hasWhy) match {
+      case (_, false) =>
         cn.copy(scenarios = cn.scenarios :+ s)
-      case (_: ScenarioReasonWithoutWhy[P, R], _: ScenarioReasonWithWhy[P, R]) => {
+      case (false, true) => {
         if (cn.scenarios.forall(os => s.isDefinedAt(os.situation)))
           cn.copy(mainScenario = s, scenarios = cn.mainScenario :: cn.scenarios)
         else
