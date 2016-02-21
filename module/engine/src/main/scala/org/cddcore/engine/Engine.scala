@@ -74,11 +74,11 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
   lazy val decisionTree = {
     builder.seal
     val ss: List[Scenario[P, R]] = allScenarios.toList
-    val noMocks = allScenarios.filter { s => try {
+    val noMocks = allScenarios.flatMap { s => try {
       s(mocks, s.situation)
-      false
+      Nil
     } catch {
-      case e: MockValueNotFoundException => true
+      case e: MockValueNotFoundException => List((s, e.p))
     }
     }.toList
 
@@ -95,7 +95,7 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
 
   def asUseCase = builder.asUseCase
 
-  def mocks = (p: P) => builder.mocks.getOrElse(p, throw new MockValueNotFoundException)
+  def mocks = (p: P) => builder.mocks.getOrElse(p, throw new MockValueNotFoundException(p))
 
 
   def validate = DecisionTree.validate(mocks, decisionTree) match {

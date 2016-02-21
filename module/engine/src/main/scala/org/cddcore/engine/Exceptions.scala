@@ -6,7 +6,8 @@ class ValidationException(list: List[ValidationReport[_, _]]) extends Exception(
 
 class NoLastException(msg: String = "Last can only be used if the last item defined was a scenario") extends Exception(msg)
 
-class MockValueNotFoundException extends Exception
+class MockValueNotFoundException(val p: Any) extends Exception
 
-class RecursiveScenariosWithoutMocksException(mocks: Iterable[_], scenarios: List[Scenario[_, _]]) extends
-  Exception(s"The following scenarios don't have a mock:\n" + scenarios.mkString("\n") + "\nValid mocks are:\n" + mocks.mkString("\n"))
+class RecursiveScenariosWithoutMocksException(mocks: Iterable[_], scenarioAndValue: List[(Scenario[_, _], Any)]) extends
+  Exception(s"The following scenarios don't have a mock:\n" +
+    scenarioAndValue.map { case (s, p) => s"Mock for situation[$p] needed by $s" }.mkString("\n") + "\nValid mocks are:\n" + mocks.mkString("\n"))
