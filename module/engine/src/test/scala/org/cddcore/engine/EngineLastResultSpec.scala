@@ -3,7 +3,7 @@ package org.cddcore.engine
 import org.cddcore.engine.enginecomponents.Scenario
 import org.cddcore.utilities.CddSpec
 
-class EngineLastResultSpec extends CddSpec {
+class EngineLastResultSpec extends CddEngineSpec {
 
   "last" should "be the result of the previous scenario in the same use case" in {
     var remembered1 = ""

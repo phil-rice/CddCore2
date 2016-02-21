@@ -4,14 +4,15 @@ import org.cddcore.engine.enginecomponents.Scenario
 import org.cddcore.utilities.CddSpec
 
 
-class DecisionTreeLensForSpec extends CddSpec {
+class DecisionTreeLensForSpec extends CddNonRecursiveSpec[Int,String] {
 
   import DecisionTreeBuilder._
   import Scenario._
+
   "The decisiontree lensFor method called on a Conclusion Node" should "return a lens pointing to the conclusion node" in {
     val s1 = 1 produces "result"
     val cn1: ConclusionNode[Int, String] = s1
-    val lensToDt = cn1.lensFor(s1)
+    val lensToDt = cn1.lensFor(mockEngine, s1)
     lensToDt.get(cn1) shouldBe cn1
   }
 
@@ -20,7 +21,7 @@ class DecisionTreeLensForSpec extends CddSpec {
     val cn1: ConclusionNode[Int, String] = s
     val cn2: ConclusionNode[Int, String] = 2 produces "result"
 
-    val lensToCn = cn1.lensFor(s)
+    val lensToCn = cn1.lensFor(mockEngine, s)
     lensToCn.get(cn1) shouldBe cn1
     lensToCn.transform(cn1, x => if (x != cn1) throw new RuntimeException else cn2) shouldBe cn2
   }
@@ -31,7 +32,7 @@ class DecisionTreeLensForSpec extends CddSpec {
     val s3 = 3 produces "odd"
     val dt = s1 ifFalse s2
 
-    val lensToDt = dt.lensFor(s3)
+    val lensToDt = dt.lensFor(mockEngine, s3)
     lensToDt.get(dt) shouldBe dt.trueNode
   }
 
@@ -42,7 +43,7 @@ class DecisionTreeLensForSpec extends CddSpec {
     val s4 = 4 produces "even"
     val dt = s1 ifFalse s2
 
-    val lens = dt.lensFor(s3)
+    val lens = dt.lensFor(mockEngine, s3)
     lens.get(dt) shouldBe dt.trueNode
 
     lens.transform(dt, { case cn: ConclusionNode[Int, String] => if (cn != dt.trueNode) throw new RuntimeException else cn.withScenario(s3) }) shouldBe (s1 ifTrue(s1, s3) ifFalse s2)
@@ -54,7 +55,7 @@ class DecisionTreeLensForSpec extends CddSpec {
     val s4 = 4 produces "even"
     val dt = s1 ifFalse s2
 
-    val lensToDt = dt.lensFor(s4)
+    val lensToDt = dt.lensFor(mockEngine, s4)
     lensToDt.get(dt) shouldBe dt.falseNode
   }
   it should "let the lens returned modify the reached condition once " in {
@@ -64,7 +65,7 @@ class DecisionTreeLensForSpec extends CddSpec {
     val s4 = 4 produces "even"
     val dt = s1 ifFalse s2
 
-    val lens = dt.lensFor(s4)
+    val lens = dt.lensFor(mockEngine, s4)
     lens.get(dt) shouldBe dt.falseNode
     lens.transform(dt, { case cn: ConclusionNode[Int, String] => if (cn != dt.falseNode) throw new RuntimeException else cn.withScenario(s4) }) shouldBe (s1 ifFalse(s2, s4))
   }

@@ -66,20 +66,22 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
     builder.mod(_.popParent)
   }
 
+  val mockEngineProhibitingRecursion: P=>R = _ => throw new RuntimeException("Recursion shouldn't occur")
+
   lazy val decisionTree = {
     builder.seal
-    DecisionTree(allScenarios.toSeq)
+    DecisionTree(mockEngineProhibitingRecursion, allScenarios.toSeq)
   }
 
   def something = Scenario.something[R]
 
-  def apply(p: P): R = decisionTree(p)
+  def apply(p: P): R = decisionTree(mockEngineProhibitingRecursion,p)
 
   def allScenarios: TraversableOnce[Scenario[P, R]] = builder.allScenarios
 
   def asUseCase = builder.asUseCase
 
-  def validate = DecisionTree.validate(decisionTree) match {
+  def validate = DecisionTree.validate(mockEngineProhibitingRecursion, decisionTree) match {
     case Nil =>
     case list => throw new ValidationException(list)
   }

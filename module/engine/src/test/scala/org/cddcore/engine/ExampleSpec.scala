@@ -2,7 +2,7 @@ package org.cddcore.engine
 
 import org.cddcore.utilities.CddSpec
 
-class ExampleSpec extends CddSpec {
+class ExampleSpec extends CddEngineSpec {
 
   case class Person(wealth: Int)
 

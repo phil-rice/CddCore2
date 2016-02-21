@@ -4,7 +4,7 @@ import org.cddcore.engine.enginecomponents.UseCase
 import org.cddcore.utilities.CddSpec
 
 
-class EngineSpec extends CddSpec {
+class EngineSpec extends CddEngineSpec {
 
   case class Person(wealth: Int)
 
@@ -33,7 +33,7 @@ class EngineSpec extends CddSpec {
   }
 
   it should "be possible to nest use cases" in {
-    val e = new Engine[Person, String] {
+    val e = safeMake(new Engine[Person, String] {
       useCase("usecase1") {
         useCase("usecase1a", "comment")()
       }
@@ -41,7 +41,7 @@ class EngineSpec extends CddSpec {
         useCase("usecase2a")()
         useCase("usecase2b")()
       }
-    }
+    })
     val List(uc2: UC, uc1: UC) = e.asUseCase.components
     val (List(uc1a: UC)) = uc1.components
     val (List(uc2b: UC, uc2a: UC)) = uc2.components

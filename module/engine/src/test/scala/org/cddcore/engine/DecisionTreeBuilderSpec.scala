@@ -4,7 +4,7 @@ import org.cddcore.engine.enginecomponents.Scenario
 import org.cddcore.utilities.CddSpec
 
 
-class DecisionTreeBuilderSpec extends CddSpec {
+class DecisionTreeBuilderSpec extends CddEngineSpec {
 
   import DecisionTreeBuilder._
   import Scenario._

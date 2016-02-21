@@ -6,9 +6,9 @@ import org.cddcore.utilities.Lens
 import scala.language.implicitConversions
 
 
-class ScenarioValidationChecker[P, R](val fn: (DecisionTree[P, R], Scenario[P, R]) => Option[String])
+class ScenarioValidationChecker[P, R](val fn: (P => R, DecisionTree[P, R], Scenario[P, R]) => Option[String])
 
-class ConclusionNodeValidationChecker[P, R](val fn: (DecisionTree[P, R], ConclusionNode[P, R], Scenario[P, R]) => Option[String])
+class ConclusionNodeValidationChecker[P, R](val fn: (P => R, DecisionTree[P, R], ConclusionNode[P, R], Scenario[P, R]) => Option[String])
 
 
 trait DecisionTreeValidator {
@@ -20,18 +20,19 @@ trait DecisionTreeValidator {
     val scenarioComesToWrongConclusion = "Scenario comes to wrong conclusion"
   }
 
-  protected def lensValidationChecker[P, R] = new ScenarioValidationChecker[P, R]((dt, s) => if (dt.lensFor(s).get(dt).allScenarios.toList.contains(s)) None else Some(ValidationIssues.lensReportsWrongScenario))
+  protected def lensValidationChecker[P, R] =
+    new ScenarioValidationChecker[P, R]((engine, dt, s) => if (dt.lensFor(engine, s).get(dt).allScenarios.toList.contains(s)) None else Some(ValidationIssues.lensReportsWrongScenario))
 
   protected def scenarioInConclusionNodeChecker[P, R] =
-    new ConclusionNodeValidationChecker[P, R]((dt, cn, s) =>
-      if (cn.isDefinedAt(s.situation)) None
+    new ConclusionNodeValidationChecker[P, R]((engine, dt, cn, s) =>
+      if (cn.isDefinedAt(engine, s.situation)) None
       else
         Some(ValidationIssues.scenarioIsNotDefinedAtConclusionNode))
 
   protected def scenarioComesToCorrectAnswerWhenCheckedAgainstNodeChecker[P, R] =
-    new ConclusionNodeValidationChecker[P, R]((dt, cn, s) => {
+    new ConclusionNodeValidationChecker[P, R]((engine, dt, cn, s) => {
       //      if (cn.apply(s.situation) == s.expected) None
-      val result = cn.apply(s.situation)
+      val result = cn.apply(engine, s.situation)
       if (s.assertion.valid(s.situation, result)) None
       else s.assertion match {
         case EqualsAssertion(_) => Some(ValidationIssues.scenarioComesToWrongConclusionInNode)
@@ -41,8 +42,8 @@ trait DecisionTreeValidator {
 
 
   //TODO rename this to cover asserions
-  protected def scenarioComesToCorrectAnswer[P, R] = new ScenarioValidationChecker[P, R]((dt, s) => {
-    val actual = dt.apply(s.situation)
+  protected def scenarioComesToCorrectAnswer[P, R] = new ScenarioValidationChecker[P, R]((engine, dt, s) => {
+    val actual = dt.apply(engine, s.situation)
     if (s.assertion.valid(s.situation, actual)) None
     else s.assertion match {
       case EqualsAssertion(_) => Some(ValidationIssues.scenarioComesToWrongConclusion)
@@ -53,54 +54,56 @@ trait DecisionTreeValidator {
 
   protected def conclusionNodeValidators[P, R] = List[ConclusionNodeValidationChecker[P, R]](scenarioInConclusionNodeChecker, scenarioComesToCorrectAnswerWhenCheckedAgainstNodeChecker)
 
-  protected def validateScenarios[P, R](dt: DecisionTree[P, R], checker: ScenarioValidationChecker[P, R]) =
-    dt.allScenarios.flatMap { s => checker.fn(dt, s).map(msg => ValidationReport(msg, s)) }
+  protected def validateScenarios[P, R](engine: P => R, dt: DecisionTree[P, R], checker: ScenarioValidationChecker[P, R]) =
+    dt.allScenarios.flatMap { s => checker.fn(engine, dt, s).map(msg => ValidationReport(msg, s)) }
 
-  protected def validateConclusionNodes[P, R](dt: DecisionTree[P, R], validator: ConclusionNodeValidationChecker[P, R]): TraversableOnce[ValidationReport[P, R]] =
-    dt.allConclusionNodes.flatMap(cn => cn.allScenarios.flatMap(s => validator.fn(dt, cn, s).map(ValidationReport(_, s))))
+  protected def validateConclusionNodes[P, R](engine: P => R, dt: DecisionTree[P, R], validator: ConclusionNodeValidationChecker[P, R]): TraversableOnce[ValidationReport[P, R]] =
+    dt.allConclusionNodes.flatMap(cn => cn.allScenarios.flatMap(s => validator.fn(engine, dt, cn, s).map(ValidationReport(_, s))))
 
 
-  def validate[P, R](dt: DecisionTree[P, R]) = scenarioValidators[P, R].flatMap(validateScenarios(dt, _)) ::: conclusionNodeValidators[P, R].flatMap(validateConclusionNodes(dt, _))
+  def validate[P, R](engine: P => R, dt: DecisionTree[P, R]) =
+    scenarioValidators[P, R].flatMap(validateScenarios(engine, dt, _)) :::
+      conclusionNodeValidators[P, R].flatMap(validateConclusionNodes(engine, dt, _))
 }
 
 object DecisionTree extends DecisionTreeValidator {
 
-  private def addScenarioToConclusionNode[P, R](cn: ConclusionNode[P, R], s: Scenario[P, R]) = {
+  private def addScenarioToConclusionNode[P, R](mockEngine: P => R, cn: ConclusionNode[P, R], s: Scenario[P, R]) = {
     (cn.mainScenario.reason.hasWhy, s.reason.hasWhy) match {
       case (_, false) =>
         cn.copy(scenarios = cn.scenarios :+ s)
       case (false, true) => {
-        if (cn.scenarios.forall(os => s.isDefinedAt(os.situation)))
+        if (cn.scenarios.forall(os => s.isDefinedAt(mockEngine, os.situation)))
           cn.copy(mainScenario = s, scenarios = cn.mainScenario :: cn.scenarios)
         else
-          makeDecisionNode(s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios)
+          makeDecisionNode(mockEngine, s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios)
       }
     }
   }
 
-  def makeDecisionNode[P, R](s: Scenario[P, R], trueAnchor: Scenario[P, R], falseAnchor: Scenario[P, R], otherScenarios: List[Scenario[P, R]]) = {
-    val (trueSituations, falseSituations) = otherScenarios.partition(os => s.isDefinedAt(os.situation))
+  def makeDecisionNode[P, R](mockEngine: P => R, s: Scenario[P, R], trueAnchor: Scenario[P, R], falseAnchor: Scenario[P, R], otherScenarios: List[Scenario[P, R]]) = {
+    val (trueSituations, falseSituations) = otherScenarios.partition(os => s.isDefinedAt(mockEngine, os.situation))
     DecisionNode(s, trueNode = ConclusionNode[P, R](trueAnchor, trueSituations), falseNode = ConclusionNode(falseAnchor, falseSituations))
   }
 
-  def addOne[P, R](dt: DecisionTree[P, R], s: Scenario[P, R]): DecisionTree[P, R] =
-    dt.lensFor(s).
+  def addOne[P, R](mockEngine: P => R, dt: DecisionTree[P, R], s: Scenario[P, R]): DecisionTree[P, R] =
+    dt.lensFor(mockEngine, s).
       transform(dt, { case cn: ConclusionNode[P, R] =>
-        if (cn.isDefinedAt(s.situation)) {
-          val actual = cn.mainScenario(s.situation)
+        if (cn.isDefinedAt(mockEngine, s.situation)) {
+          val actual = cn.mainScenario(mockEngine, s.situation)
           if (s.assertion.valid(s.situation, actual))
-            addScenarioToConclusionNode(cn, s)
-          else if (s.isDefinedAt(cn.mainScenario.situation))
+            addScenarioToConclusionNode(mockEngine, cn, s)
+          else if (s.isDefinedAt(mockEngine, cn.mainScenario.situation))
             throw new CannotAddScenarioException(s, cn.mainScenario, actual)
           else
-            makeDecisionNode(s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios)
+            makeDecisionNode(mockEngine, s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios)
         } else
-          makeDecisionNode(cn.mainScenario, trueAnchor = cn.mainScenario, falseAnchor = s, otherScenarios = cn.scenarios)
+          makeDecisionNode(mockEngine, cn.mainScenario, trueAnchor = cn.mainScenario, falseAnchor = s, otherScenarios = cn.scenarios)
       })
 
-  def apply[P, R](scenarios: Seq[Scenario[P, R]]): DecisionTree[P, R] = scenarios match {
+  def apply[P, R](mockEngine: P => R, scenarios: Seq[Scenario[P, R]]): DecisionTree[P, R] = scenarios match {
     case h :: tail => tail.foldLeft[DecisionTree[P, R]](ConclusionNode(h)) {
-      (dt, s) => addOne(dt, s)
+      (dt, s) => addOne(mockEngine, dt, s)
     }
   }
 }
@@ -141,15 +144,15 @@ case class DecisionTreeNodeAndIfTrue[P, R](dt: DecisionTree[P, R], ifTrue: Decis
 
 case class ValidationReport[P, R](message: String, scenario: Scenario[P, R])
 
-trait DecisionTree[P, R] extends EngineComponent[P, R] with PartialFunction[P, R] {
+trait DecisionTree[P, R] extends EngineComponent[P, R] {
 
-  def lensFor(s: Scenario[P, R]): Lens[DecisionTree[P, R], DecisionTree[P, R]]
+  def lensFor(mockEngine: P => R, s: Scenario[P, R]): Lens[DecisionTree[P, R], DecisionTree[P, R]]
 
   def mainScenario: Scenario[P, R]
 
-  def isDefinedAt(p: P) = mainScenario.isDefinedAt(p)
+  def isDefinedAt(engine: P => R, p: P) = mainScenario.isDefinedAt(engine, p)
 
-  def apply(p: P): R
+  def apply(engine: P => R, p: P): R
 
   def definedInSourceCodeAt: String = mainScenario.definedInSourceCodeAt
 
@@ -167,9 +170,9 @@ case class ConclusionNode[P, R](mainScenario: Scenario[P, R], scenarios: List[Sc
 
   def withScenario(s: Scenario[P, R]) = copy(scenarios = s :: scenarios)
 
-  def lensFor(s: Scenario[P, R]) = identityLens
+  def lensFor(mockEngine: P => R, s: Scenario[P, R]) = identityLens
 
-  def apply(p: P) = mainScenario(p)
+  def apply(engine: P => R, p: P) = mainScenario(engine, p)
 
   def allScenarios: TraversableOnce[Scenario[P, R]] = mainScenario :: scenarios
 
@@ -182,11 +185,11 @@ case class DecisionNode[P, R](mainScenario: Scenario[P, R], falseNode: DecisionT
 
   import DecisionTreeLens._
 
-  def apply(p: P) = if (mainScenario.isDefinedAt(p)) trueNode(p) else falseNode(p)
+  def apply(engine: P => R, p: P) = if (mainScenario.isDefinedAt(engine, p)) trueNode(engine,p) else falseNode(engine,p)
 
-  def lensFor(s: Scenario[P, R]) = isDefinedAt(s.situation) match {
-    case true => dtToDN.andThen(dtTrue[P, R]).andThen(trueNode.lensFor(s))
-    case false => dtToDN.andThen(dtFalse[P, R]).andThen(falseNode.lensFor(s))
+  def lensFor(mockEngine: P => R, s: Scenario[P, R]) = isDefinedAt(mockEngine, s.situation) match {
+    case true => dtToDN.andThen(dtTrue[P, R]).andThen(trueNode.lensFor(mockEngine, s))
+    case false => dtToDN.andThen(dtFalse[P, R]).andThen(falseNode.lensFor(mockEngine, s))
   }
 
   def allScenarios: TraversableOnce[Scenario[P, R]] = trueNode.allScenarios.toIterator ++ falseNode.allScenarios

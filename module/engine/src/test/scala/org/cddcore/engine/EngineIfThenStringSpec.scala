@@ -4,7 +4,7 @@ import org.cddcore.engine.enginecomponents.Scenario
 import org.cddcore.utilities.CddSpec
 
 
-class EngineIfThenStringSpec extends CddSpec {
+class EngineIfThenStringSpec extends CddEngineSpec {
 
   import Scenario._
 

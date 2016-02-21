@@ -22,27 +22,33 @@ object Scenario {
 
 }
 
-case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: String) extends EngineComponent[P, R] with PartialFunction[P, R] with DefinedInSourceCodeAt {
+case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: String) extends EngineComponent[P, R] with DefinedInSourceCodeAt {
   def allScenarios = Seq(this)
 
-  def isDefinedAt(p: P) = reason.isDefinedAt(p)
+  def apply(engine: P=>R, p:P) = reason(engine, p)
+
+  def isDefinedAt(engine: P => R, p: P) = reason.isDefinedAt(engine, p)
 
   def expectedOption = assertion match {
     case EqualsAssertion(expected) => Some(expected)
     case _ => None
   }
 
-  def calcuateAssertionFor(p: P) = {
-    val result = apply(p)
+
+  def calcuateAssertionFor(engine: P => R, p: P) = {
+    val result = reason.apply(engine, p)
     assertion.valid(p, result)
   }
 
-  def apply(p: P) = reason(p)
-
   def validate = {
-    if (!isDefinedAt(situation)) throw new ReasonInvalidException(this)
-    val actual = apply(situation)
-    if (assertion.valid(situation, actual) == false) throw AssertionInvalidException(this, actual)
+    reason match {
+      case sr: ScenarioReasonThatIsntRecursive[P, R] =>
+        if (!sr.isDefinedAt(situation)) throw new ReasonInvalidException(this)
+        val actual = sr.apply(situation)
+        if (assertion.valid(situation, actual) == false) throw AssertionInvalidException(this, actual)
+
+      case _ => // can't check recursive things without the engine
+    }
   }
 
   override def toString = s"Scenario($situation ${assertion.prettyDescription} ${reason.prettyDescription})/$definedInSourceCodeAt"
