@@ -159,6 +159,7 @@ case class ScenarioBuilder[P, R](scenario: Scenario[P, R])(implicit val scl: Chi
 
   def by(fn: P => R) = macro ScenarioBuilder.byImpl[P, R]
 
+  def byRecursion (fn: (P=>R,P) =>R) = scenario
 
 }
 
