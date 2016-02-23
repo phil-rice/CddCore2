@@ -17,15 +17,16 @@ lazy val utilitiesSettings = commonSettings ++ Seq(
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersionNo
 )
 
-lazy val mustacheSettings = baseSettings ++ Seq(
-  libraryDependencies ++= Seq(
-    "junit" % "junit" % "4.8.1" % "test->default",
-    "org.specs2" %% "specs2" % "2.3.12" % "test->default",
-    "com.typesafe.akka" %% "akka-actor" % "2.3.3" % "test->default"
-  )
-)
+//lazy val mustacheSettings = baseSettings ++ Seq(
+//  libraryDependencies ++= Seq(
+//    "junit" % "junit" % "4.8.1" % "test->default",
+//    "org.specs2" %% "specs2" % "2.3.12" % "test->default",
+//    "com.typesafe.akka" %% "akka-actor" % "2.3.3" % "test->default"
+//  )
+//)
 
 lazy val renderingSettings = commonSettings ++ Seq(
+  libraryDependencies += "com.github.spullara.mustache.java" % "scala-extensions-2.11" % "0.9.1"
 )
 
 lazy val utilities = (project in file("module/utilities")).
@@ -51,16 +52,16 @@ lazy val engine = (project in file("module/engine")).
   dependsOn(enginecomponents).
   aggregate(enginecomponents)
 
-lazy val mustache = (project in file("module/mustache")).
-  settings(mustacheSettings: _*)
+//lazy val mustache = (project in file("module/mustache")).
+//  settings(mustacheSettings: _*)
 
 
 lazy val rendering = (project in file("module/rendering")).
   settings(renderingSettings: _*).
   dependsOn(engine % "test->test;compile->compile").
-  aggregate(engine).
-  dependsOn(mustache).
-  aggregate(mustache)
+  aggregate(engine)
+//  dependsOn(mustache).
+//  aggregate(mustache)
 
 
 lazy val examples = (project in file("module/examples")).

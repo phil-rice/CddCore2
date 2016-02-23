@@ -1,11 +1,15 @@
 package org.cddcore.rendering
 
+import java.io.{OutputStreamWriter, StringReader}
+import java.util
 import java.util.Date
 
-import mustache.Mustache
+import com.github.mustachejava.{ObjectHandler, DefaultMustacheFactory}
+import com.twitter.mustache.ScalaObjectHandler
 import org.cddcore.engine.enginecomponents.{EngineComponent, Scenario, UseCase}
 import org.cddcore.engine.{Engine, Engine2}
 
+import scala.collection.convert.WrapAsJava
 
 
 case class RenderContext(reportDate: Date, urlBase: String, pathMap: PathMap) {
@@ -40,7 +44,8 @@ trait KeysForRendering {
   val situationKey = "situation"
   val expectedKey = "expected"
 
-  val childrenKey = "children"
+  val scenariosKey = "scenarios"
+  val useCasesKey = "useCases"
 
   val typeKey = "type"
 
@@ -58,40 +63,56 @@ trait Icons {
   val scenarioIcon = "http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
 }
 
-trait MustacheTemplates {
-  val linkTemplate = new Mustache("{{#link}}<a href='{{linkUrl}}' alt='{{title}}'>{{title}}<img src='{{iconUrl}}' /></a>{{/link}}")
-  val scenarioFullTemplate = new Mustache(
-    """<div id='{{id}}' class='scenario'><div class='scenarioTitle'>{{title}} {{>link}}</div><!-- scenarioTitle -->
-      |   <table class='scenarioTable'">{{#link}}{{>link}}{{/link}}
-      |      <tr><td>Situation</td><td>{{situation}}</td></tr>
-      |      <tr><td>Expected</td><td>{{expected}}</td></tr>
-      |   </table>
-      |</div><!-- scenario -->""".stripMargin)
+object Mustache {
+  val mf = new DefaultMustacheFactory();
 
-  val useCaseFullTemplate = new Mustache(
-    """<div id='{{id}}' class='usecase'>
-      |    <div class='usecaseTitle'> {{title}} {{>link}} </div><!-- usecaseTitle -->
-      |    {{#children}}{{>component}}{{/children}}
-      |</div><!-- usecase' --> """.stripMargin)
+  def apply(name: String, template: String) = mf.compile(new StringReader(template), name)
 
-  val engineFullTemplate = new Mustache(
-    """<div id='{{id}}' class='engine'>{{
-      |    <div class='usecaseTitle'>{{title}} {{>link}} </div><!-- usecaseTitle -->
-      |    {{#children}}{{>component}}{{/children}}
-      |</div><!-- usecase' --> """.stripMargin)
+  def apply(name: String) = mf.compile(name)
+}
 
-  val childrenTemplate = new Mustache(
-    """{{#engine}}{{>engine}}{{/engine}}
-      |{{#usecase}}{{>usecase}}{{/usecase}}
-      |{{#scenario}}{{>scenario}}{{/scenario}}""".stripMargin)
+trait MustacheTemplates extends KeysForRendering {
+
+  //
+  //  val linkTemplate = Mustache("link", "{{#link}}<a href='{{linkUrl}}' alt='{{title}}'>{{title}}<img src='{{iconUrl}}' /></a>{{/link}}")
+  //  val scenarioFullTemplate = Mustache("scenarioFull",
+  //    """<div id='{{id}}' class='scenario'><div class='scenarioTitle'>{{title}} {{>link}}</div><!-- scenarioTitle -->
+  //      |   <table class='scenarioTable'">{{#link}}{{>link}}{{/link}}
+  //      |      <tr><td>Situation</td><td>{{situation}}</td></tr>
+  //      |      <tr><td>Expected</td><td>{{expected}}</td></tr>
+  //      |   </table>
+  //      |</div><!-- scenario -->""".stripMargin)
+  //
+  //  val useCaseFullTemplate = Mustache("useCaseFull",
+  //    ""nt{{/chil"<div id='{{ id }}' class='usecase'>
+  //      |    <div class='usecaseTitle'> {{title}} {{> link}} </div><!-- usecaseTitle -->
+  //      |    {{# children}} > componedren}}
+  //      |</div><!-- usecase' --> """.stripMargin)
+  //
+  //  val engineFullTemplate = Mustache("engineFull",
+  //    """<div id='{{id}}' class='engine'>
+  //      |    <div class='engineTitle'> {{ title }} {{>link}} </div><!-- engineTitle -->
+  //      |    {{#children}}{{>component}}{{/children}}
+  //      |</div><!-- engine' --> """.stripMargin)
+  //
+  //  val childrenTemplate = Mustache("children",
+  //    """CHILDREN {{#UseCase}}INSIDE USECASE{{.}}{{>UseCase}}{{/UseCase}}
+  //      |{{#Scenario}}{{>Scenario}}{{/Scenario}}""".stripMargin)
+  //
+  //  val partials = Map(
+  //    engineTypeName -> engineFullTemplate,
+  //    useCaseTypeName -> useCaseFullTemplate,
+  //    scenarioTypeName -> scenarioFullTemplate,
+  //    linkKey -> linkTemplate,
+  //    "component" -> childrenTemplate)
 }
 
 trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering with Icons {
   protected val expectedForScenario1Link = Map(titleKey -> scenario1.title, linkUrlKey -> rc.url(scenario1), iconUrlKey -> scenarioIcon)
   protected val expectedForScenario2Link = Map(titleKey -> scenario2.title, linkUrlKey -> rc.url(scenario2), iconUrlKey -> scenarioIcon)
-  protected val expectedForScenario3Link =  Map(titleKey -> scenario3.title, linkUrlKey -> rc.url(scenario3), iconUrlKey -> scenarioIcon)
+  protected val expectedForScenario3Link = Map(titleKey -> scenario3.title, linkUrlKey -> rc.url(scenario3), iconUrlKey -> scenarioIcon)
   protected val expectedForUseCase1Link = Map(titleKey -> useCase1.title, linkUrlKey -> rc.url(useCase1), iconUrlKey -> useCasesIcon)
-  protected val expectedForEngineWithUseCaseLink =  Map(titleKey -> engineWithUseCase.title, linkUrlKey -> rc.url(engineWithUseCase), iconUrlKey -> engineWithTestsIcon)
+  protected val expectedForEngineWithUseCaseLink = Map(titleKey -> engineWithUseCase.title, linkUrlKey -> rc.url(engineWithUseCase), iconUrlKey -> engineWithTestsIcon)
 
 
   protected val expectedForScenario1 = Map(
@@ -99,39 +120,45 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     typeKey -> scenarioTypeName,
     titleKey -> scenario1.title,
     linkKey -> expectedForScenario1Link,
-    childrenKey -> List())
+    scenariosKey -> List(),
+    useCasesKey -> List())
 
   protected val expectedForScenario2 = Map(
     idKey -> rc.path(scenario2),
     typeKey -> scenarioTypeName,
     titleKey -> scenario2.title,
     linkKey -> expectedForScenario2Link,
-    childrenKey -> List())
+    scenariosKey -> List(),
+    useCasesKey -> List())
 
   protected val expectedForScenario3 = Map(
     idKey -> rc.path(scenario3),
     typeKey -> scenarioTypeName,
     titleKey -> scenario3.title,
     linkKey -> expectedForScenario3Link,
-    childrenKey -> List())
+    scenariosKey -> List(),
+    useCasesKey -> List())
 
   protected val expectedForUseCase1 = Map(
     idKey -> rc.path(useCase1),
     typeKey -> useCaseTypeName,
     titleKey -> "someUseCase",
     linkKey -> expectedForUseCase1Link,
-    childrenKey -> List(Map(scenarioTypeName -> expectedForScenario1), Map(scenarioTypeName -> expectedForScenario2), Map(scenarioTypeName -> expectedForScenario3)))
+    scenariosKey -> List(expectedForScenario1, expectedForScenario2, expectedForScenario3),
+    useCasesKey -> List())
 
   protected val expectedForEngineWithUseCase = Map(
     idKey -> rc.path(engineWithUseCase),
     typeKey -> engineTypeName,
-    titleKey -> "someEngineTitle2",
+    titleKey -> engineWithUseCase.title,
     linkKey -> expectedForEngineWithUseCaseLink,
-    childrenKey -> List(expectedForUseCase1))
+    useCasesKey -> List(expectedForUseCase1),
+    scenariosKey -> List()
+  )
 
 }
 
-object Templates extends TestObjectsForRendering with Icons with KeysForRendering with ExpectedForTemplates {
+object Templates extends TestObjectsForRendering with Icons with KeysForRendering with ExpectedForTemplates with MustacheTemplates {
 
   val findIconUrl = new Engine[EngineComponent[_, _], String] {
     emptyEngine produces engineWithTestsIcon because { case e: Engine[_, _] => engineWithTestsIcon }
@@ -146,12 +173,17 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
     (rc, emptyEngine) produces Map(linkKey -> Map(titleKey -> "someEngineTitle", linkUrlKey -> rc.url(emptyEngine), iconUrlKey -> engineWithTestsIcon)) by {
       case (rc, ec) => Map(linkKey -> Map(titleKey -> ec.title, linkUrlKey -> rc.url(ec), iconUrlKey -> findIconUrl(ec)))
     }
-    (rc, engineWithUseCase) produces Map(linkKey ->expectedForEngineWithUseCaseLink)
-    (rc, useCase1) produces Map(linkKey ->expectedForUseCase1Link)
+    (rc, engineWithUseCase) produces Map(linkKey -> expectedForEngineWithUseCaseLink)
+    (rc, useCase1) produces Map(linkKey -> expectedForUseCase1Link)
     (rc, scenario1) produces Map(linkKey -> expectedForScenario1Link)
-    (rc, scenario2) produces Map(linkKey ->expectedForScenario2Link)
-    (rc, scenario3) produces Map(linkKey ->expectedForScenario3Link)
+    (rc, scenario2) produces Map(linkKey -> expectedForScenario2Link)
+    (rc, scenario3) produces Map(linkKey -> expectedForScenario3Link)
   }
+
+  private def ucAndS(uc: List[EngineComponent[_, _]], s: List[EngineComponent[_, _]]) = Map(useCasesKey -> uc, scenariosKey -> s)
+
+  private def partition(ecs: List[EngineComponent[_, _]]) =
+    ucAndS(ecs.filter(_.isInstanceOf[UseCase[_, _]]), ecs.filter(_.isInstanceOf[Scenario[_, _]]))
 
   val findChildren = new Engine[EngineComponent[_, _], List[EngineComponent[_, _]]] {
     engineWithUseCase produces List(useCase1) because { case e: Engine[_, _] => e.asUseCase.components }
@@ -165,18 +197,53 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
     scenario1 produces scenarioTypeName because { case s: Scenario[_, _] => scenarioTypeName }
   }
   val render = new Engine2[RenderContext, EngineComponent[_, _], Any]("Produces the maps for the rendering template story") {
-    (rc, scenario1) produces expectedForScenario1 byRecursion {
-      case (engine, (rc, ec)) => Map(
+    (rc, scenario1) produces expectedForScenario1 byRecursion { case (engine, (rc, ec)) => {
+      val children = findChildren(ec)
+      makeLink(rc, ec) ++ Map(
         idKey -> rc.path(ec),
         typeKey -> findTypeName(ec),
         titleKey -> ec.title,
-        linkKey -> makeLink(rc, ec),
-        childrenKey -> findChildren(ec).map(c => Map(findTypeName(c) -> engine(rc, c)))
-      )
+        scenariosKey -> children.filter(_.isInstanceOf[Scenario[_, _]]).map(engine(rc, _)),
+        useCasesKey -> children.filter(_.isInstanceOf[UseCase[_, _]]).map(engine(rc, _)))
+
+    }
     }
     (rc, scenario2) produces expectedForScenario2
     (rc, scenario3) produces expectedForScenario3
-//    (rc, engineWithUseCase) produces expectedForEngineWithUseCase
     (rc, useCase1) produces expectedForUseCase1
+    (rc, engineWithUseCase) produces expectedForEngineWithUseCase
   }
+
+  def forMustache(s: Any): Any = s match {
+    case m: Map[String, _] => m.foldLeft(new util.HashMap[String, Any]) { case (acc, (k, v)) => acc.put(k, forMustache(v)); acc }
+    case l: List[_] => l.foldLeft(new util.ArrayList[Any]) { (acc, v) => acc.add(forMustache(v)); acc }
+    case _ => s
+  }
+
+  def main(args: Array[String]) {
+    val writer = new OutputStreamWriter(System.out)
+    Mustache("link.mustache").execute(writer, forMustache(Map(linkKey -> expectedForScenario1Link)))
+    writer.write("\n\n")
+    writer.flush
+    Mustache("Scenario.mustache").execute(writer, forMustache(expectedForScenario1))
+    writer.write("\n\n")
+    writer.write("\n\n")
+    writer.flush
+    Mustache("UseCase.mustache").execute(writer, forMustache(expectedForUseCase1))
+    writer.flush();
+    println
+    println
+    Mustache("Engine.mustache").execute(writer, forMustache(expectedForEngineWithUseCase))
+    writer.flush();
+    println
+    println
+    println
+    Mustache("Engine.mustache").execute(writer, forMustache(render(rc, engineWithUseCase)))
+    writer.flush();
+    println
+    //    //    println(expectedForEngineWithUseCase)
+    //    //    engineFullTemplate.execute(writer, expectedForEngineWithUseCase)
+
+  }
+
 }
