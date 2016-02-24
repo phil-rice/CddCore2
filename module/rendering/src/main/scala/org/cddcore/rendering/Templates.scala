@@ -31,9 +31,9 @@ case class SimpleRenderConfiguration(urlBase: String, date: Date = new Date()) e
 case class RenderContext(reportDate: Date, urlBase: String, pathMap: PathMap) {
   override def toString = getClass.getSimpleName()
 
-  def path(ec: EngineComponent[_, _]) = pathMap(ec)
+  def idPath(ec: EngineComponent[_, _]) = pathMap(ec)
 
-  def url(ec: EngineComponent[_, _]) = urlBase + "/" + ec.getClass.getSimpleName + "/" + path(ec)
+  def url(ec: EngineComponent[_, _]) = urlBase + "/" + ec.getClass.getSimpleName + "/" + idPath(ec)
 
 }
 
@@ -133,34 +133,34 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
   protected val emptyUsecasesAndScenarios = Map(scenariosKey -> List(), useCasesKey -> List())
 
   protected val expectedForScenario1Depth0 = Map(
-    idKey -> rc.path(scenario1),
+    idKey -> rc.idPath(scenario1),
     typeKey -> scenarioTypeName,
     titleKey -> scenario1.title,
     linkKey -> expectedForScenario1Link)
 
 
   protected val expectedForScenario2Depth0 = Map(
-    idKey -> rc.path(scenario2),
+    idKey -> rc.idPath(scenario2),
     typeKey -> scenarioTypeName,
     titleKey -> scenario2.title,
     linkKey -> expectedForScenario2Link)
 
 
   protected val expectedForScenario3Depth0 = Map(
-    idKey -> rc.path(scenario3),
+    idKey -> rc.idPath(scenario3),
     typeKey -> scenarioTypeName,
     titleKey -> scenario3.title,
     linkKey -> expectedForScenario3Link)
 
 
   protected val expectedForUseCase1Depth0 = Map(
-    idKey -> rc.path(useCase1),
+    idKey -> rc.idPath(useCase1),
     typeKey -> useCaseTypeName,
     titleKey -> "someUseCase",
     linkKey -> expectedForUseCase1Link)
 
   protected val expectedForEngineDepth0 = Map(
-    idKey -> rc.path(engineWithUseCase),
+    idKey -> rc.idPath(engineWithUseCase),
     typeKey -> engineTypeName,
     titleKey -> engineWithUseCase.title,
     linkKey -> expectedForEngineWithUseCaseLink)
@@ -226,29 +226,29 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
 
   object renderDepth0 extends Engine2[RenderContext, EngineComponent[_, _], Map[String, _]] {
     (rc, useCase1) produces Map(
-      idKey -> rc.path(useCase1),
+      idKey -> rc.idPath(useCase1),
       typeKey -> useCaseTypeName,
       titleKey -> useCase1.title,
       linkKey -> expectedForUseCase1Link) byRecursion { case (engine, (rc, ec)) =>
       makeLink(rc, ec) ++ Map(
-        idKey -> rc.path(ec),
+        idKey -> rc.idPath(ec),
         typeKey -> findTypeName(ec),
         titleKey -> ec.title)
     }
     (rc, engineWithUseCase) produces Map(
-      idKey -> rc.path(engineWithUseCase),
+      idKey -> rc.idPath(engineWithUseCase),
       typeKey -> engineTypeName,
       titleKey -> engineWithUseCase.title,
       linkKey -> expectedForEngineWithUseCaseLink
     )
 
-    (rc, scenario1) produces Map(idKey -> rc.path(scenario1),
+    (rc, scenario1) produces Map(idKey -> rc.idPath(scenario1),
       typeKey -> scenarioTypeName,
       titleKey -> scenario1.title,
       linkKey -> expectedForScenario1Link)
 
     (rc, scenario2) produces Map(
-      idKey -> rc.path(scenario2),
+      idKey -> rc.idPath(scenario2),
       typeKey -> scenarioTypeName,
       titleKey -> scenario2.title,
       linkKey -> expectedForScenario2Link)
@@ -259,7 +259,7 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
     (rc, useCase1) produces expectedForUseCase1Depth1 by { case (rc, ec) =>
       val children = findChildren(ec)
       makeLink(rc, ec) ++ Map(
-        idKey -> rc.path(ec),
+        idKey -> rc.idPath(ec),
         typeKey -> findTypeName(ec),
         titleKey -> ec.title,
         scenariosKey -> children.filter(_.isInstanceOf[Scenario[_, _]]).map(renderDepth0(rc, _)),
@@ -290,7 +290,7 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
 //  }
 
   def forMustache(s: Any): Any = s match {
-    case m: Map[String, _] => m.foldLeft(new util.HashMap[String, Any]) { case (acc, (k, v)) => acc.put(k, forMustache(v)); acc }
+    case m: Map[_, _] => m.foldLeft(new util.HashMap[String, Any]) { case (acc, (k: String, v)) => acc.put(k, forMustache(v)); acc }
     case l: List[_] => l.foldLeft(new util.ArrayList[Any]) { (acc, v) => acc.add(forMustache(v)); acc }
     case _ => s
   }

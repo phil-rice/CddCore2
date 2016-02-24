@@ -1,7 +1,5 @@
 package org.cddcore.utilities
 
-import org.cddcore.utilities.{Hierarchy, HierarchyBuilder}
-
 
 class HierarchySpec extends CddSpec {
 

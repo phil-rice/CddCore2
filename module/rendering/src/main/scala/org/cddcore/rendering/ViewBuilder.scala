@@ -84,7 +84,11 @@ class EngineComponentPimper(ec: EngineComponent[_, _]) {
     withChildrenPaths.map(path => path.map { case ec: EC => Renderer.scalaMap(ec) })
 
   def toSingleMaps(implicit renderContext: RenderContext = renderContext) =
-    withChildrenPathMaps.map(path => path.reduce((acc, v) => v + ("path" -> acc)))
+    withChildrenPathMaps.map(path => Map(
+      "id" ->path.head("id"),
+      path.head("type") -> path.reduce((acc, v) => v + ("path" -> acc)))
+
+  )
 
 }
 
