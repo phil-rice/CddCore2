@@ -35,24 +35,44 @@ class RenderingSpec extends CddSpec with ExpectedForTemplates {
 
   "withChildrenPathMaps" should "be" in {
     implicit val renderDefintion = SimpleRenderConfiguration("urlBase")
-    //    renderDefintion.urlBase shouldBe "urlBase"
     implicit val rc = engineWithUseCase.renderContext
-    //    rc.urlBase shouldBe "urlBase"
-    //    rc.url(scenario1) shouldBe ""
+
     scenario1.withChildrenPathMaps shouldBe List(
       List(expectedForScenario1Depth1))
+
     useCase1.withChildrenPathMaps shouldBe List(
       List(expectedForUseCase1Depth1),
       List(expectedForScenario1Depth1, expectedForUseCase1Depth1),
       List(expectedForScenario2Depth1, expectedForUseCase1Depth1),
       List(expectedForScenario3Depth1, expectedForUseCase1Depth1))
-    engineWithUseCase.withChildrenPathMaps shouldBe List (
+
+    engineWithUseCase.withChildrenPathMaps shouldBe List(
       List(expectedForEngineWithUseCaseDepth1),
       List(expectedForUseCase1Depth1, expectedForEngineWithUseCaseDepth1),
       List(expectedForScenario1Depth1, expectedForUseCase1Depth1, expectedForEngineWithUseCaseDepth1),
       List(expectedForScenario2Depth1, expectedForUseCase1Depth1, expectedForEngineWithUseCaseDepth1),
       List(expectedForScenario3Depth1, expectedForUseCase1Depth1, expectedForEngineWithUseCaseDepth1)
     )
+  }
+
+  "toSingleMap" should "be" in {
+    implicit val renderDefintion = SimpleRenderConfiguration("urlBase")
+    implicit val rc = engineWithUseCase.renderContext
+    
+    scenario1.toSingleMaps shouldBe List(expectedForScenario1Depth1)
+
+    useCase1.toSingleMaps shouldBe List(
+      expectedForUseCase1Depth1,
+      expectedForUseCase1Depth1 ++ Map("path" -> expectedForScenario1Depth1),
+      expectedForUseCase1Depth1 ++ Map("path" -> expectedForScenario2Depth1),
+      expectedForUseCase1Depth1 ++ Map("path" -> expectedForScenario3Depth1))
+
+    engineWithUseCase.toSingleMaps shouldBe List(
+      expectedForEngineWithUseCaseDepth1,
+      expectedForEngineWithUseCaseDepth1 ++ Map("path" -> expectedForUseCase1Depth1),
+      expectedForEngineWithUseCaseDepth1 ++ Map("path" -> (expectedForUseCase1Depth1 ++ Map("path" -> expectedForScenario1Depth1))),
+      expectedForEngineWithUseCaseDepth1 ++ Map("path" -> (expectedForUseCase1Depth1 ++ Map("path" -> expectedForScenario2Depth1))),
+      expectedForEngineWithUseCaseDepth1 ++ Map("path" -> (expectedForUseCase1Depth1 ++ Map("path" -> expectedForScenario3Depth1))))
   }
 
 }

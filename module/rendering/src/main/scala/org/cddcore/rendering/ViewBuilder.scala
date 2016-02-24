@@ -50,7 +50,7 @@ object Renderer extends ExpectedForTemplates {
 
   def main(args: Array[String]) {
     implicit val rc = engineWithUseCase.renderContext
-    println(useCase1.toSingleMap)
+    println(useCase1.toSingleMaps)
     //    for (ec <- engineWithUseCase.withDescendents) {
     //      println("TITLE: " + ec.title)
     //      println(ec.toHtml)
@@ -83,7 +83,7 @@ class EngineComponentPimper(ec: EngineComponent[_, _]) {
   def withChildrenPathMaps(implicit renderContext: RenderContext = renderContext) =
     withChildrenPaths.map(path => path.map { case ec: EC => Renderer.scalaMap(ec) })
 
-  def toSingleMap =
+  def toSingleMaps(implicit renderContext: RenderContext = renderContext) =
     withChildrenPathMaps.map(path => path.reduce((acc, v) => v + ("path" -> acc)))
 
 }
