@@ -6,10 +6,7 @@ class TemplatesSpec extends CddSpec {
 
   import Templates._
 
-  "The icons engine" should "compile" in {
-//    icon.validate
-    render.validate
-  }
+
 
 
 }
