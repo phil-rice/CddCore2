@@ -3,7 +3,7 @@ package org.cddcore.rendering
 import java.io.StringWriter
 
 import org.cddcore.engine.{Engine2, Engine, AbstractEngine}
-import org.cddcore.engine.enginecomponents.{Scenario, UseCase, EngineComponent}
+import org.cddcore.engine.enginecomponents.{DisplayProcessor, Scenario, UseCase, EngineComponent}
 
 
 case class TemplateNames(engineName: String, useCaseName: String, scenarioName: String) {
@@ -23,7 +23,7 @@ object Renderer extends ExpectedForTemplates {
   def pathMap(ec: EC) = PathMap(ec)
 
   def renderContext(ec: EC)(implicit renderConfiguration: RenderConfiguration) =
-    RenderContext(renderConfiguration.date, renderConfiguration.urlBase, pathMap(ec))
+    RenderContext(renderConfiguration.date, renderConfiguration.urlBase, pathMap(ec))(renderConfiguration.displayProcessor)
 
   def withDescendents(ec: EC): List[EC] = ec :: Templates.findChildren(ec).flatMap(withDescendents)
 
@@ -51,12 +51,6 @@ object Renderer extends ExpectedForTemplates {
   def main(args: Array[String]) {
     implicit val rc = engineWithUseCase.renderContext
     println(useCase1.toSingleMaps)
-    //    for (ec <- engineWithUseCase.withDescendents) {
-    //      println("TITLE: " + ec.title)
-    //      println(ec.toHtml)
-    //      println
-    //      println
-    //    }
   }
 }
 
@@ -85,10 +79,10 @@ class EngineComponentPimper(ec: EngineComponent[_, _]) {
 
   def toSingleMaps(implicit renderContext: RenderContext = renderContext) =
     withChildrenPathMaps.map(path => Map(
-      "id" ->path.head("id"),
+      "id" -> path.head("id"),
       path.head("type") -> path.reduce((acc, v) => v + ("path" -> acc)))
 
-  )
+    )
 
 }
 

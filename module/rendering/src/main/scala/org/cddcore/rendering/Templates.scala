@@ -6,7 +6,7 @@ import java.util.Date
 
 import com.github.mustachejava.{ObjectHandler, DefaultMustacheFactory}
 import com.twitter.mustache.ScalaObjectHandler
-import org.cddcore.engine.enginecomponents.{EngineComponent, Scenario, UseCase}
+import org.cddcore.engine.enginecomponents.{DisplayProcessor, EngineComponent, Scenario, UseCase}
 import org.cddcore.engine.{Engine, Engine2}
 
 import scala.collection.convert.WrapAsJava
@@ -16,19 +16,25 @@ trait RenderConfiguration {
 
   def urlBase: String
 
+  implicit def displayProcessor: DisplayProcessor
+
 }
 
 object RenderConfiguration {
+
   implicit object DefaultRenderConfiguration extends RenderConfiguration {
     def date: Date = new Date
 
     def urlBase: String = "./target/cdd/"
+
+    implicit val displayProcessor = DisplayProcessor.defaultDisplayProcessor
   }
+
 }
 
-case class SimpleRenderConfiguration(urlBase: String, date: Date = new Date()) extends RenderConfiguration
+case class SimpleRenderConfiguration(urlBase: String, date: Date = new Date())(implicit val displayProcessor: DisplayProcessor) extends RenderConfiguration
 
-case class RenderContext(reportDate: Date, urlBase: String, pathMap: PathMap) {
+case class RenderContext(reportDate: Date, urlBase: String, pathMap: PathMap)(implicit val displayProcessor: DisplayProcessor) {
   override def toString = getClass.getSimpleName()
 
   def idPath(ec: EngineComponent[_, _]) = pathMap(ec)
@@ -50,7 +56,7 @@ trait TestObjectsForRendering {
   val List(scenario1: Scenario[_, _], scenario2: Scenario[_, _], scenario3: Scenario[_, _]) = useCase1.components.reverse
 
 
-  protected val rc: RenderContext = RenderContext(new Date(), "urlBase", PathMap(emptyEngine, engineWithUseCase))
+  protected val rc: RenderContext = RenderContext(new Date(), "urlBase", PathMap(emptyEngine, engineWithUseCase))(DisplayProcessor.defaultDisplayProcessor)
 }
 
 trait KeysForRendering {
@@ -85,42 +91,6 @@ object Mustache {
   def apply(name: String, template: String) = mf.compile(new StringReader(template), name)
 
   def apply(name: String) = mf.compile(name)
-}
-
-trait MustacheTemplates extends KeysForRendering {
-
-  //
-  //  val linkTemplate = Mustache("link", "{{#link}}<a href='{{linkUrl}}' alt='{{title}}'>{{title}}<img src='{{iconUrl}}' /></a>{{/link}}")
-  //  val scenarioFullTemplate = Mustache("scenarioFull",
-  //    """<div id='{{id}}' class='scenario'><div class='scenarioTitle'>{{title}} {{>link}}</div><!-- scenarioTitle -->
-  //      |   <table class='scenarioTable'">{{#link}}{{>link}}{{/link}}
-  //      |      <tr><td>Situation</td><td>{{situation}}</td></tr>
-  //      |      <tr><td>Expected</td><td>{{expected}}</td></tr>
-  //      |   </table>
-  //      |</div><!-- scenario -->""".stripMargin)
-  //
-  //  val useCaseFullTemplate = Mustache("useCaseFull",
-  //    ""nt{{/chil"<div id='{{ id }}' class='usecase'>
-  //      |    <div class='usecaseTitle'> {{title}} {{> link}} </div><!-- usecaseTitle -->
-  //      |    {{# children}} > componedren}}
-  //      |</div><!-- usecase' --> """.stripMargin)
-  //
-  //  val engineFullTemplate = Mustache("engineFull",
-  //    """<div id='{{id}}' class='engine'>
-  //      |    <div class='engineTitle'> {{ title }} {{>link}} </div><!-- engineTitle -->
-  //      |    {{#children}}{{>component}}{{/children}}
-  //      |</div><!-- engine' --> """.stripMargin)
-  //
-  //  val childrenTemplate = Mustache("children",
-  //    """CHILDREN {{#UseCase}}INSIDE USECASE{{.}}{{>UseCase}}{{/UseCase}}
-  //      |{{#Scenario}}{{>Scenario}}{{/Scenario}}""".stripMargin)
-  //
-  //  val partials = Map(
-  //    engineTypeName -> engineFullTemplate,
-  //    useCaseTypeName -> useCaseFullTemplate,
-  //    scenarioTypeName -> scenarioFullTemplate,
-  //    linkKey -> linkTemplate,
-  //    "component" -> childrenTemplate)
 }
 
 trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering with Icons {
@@ -185,7 +155,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
 
 }
 
-object Templates extends TestObjectsForRendering with Icons with KeysForRendering with ExpectedForTemplates with MustacheTemplates {
+object Templates extends TestObjectsForRendering with Icons with KeysForRendering with ExpectedForTemplates {
 
   val findIconUrl = new Engine[EngineComponent[_, _], String] {
     emptyEngine produces engineWithTestsIcon because { case e: Engine[_, _] => engineWithTestsIcon }
@@ -270,55 +240,11 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
     (rc, scenario3) produces expectedForScenario3Depth1
 
   }
-//
-//  val render = new Engine2[RenderContext, EngineComponent[_, _], Map[String, Any]]("Produces the maps for the rendering template story") {
-//    (rc, scenario1) produces expectedForScenario1Depth1 byRecursion { case (engine, (rc, ec)) => {
-//      val children = findChildren(ec)
-//      makeLink(rc, ec) ++ Map(
-//        idKey -> rc.path(ec),
-//        typeKey -> findTypeName(ec),
-//        titleKey -> ec.title,
-//        scenariosKey -> children.filter(_.isInstanceOf[Scenario[_, _]]).map(engine(rc, _)),
-//        useCasesKey -> children.filter(_.isInstanceOf[UseCase[_, _]]).map(engine(rc, _)))
-//
-//    }
-//    }
-//    (rc, scenario2) produces expectedForScenario2Depth0
-//    (rc, scenario3) produces expectedForScenario3Depth0
-//    (rc, useCase1) produces expectedForUseCase1Depth0
-//    (rc, engineWithUseCase) produces expectedForEngineWithUseCaseDepth0
-//  }
 
   def forMustache(s: Any): Any = s match {
     case m: Map[_, _] => m.foldLeft(new util.HashMap[String, Any]) { case (acc, (k: String, v)) => acc.put(k, forMustache(v)); acc }
     case l: List[_] => l.foldLeft(new util.ArrayList[Any]) { (acc, v) => acc.add(forMustache(v)); acc }
     case _ => s
   }
-
-  //  def main(args: Array[String]) {
-  //    val writer = new OutputStreamWriter(System.out)
-  //    Mustache("link.mustache").execute(writer, forMustache(Map(linkKey -> expectedForScenario1Link)))
-  //    writer.write("\n\n")
-  //    writer.flush
-  //    Mustache("Scenario.mustache").execute(writer, forMustache(expectedForScenario1))
-  //    writer.write("\n\n")
-  //    writer.write("\n\n")
-  //    writer.flush
-  //    Mustache("UseCase.mustache").execute(writer, forMustache(expectedForUseCase1))
-  //    writer.flush();
-  //    println
-  //    println
-  //    Mustache("Engine.mustache").execute(writer, forMustache(expectedForEngineWithUseCase))
-  //    writer.flush();
-  //    println
-  //    println
-  //    println
-  //    Mustache("Engine.mustache").execute(writer, forMustache(render(rc, engineWithUseCase)))
-  //    writer.flush();
-  //    println
-  //    //    //    println(expectedForEngineWithUseCase)
-  //    //    //    engineFullTemplate.execute(writer, expectedForEngineWithUseCase)
-  //
-  //  }
 
 }
