@@ -6,7 +6,7 @@ import java.util.Date
 
 import com.github.mustachejava.{ObjectHandler, DefaultMustacheFactory}
 import com.twitter.mustache.ScalaObjectHandler
-import org.cddcore.engine.enginecomponents.{DisplayProcessor, EngineComponent, Scenario, UseCase}
+import org.cddcore.engine.enginecomponents._
 import org.cddcore.engine.{Engine, Engine2}
 
 import scala.collection.convert.WrapAsJava
@@ -40,6 +40,7 @@ case class RenderContext(reportDate: Date, urlBase: String, pathMap: PathMap)(im
 }
 
 trait TestObjectsForRendering {
+  val displayProcessorModifiedForSituations = DisplayProcessor.defaultDisplayProcessor.withSummarize { case x => s"Summary($x)" }
   protected val emptyEngine = new Engine[Int, String]("someEngineTitle") {}
   protected val engineWithUseCase = new Engine[Int, String]("someEngineTitle2") {
     useCase("someUseCase") {
@@ -51,8 +52,7 @@ trait TestObjectsForRendering {
   val List(useCase1: UseCase[Int, String]) = engineWithUseCase.builder.asUseCase.components
   val List(scenario1: Scenario[_, _], scenario2: Scenario[_, _], scenario3: Scenario[_, _]) = useCase1.components.reverse
 
-
-  protected val rc: RenderContext = RenderContext(new Date(), "urlBase", PathMap(emptyEngine, engineWithUseCase))(DisplayProcessor.defaultDisplayProcessor)
+  protected val rc: RenderContext = RenderContext(new Date(), "urlBase", PathMap(emptyEngine, engineWithUseCase))(displayProcessorModifiedForSituations)
 }
 
 trait KeysForRendering {
@@ -104,7 +104,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     typeKey -> scenarioTypeName,
     titleKey -> scenario1.title,
     linkKey -> expectedForScenario1Link,
-    situationKey -> scenario1.situation)
+    situationKey -> "Summary(1)")
 
 
   protected val expectedForScenario2Depth0 = Map(
@@ -112,7 +112,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     typeKey -> scenarioTypeName,
     titleKey -> scenario2.title,
     linkKey -> expectedForScenario2Link,
-    situationKey -> scenario2.situation)
+    situationKey -> "Summary(2)")
 
 
   protected val expectedForScenario3Depth0 = Map(
@@ -120,7 +120,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     typeKey -> scenarioTypeName,
     titleKey -> scenario3.title,
     linkKey -> expectedForScenario3Link,
-    situationKey -> scenario3.situation)
+    situationKey ->  "Summary(3)")
 
 
   protected val expectedForUseCase1Depth0 = Map(
@@ -216,12 +216,12 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
       typeKey -> scenarioTypeName,
       titleKey -> scenario1.title,
       linkKey -> expectedForScenario1Link,
-      situationKey -> scenario1.situation) because { case (rc, s: Scenario[_, _]) =>
+      situationKey ->  "Summary(1)") because { case (rc, s: Scenario[_, _]) =>
       makeLink(rc, s) ++ Map(
         idKey -> rc.idPath(s),
         typeKey -> findTypeName(s),
         titleKey -> s.title,
-        situationKey -> s.situation)
+        situationKey -> rc.displayProcessor.summarize(s.situation))
     }
 
     (rc, scenario2) produces Map(
@@ -229,7 +229,7 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
       typeKey -> scenarioTypeName,
       titleKey -> scenario2.title,
       linkKey -> expectedForScenario2Link,
-      situationKey -> scenario2.situation)
+      situationKey ->  "Summary(2)")
 
   }
 

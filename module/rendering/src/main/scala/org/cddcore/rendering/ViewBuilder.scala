@@ -22,7 +22,7 @@ object Renderer extends ExpectedForTemplates {
 
   def pathMap(ec: EC) = PathMap(ec)
 
-  def renderContext(ec: EC)(implicit renderConfiguration: RenderConfiguration) =
+  def renderContext(ec: EC)(implicit renderConfiguration: RenderConfiguration, displayProcessor: DisplayProcessor) =
     RenderContext(renderConfiguration.date, renderConfiguration.urlBase, pathMap(ec))
 
   def withDescendents(ec: EC): List[EC] = ec :: Templates.findChildren(ec).flatMap(withDescendents)
@@ -57,7 +57,7 @@ object Renderer extends ExpectedForTemplates {
 class EngineComponentPimper(ec: EngineComponent[_, _]) {
   type EC = EngineComponent[_, _]
 
-  def renderContext(implicit renderConfiguration: RenderConfiguration) = Renderer.renderContext((ec))
+  def renderContext(implicit renderConfiguration: RenderConfiguration, displayProcessor: DisplayProcessor) = Renderer.renderContext((ec))
 
   def toHtml(implicit rc: RenderContext = renderContext) = Renderer.toHtml(ec)
 

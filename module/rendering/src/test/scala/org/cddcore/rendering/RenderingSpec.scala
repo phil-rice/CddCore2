@@ -34,6 +34,7 @@ class RenderingSpec extends CddSpec with ExpectedForTemplates {
   }
 
   "withChildrenPathMaps" should "be" in {
+    implicit val dp = displayProcessorModifiedForSituations
     implicit val renderDefintion = SimpleRenderConfiguration("urlBase")
     implicit val rc = engineWithUseCase.renderContext
 
@@ -56,6 +57,7 @@ class RenderingSpec extends CddSpec with ExpectedForTemplates {
   }
 
   "toSingleMap" should "be" in {
+    implicit val dp = displayProcessorModifiedForSituations
     implicit val renderDefintion = SimpleRenderConfiguration("urlBase")
     implicit val rc = engineWithUseCase.renderContext
 
