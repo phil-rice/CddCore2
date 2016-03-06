@@ -3,7 +3,8 @@ package org.cddcore.rendering
 import java.io.StringWriter
 
 import org.cddcore.engine.{Engine2, Engine, AbstractEngine}
-import org.cddcore.engine.enginecomponents.{DisplayProcessor, Scenario, UseCase, EngineComponent}
+import org.cddcore.engine.enginecomponents.{Scenario, UseCase, EngineComponent}
+import org.cddcore.utilities.DisplayProcessor
 
 
 case class TemplateNames(engineName: String, useCaseName: String, scenarioName: String) {

@@ -8,6 +8,7 @@ import com.github.mustachejava.{ObjectHandler, DefaultMustacheFactory}
 import com.twitter.mustache.ScalaObjectHandler
 import org.cddcore.engine.enginecomponents._
 import org.cddcore.engine.{Engine, Engine2}
+import org.cddcore.utilities.DisplayProcessor
 
 import scala.collection.convert.WrapAsJava
 
