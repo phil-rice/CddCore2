@@ -1,7 +1,5 @@
 package org.cddcore.utilities
 
-import org.cddcore.utilities.Strings
-
 class StringsSpec extends CddSpec {
 
   "The Strings.findFirst" should "extract the first chunk that matches the criteria " in {

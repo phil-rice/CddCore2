@@ -1,7 +1,7 @@
 package org.cddcore.rendering
 
-import org.cddcore.engine.enginecomponents.{UseCase, EngineComponent}
-import org.cddcore.engine.{AbstractEngine, FoldLeftEngine, Engine}
+import org.cddcore.engine.AbstractEngine
+import org.cddcore.engine.enginecomponents.{EngineComponent, UseCase}
 
 
 object PathMap extends TestObjectsForRendering {

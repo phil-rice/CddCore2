@@ -1,7 +1,7 @@
 package org.cddcore.engine
 
 import org.cddcore.engine.enginecomponents._
-import org.cddcore.utilities.{Monitor, Lens}
+import org.cddcore.utilities.{DisplayProcessor, Lens, Monitor}
 
 import scala.language.implicitConversions
 
@@ -87,7 +87,7 @@ object DecisionTree extends DecisionTreeValidator {
     DecisionNode(s, trueNode = ConclusionNode[P, R](trueAnchor, trueSituations), falseNode = ConclusionNode(falseAnchor, falseSituations))
   }
 
-  def addOne[P, R](mockEngine: P => R, dt: DecisionTree[P, R], s: Scenario[P, R])(implicit monitor: Monitor): DecisionTree[P, R] = {
+  def addOne[P, R](mockEngine: P => R, dt: DecisionTree[P, R], s: Scenario[P, R])(implicit monitor: Monitor, dp: DisplayProcessor): DecisionTree[P, R] = {
     monitor(s"DecisionTree.addOne($s)", {
       dt.lensFor(mockEngine, s).
         transform(dt, { case cn: ConclusionNode[P, R] =>
@@ -110,7 +110,7 @@ object DecisionTree extends DecisionTreeValidator {
     })
   }
 
-  def apply[P, R](mockEngine: P => R, scenarios: Seq[Scenario[P, R]])(implicit monitor: Monitor): DecisionTree[P, R] = {
+  def apply[P, R](mockEngine: P => R, scenarios: Seq[Scenario[P, R]])(implicit monitor: Monitor, dp: DisplayProcessor): DecisionTree[P, R] = {
     type DT = DecisionTree[P, R]
     monitor[DT](s"DecisionTree.apply(count of Scenarios is ${scenarios.size}",{
       scenarios match {

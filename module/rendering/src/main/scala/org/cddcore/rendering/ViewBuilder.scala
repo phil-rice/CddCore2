@@ -2,8 +2,8 @@ package org.cddcore.rendering
 
 import java.io.StringWriter
 
-import org.cddcore.engine.{Engine2, Engine, AbstractEngine}
-import org.cddcore.engine.enginecomponents.{Scenario, UseCase, EngineComponent}
+import org.cddcore.engine.Engine
+import org.cddcore.engine.enginecomponents.{EngineComponent, Scenario, UseCase}
 import org.cddcore.utilities.DisplayProcessor
 
 

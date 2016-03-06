@@ -1,14 +1,18 @@
 package org.cddcore.engine.enginecomponents
 
+import org.cddcore.utilities.DisplayProcessor
+
 class ReasonInvalidException(s: Scenario[_, _])
   extends Exception(s"Scenario defined at ${s.definedInSourceCodeAt} cannot be added because the reason given isn't actually true")
 
-class CannotAddScenarioException(s: Scenario[_, _], existing: Scenario[_, _], actual: Any) extends Exception(
+class CannotAddScenarioException(s: Scenario[_, _], existing: Scenario[_, _], actual: Any)(implicit dp: DisplayProcessor) extends Exception(
   s"Scenario defined at ${s.definedInSourceCodeAt} conflicts with ${existing.definedInSourceCodeAt}\n" +
-    s"Scenario being added is $s\n" +
-    s"Scenario already existing is $existing\n" +
-    s"If it was added, would come to result $actual"
-)
+    s"Scenario being added is ${dp(s)}\n" +
+    s"Scenario already existing is ${dp(existing)}\n" +
+    s"If it was added, would come to result ${dp(actual)}") {
+  println("In CannotAddScenarioException. dp is " + dp)
+}
+
 
 object AssertionInvalidException {
   def apply(s: Scenario[_, _], actualValue: Any) = s.assertion match {
@@ -29,6 +33,7 @@ class ScenarioCannotHaveWhenByAndBecauseException(definedInSourceCodeAt: String)
 class ScenarioCannotHaveSecondByException(definedInSourceCodeAt: String) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
 
 class ScenarioCannotHaveSecondBecauseException(definedInSourceCodeAt: String) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
+
 class ScenarioCannotHaveSeconByRecursionException(definedInSourceCodeAt: String) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
 
 class ScenarioCannotHaveSecondWhenException(definedInSourceCodeAt: String) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")

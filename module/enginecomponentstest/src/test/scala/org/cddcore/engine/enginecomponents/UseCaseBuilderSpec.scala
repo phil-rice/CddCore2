@@ -1,6 +1,5 @@
 package org.cddcore.engine.enginecomponents
 
-import org.cddcore.engine.enginecomponents.{UseCase, Scenario, EngineComponent}
 import org.cddcore.utilities.{CddSpec, HierarchyBuilder}
 
 

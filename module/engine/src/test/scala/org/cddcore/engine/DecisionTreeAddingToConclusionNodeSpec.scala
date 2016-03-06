@@ -1,7 +1,6 @@
 package org.cddcore.engine
 
 import org.cddcore.engine.enginecomponents.Scenario
-import org.cddcore.utilities.{Monitor, CddSpec}
 
 import scala.language.implicitConversions
 

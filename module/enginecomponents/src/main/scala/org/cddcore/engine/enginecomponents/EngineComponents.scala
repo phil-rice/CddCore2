@@ -1,6 +1,6 @@
 package org.cddcore.engine.enginecomponents
 
-import org.cddcore.utilities.Hierarchy
+import org.cddcore.utilities.{DisplayProcessor, Hierarchy, ToSummary}
 
 class AddedFinderNotActuallAnException extends Exception
 
@@ -23,7 +23,7 @@ trait EngineComponent[P, R] {
   def title: String
 }
 
-object UseCase{
+object UseCase {
   implicit def useCaseHierarcy[P, R] =
     new Hierarchy[UseCase[P, R], EngineComponent[P, R]] {
       def withNewChild(h: UseCase[P, R], child: EngineComponent[P, R]): UseCase[P, R] =
@@ -33,13 +33,14 @@ object UseCase{
         case oldHead :: tail => h.copy(components = fn(oldHead) :: tail)
       }
 
-      def currentChild(h: UseCase[P, R])= h.components.headOption
+      def currentChild(h: UseCase[P, R]) = h.components.headOption
 
       def childToHolder(child: EngineComponent[P, R]): UseCase[P, R] = child.asInstanceOf[UseCase[P, R]]
     }
 }
 
-case class UseCase[P, R](title: String, components: List[EngineComponent[P, R]] = List(), comment: Option[String] = None, definedInSourceCodeAt: String) extends EngineComponent[P, R] {
+case class UseCase[P, R](title: String, components: List[EngineComponent[P, R]] = List(), comment: Option[String] = None, definedInSourceCodeAt: String) extends EngineComponent[P, R] with ToSummary {
   def allScenarios = components.reverse.flatMap(_.allScenarios)
 
+  override def toSummary(displayProcessor: DisplayProcessor): String = s"UseCase($title${comment.map(c => s",$c").getOrElse("")})"
 }

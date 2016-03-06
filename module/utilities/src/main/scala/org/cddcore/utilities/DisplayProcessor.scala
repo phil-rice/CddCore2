@@ -6,29 +6,34 @@ object DisplayProcessor {
   implicit val defaultDisplayProcessor = SimpleDisplayProcessor(List(), List(), List())
 
   protected case class SimpleDisplayProcessor(htmlers: List[DpFunction], summarizers: List[DpFunction], detailers: List[DpFunction]) extends DisplayProcessor {
-    def apply(list: List[DpFunction], value: Any): String = {
+    def applyFn(list: List[DpFunction], value: Any, fn: Any => String): String = {
       val tuple = (this, value)
       list.find(_.isDefinedAt(tuple)) match {
         case Some(f) => f(tuple)
-        case _ => value.toString
+        case _ => value match {
+          case (a, b) => s"(${fn(a)},${fn(b)})"
+          case (a, b, c) => s"(${fn(a)},${fn(b)},${fn(c)})"
+          case x: List[_] => x.map(fn).mkString("List(", ",", ")")
+          case m: Map[_, _] => m.map { case (k, v) => (fn(k), fn(v)) }.mkString("Map(", ",", ")")
+          case _ => value.toString
+        }
       }
     }
 
-    def html(x: Any) = x match {
+    def html(x: Any): String = x match {
       case h: ToHtml => h.toHtml(this)
-      case _ => apply(htmlers, x)
+      case _ => applyFn(htmlers, x, html(_))
     }
 
-    def summarize(x: Any): String = x match {
+    def apply(x: Any): String = x match {
       case h: ToSummary => h.toSummary(this)
-      case _ => apply(summarizers, x)
+      case _ => applyFn(summarizers, x, apply(_))
     }
 
     def detailed(x: Any): String = x match {
       case h: ToDetailed => h.toDetailed(this)
-      case _ => apply(detailers, x)
+      case _ => applyFn(detailers, x, detailed(_))
     }
-
 
     def withHtml(htmler: DpFunction) = copy(htmlers = htmler :: htmlers)
 
@@ -42,7 +47,7 @@ object DisplayProcessor {
 trait DisplayProcessor {
   def html(x: Any): String
 
-  def summarize(x: Any): String
+  def apply(x: Any): String
 
   def detailed(x: Any): String
 }

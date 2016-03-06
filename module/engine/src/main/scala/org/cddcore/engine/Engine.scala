@@ -1,10 +1,9 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents.{ByRecursionReason, Scenario, EngineComponent, UseCase}
-import org.cddcore.utilities.{ChildLifeCycle, HierarchyBuilder}
+import org.cddcore.engine.enginecomponents.{EngineComponent, Scenario, UseCase}
+import org.cddcore.utilities.{ChildLifeCycle, DisplayProcessor, HierarchyBuilder}
 
 import scala.language.implicitConversions
-import scala.util.Try
 
 
 trait PartialFunctionWithDescription[P, R] extends PartialFunction[P, R] {
@@ -49,7 +48,7 @@ class EngineBuilder[P, R](initialTitle: String, definedInSourceCodeAt: String) e
 
 }
 
-abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends EngineComponent[P, R] {
+abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt())(implicit dp: DisplayProcessor) extends EngineComponent[P, R] {
   implicit val builder = new EngineBuilder[P, R](initialTitle, definedInSourceCodeAt)
 
   def title: String = builder.title
@@ -110,14 +109,15 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
   def last = builder.last
 }
 
-class Engine[P, R](initialTitle: String = "Untitled", definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends AbstractEngine[P, R](initialTitle, definedInSourceCodeAt) with Function[P, R] {
+class Engine[P, R](initialTitle: String = "Untitled", definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt())(implicit dp: DisplayProcessor) extends AbstractEngine[P, R](initialTitle, definedInSourceCodeAt) with Function[P, R] {
 }
 
-class Engine2[P1, P2, R](initialTitle: String = "Untitled", definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt()) extends AbstractEngine[(P1, P2), R](initialTitle, definedInSourceCodeAt) with Function2[P1, P2, R] {
+class Engine2[P1, P2, R](initialTitle: String = "Untitled", definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt())(implicit val dp: DisplayProcessor) extends AbstractEngine[(P1, P2), R](initialTitle, definedInSourceCodeAt) with Function2[P1, P2, R] {
+  println("In engine2: dp is " + dp)
   def apply(p1: P1, p2: P2): R = apply((p1, p2))
 }
 
-class FoldLeftEngine[Acc, V] extends Engine2[Acc, V, Acc]
+class FoldLeftEngine[Acc, V](implicit dp: DisplayProcessor) extends Engine2[Acc, V, Acc]
 
 
 

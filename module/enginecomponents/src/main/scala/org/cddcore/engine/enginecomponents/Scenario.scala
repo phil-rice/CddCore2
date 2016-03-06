@@ -1,6 +1,6 @@
 package org.cddcore.engine.enginecomponents
 
-import org.cddcore.utilities.{CodeHolder, ChildLifeCycle}
+import org.cddcore.utilities.{ChildLifeCycle, CodeHolder, DisplayProcessor, ToSummary}
 
 import scala.language.implicitConversions
 import scala.reflect.macros._
@@ -22,7 +22,7 @@ object Scenario {
 
 }
 
-case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: String, title: String) extends EngineComponent[P, R] with DefinedInSourceCodeAt {
+case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: String, title: String) extends EngineComponent[P, R] with DefinedInSourceCodeAt with ToSummary {
   def allScenarios = Seq(this)
 
   def apply(engine: P => R, p: P) = reason(engine, p)
@@ -52,6 +52,8 @@ case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion:
   }
 
   override def toString = s"Scenario($situation ${assertion.prettyDescription} ${reason.prettyDescription})/$definedInSourceCodeAt"
+
+  override def toSummary(dp: DisplayProcessor): String = s"Scenario $definedInSourceCodeAt ${dp(situation)} ${dp(assertion)})"
 }
 
 case class FromSituationScenarioBuilder[P, R](situation: P) {

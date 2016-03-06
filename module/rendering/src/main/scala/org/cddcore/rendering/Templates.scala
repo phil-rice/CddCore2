@@ -1,16 +1,13 @@
 package org.cddcore.rendering
 
-import java.io.{OutputStreamWriter, StringReader}
+import java.io.StringReader
 import java.util
 import java.util.Date
 
-import com.github.mustachejava.{ObjectHandler, DefaultMustacheFactory}
-import com.twitter.mustache.ScalaObjectHandler
+import com.github.mustachejava.DefaultMustacheFactory
 import org.cddcore.engine.enginecomponents._
 import org.cddcore.engine.{Engine, Engine2}
-import org.cddcore.utilities.DisplayProcessor
-
-import scala.collection.convert.WrapAsJava
+import org.cddcore.utilities.{DisplayProcessor, Maps}
 
 trait RenderConfiguration {
   def date: Date
@@ -41,7 +38,7 @@ case class RenderContext(reportDate: Date, urlBase: String, pathMap: PathMap)(im
 }
 
 trait TestObjectsForRendering {
-  val displayProcessorModifiedForSituations = DisplayProcessor.defaultDisplayProcessor.withSummarize { case x => s"Summary($x)" }
+  val displayProcessorModifiedForSituations = DisplayProcessor.defaultDisplayProcessor.withSummarize { case (dp, x) => s"Summary($x)" }
   protected val emptyEngine = new Engine[Int, String]("someEngineTitle") {}
   protected val engineWithUseCase = new Engine[Int, String]("someEngineTitle2") {
     useCase("someUseCase") {
@@ -121,7 +118,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     typeKey -> scenarioTypeName,
     titleKey -> scenario3.title,
     linkKey -> expectedForScenario3Link,
-    situationKey ->  "Summary(3)")
+    situationKey -> "Summary(3)")
 
 
   protected val expectedForUseCase1Depth0 = Map(
@@ -173,10 +170,21 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
     }
     (rc, engineWithUseCase) produces Map(linkKey -> expectedForEngineWithUseCaseLink)
     (rc, useCase1) produces Map(linkKey -> expectedForUseCase1Link)
-    (rc, scenario1) produces Map(linkKey -> expectedForScenario1Link)
     (rc, scenario2) produces Map(linkKey -> expectedForScenario2Link)
     (rc, scenario3) produces Map(linkKey -> expectedForScenario3Link)
   }
+
+
+  implicit val displayProcessorRemovingLinks =
+    DisplayProcessor.defaultDisplayProcessor
+      .withSummarize {
+        case (dp, m) if m.isInstanceOf[Map[_, _]] =>
+          import Maps._
+          println("Trying to get rid of link")
+          val transformedMap = m.asInstanceOf[Map[_, _]].recursivelyTransform { case (s, v) if s == linkKey => println("LINK FOUND"); (linkKey, "?") }
+
+          transformedMap.toString
+      }
 
   private def ucAndS(uc: List[EngineComponent[_, _]], s: List[EngineComponent[_, _]]) = Map(useCasesKey -> uc, scenariosKey -> s)
 
@@ -184,18 +192,31 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
     ucAndS(ecs.filter(_.isInstanceOf[UseCase[_, _]]), ecs.filter(_.isInstanceOf[Scenario[_, _]]))
 
   val findChildren = new Engine[EngineComponent[_, _], List[EngineComponent[_, _]]] {
-    engineWithUseCase produces List(useCase1) because { case e: Engine[_, _] => e.asUseCase.components }
+    engineWithUseCase produces List(useCase1) because {
+      case e: Engine[_, _] => e.asUseCase.components
+    }
     emptyEngine produces List()
-    useCase1 produces List(scenario1, scenario2, scenario3) because { case uc: UseCase[_, _] => uc.components.reverse }
-    scenario1 produces List() because { case s: Scenario[_, _] => List() }
+    useCase1 produces List(scenario1, scenario2, scenario3) because {
+      case uc: UseCase[_, _] => uc.components.reverse
+    }
+    scenario1 produces List() because {
+      case s: Scenario[_, _] => List()
+    }
   }
   val findTypeName = new Engine[EngineComponent[_, _], String] {
-    engineWithUseCase produces engineTypeName because { case e: Engine[_, _] => engineTypeName }
-    useCase1 produces useCaseTypeName because { case u: UseCase[_, _] => useCaseTypeName }
-    scenario1 produces scenarioTypeName because { case s: Scenario[_, _] => scenarioTypeName }
+    engineWithUseCase produces engineTypeName because {
+      case e: Engine[_, _] => engineTypeName
+    }
+    useCase1 produces useCaseTypeName because {
+      case u: UseCase[_, _] => useCaseTypeName
+    }
+    scenario1 produces scenarioTypeName because {
+      case s: Scenario[_, _] => scenarioTypeName
+    }
   }
 
   object renderDepth0 extends Engine2[RenderContext, EngineComponent[_, _], Map[String, _]] {
+    println("In renderDepth0. dp is" + dp)
     (rc, useCase1) produces Map(
       idKey -> rc.idPath(useCase1),
       typeKey -> useCaseTypeName,
@@ -217,12 +238,12 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
       typeKey -> scenarioTypeName,
       titleKey -> scenario1.title,
       linkKey -> expectedForScenario1Link,
-      situationKey ->  "Summary(1)") because { case (rc, s: Scenario[_, _]) =>
+      situationKey -> "Summary(1)") because { case (rc, s: Scenario[_, _]) =>
       makeLink(rc, s) ++ Map(
         idKey -> rc.idPath(s),
         typeKey -> findTypeName(s),
         titleKey -> s.title,
-        situationKey -> rc.displayProcessor.summarize(s.situation))
+        situationKey -> rc.displayProcessor(s.situation))
     }
 
     (rc, scenario2) produces Map(
@@ -230,7 +251,7 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
       typeKey -> scenarioTypeName,
       titleKey -> scenario2.title,
       linkKey -> expectedForScenario2Link,
-      situationKey ->  "Summary(2)")
+      situationKey -> "Summary(2)")
 
   }
 
@@ -249,8 +270,14 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
   }
 
   def forMustache(s: Any): Any = s match {
-    case m: Map[_, _] => m.foldLeft(new util.HashMap[String, Any]) { case (acc, (k: String, v)) => acc.put(k, forMustache(v)); acc }
-    case l: List[_] => l.foldLeft(new util.ArrayList[Any]) { (acc, v) => acc.add(forMustache(v)); acc }
+    case m: Map[_, _] => m.foldLeft(new util.HashMap[String, Any]) {
+      case (acc, (k: String, v)) => acc.put(k, forMustache(v));
+        acc
+    }
+    case l: List[_] => l.foldLeft(new util.ArrayList[Any]) {
+      (acc, v) => acc.add(forMustache(v));
+        acc
+    }
     case _ => s
   }
 

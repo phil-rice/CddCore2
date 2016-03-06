@@ -1,6 +1,5 @@
 package org.cddcore.engine.enginecomponents
 
-import org.cddcore.engine.enginecomponents.Scenario
 import org.cddcore.utilities.{CddSpec, NullLifeCycle}
 
 

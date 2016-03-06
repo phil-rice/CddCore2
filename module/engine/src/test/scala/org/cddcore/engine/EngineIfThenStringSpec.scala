@@ -1,12 +1,7 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents.Scenario
-import org.cddcore.utilities.CddSpec
-
 
 class EngineIfThenStringSpec extends CddEngineSpec {
-
-  import Scenario._
 
   "An engine with no scenarios" should "have a simple ifThenString" in {
     new Engine[Int, String] {
