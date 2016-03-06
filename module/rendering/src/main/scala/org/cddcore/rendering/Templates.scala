@@ -16,8 +16,6 @@ trait RenderConfiguration {
 
   def urlBase: String
 
-  implicit def displayProcessor: DisplayProcessor
-
 }
 
 object RenderConfiguration {
@@ -26,13 +24,11 @@ object RenderConfiguration {
     def date: Date = new Date
 
     def urlBase: String = "./target/cdd/"
-
-    implicit val displayProcessor = DisplayProcessor.defaultDisplayProcessor
   }
 
 }
 
-case class SimpleRenderConfiguration(urlBase: String, date: Date = new Date())(implicit val displayProcessor: DisplayProcessor) extends RenderConfiguration
+case class SimpleRenderConfiguration(urlBase: String, date: Date = new Date()) extends RenderConfiguration
 
 case class RenderContext(reportDate: Date, urlBase: String, pathMap: PathMap)(implicit val displayProcessor: DisplayProcessor) {
   override def toString = getClass.getSimpleName()
@@ -76,6 +72,7 @@ trait KeysForRendering {
   val titleKey = "title"
   val linkUrlKey = "linkUrl"
   val iconUrlKey = "iconUrl"
+
 }
 
 trait Icons {
@@ -106,21 +103,24 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     idKey -> rc.idPath(scenario1),
     typeKey -> scenarioTypeName,
     titleKey -> scenario1.title,
-    linkKey -> expectedForScenario1Link)
+    linkKey -> expectedForScenario1Link,
+    situationKey -> scenario1.situation)
 
 
   protected val expectedForScenario2Depth0 = Map(
     idKey -> rc.idPath(scenario2),
     typeKey -> scenarioTypeName,
     titleKey -> scenario2.title,
-    linkKey -> expectedForScenario2Link)
+    linkKey -> expectedForScenario2Link,
+    situationKey -> scenario2.situation)
 
 
   protected val expectedForScenario3Depth0 = Map(
     idKey -> rc.idPath(scenario3),
     typeKey -> scenarioTypeName,
     titleKey -> scenario3.title,
-    linkKey -> expectedForScenario3Link)
+    linkKey -> expectedForScenario3Link,
+    situationKey -> scenario3.situation)
 
 
   protected val expectedForUseCase1Depth0 = Map(
@@ -166,7 +166,7 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
     scenario3 produces scenarioIcon
   }
 
-  val makeLink = new Engine2[RenderContext, EngineComponent[_, _], Map[String, Any]]("Produces the maps for a link to a component") {
+  val makeLink = new Engine2[RenderContext, EngineComponent[_, _], Map[String, _]]("Produces the maps for a link to a component") {
     (rc, emptyEngine) produces Map(linkKey -> Map(titleKey -> "someEngineTitle", linkUrlKey -> rc.url(emptyEngine), iconUrlKey -> engineWithTestsIcon)) by {
       case (rc, ec) => Map(linkKey -> Map(titleKey -> ec.title, linkUrlKey -> rc.url(ec), iconUrlKey -> findIconUrl(ec)))
     }
@@ -215,23 +215,29 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
     (rc, scenario1) produces Map(idKey -> rc.idPath(scenario1),
       typeKey -> scenarioTypeName,
       titleKey -> scenario1.title,
-      linkKey -> expectedForScenario1Link)
+      linkKey -> expectedForScenario1Link,
+      situationKey -> scenario1.situation) because { case (rc, s: Scenario[_, _]) =>
+      makeLink(rc, s) ++ Map(
+        idKey -> rc.idPath(s),
+        typeKey -> findTypeName(s),
+        titleKey -> s.title,
+        situationKey -> s.situation)
+    }
 
     (rc, scenario2) produces Map(
       idKey -> rc.idPath(scenario2),
       typeKey -> scenarioTypeName,
       titleKey -> scenario2.title,
-      linkKey -> expectedForScenario2Link)
+      linkKey -> expectedForScenario2Link,
+      situationKey -> scenario2.situation)
 
   }
+
 
   object renderDepth1 extends Engine2[RenderContext, EngineComponent[_, _], Map[String, _]] {
     (rc, useCase1) produces expectedForUseCase1Depth1 by { case (rc, ec) =>
       val children = findChildren(ec)
-      makeLink(rc, ec) ++ Map(
-        idKey -> rc.idPath(ec),
-        typeKey -> findTypeName(ec),
-        titleKey -> ec.title,
+      renderDepth0(rc, ec) ++ Map(
         scenariosKey -> children.filter(_.isInstanceOf[Scenario[_, _]]).map(renderDepth0(rc, _)),
         useCasesKey -> children.filter(_.isInstanceOf[UseCase[_, _]]).map(renderDepth0(rc, _)))
     }

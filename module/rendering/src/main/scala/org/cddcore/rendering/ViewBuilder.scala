@@ -23,7 +23,7 @@ object Renderer extends ExpectedForTemplates {
   def pathMap(ec: EC) = PathMap(ec)
 
   def renderContext(ec: EC)(implicit renderConfiguration: RenderConfiguration) =
-    RenderContext(renderConfiguration.date, renderConfiguration.urlBase, pathMap(ec))(renderConfiguration.displayProcessor)
+    RenderContext(renderConfiguration.date, renderConfiguration.urlBase, pathMap(ec))
 
   def withDescendents(ec: EC): List[EC] = ec :: Templates.findChildren(ec).flatMap(withDescendents)
 

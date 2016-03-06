@@ -1,7 +1,7 @@
 package org.cddcore.engine
 
 import org.cddcore.engine.enginecomponents._
-import org.cddcore.utilities.Lens
+import org.cddcore.utilities.{Monitor, Lens}
 
 import scala.language.implicitConversions
 
@@ -87,26 +87,42 @@ object DecisionTree extends DecisionTreeValidator {
     DecisionNode(s, trueNode = ConclusionNode[P, R](trueAnchor, trueSituations), falseNode = ConclusionNode(falseAnchor, falseSituations))
   }
 
-  def addOne[P, R](mockEngine: P => R, dt: DecisionTree[P, R], s: Scenario[P, R]): DecisionTree[P, R] =
-    dt.lensFor(mockEngine, s).
-      transform(dt, { case cn: ConclusionNode[P, R] =>
-        if (cn.isDefinedAt(mockEngine, s.situation)) {
-          val actual = cn.mainScenario(mockEngine, s.situation)
-          if (s.assertion.valid(s.situation, actual))
-            addScenarioToConclusionNode(mockEngine, cn, s)
-          else if (s.isDefinedAt(mockEngine, cn.mainScenario.situation))
-            throw new CannotAddScenarioException(s, cn.mainScenario, actual)
-          else
-            makeDecisionNode(mockEngine, s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios)
-        } else
-          makeDecisionNode(mockEngine, cn.mainScenario, trueAnchor = cn.mainScenario, falseAnchor = s, otherScenarios = cn.scenarios)
-      })
-
-  def apply[P, R](mockEngine: P => R, scenarios: Seq[Scenario[P, R]]): DecisionTree[P, R] = scenarios match {
-    case h :: tail => tail.foldLeft[DecisionTree[P, R]](ConclusionNode(h)) {
-      (dt, s) => addOne(mockEngine, dt, s)
+  def addOne[P, R](mockEngine: P => R, dt: DecisionTree[P, R], s: Scenario[P, R])(implicit monitor: Monitor): DecisionTree[P, R] = {
+    type DT = DecisionTree[P, R]
+    monitor[DT](s"DecisionTree.addOne($s)", dt => s"DecisionTree.addOne") {
+      dt.lensFor(mockEngine, s).
+        transform(dt, { case cn: ConclusionNode[P, R] =>
+          monitor[DT](s"conditionNode $cn") {
+            if (cn.isDefinedAt(mockEngine, s.situation)) {
+              monitor("cn.isDefinedAt(s)")
+              val actual = cn.mainScenario(mockEngine, s.situation)
+              monitor(s"actual value was $actual")
+              if (s.assertion.valid(s.situation, actual))
+                monitor[DT]("Situation comes to correct conclusion in this condition node")(addScenarioToConclusionNode(mockEngine, cn, s))
+              else if (s.isDefinedAt(mockEngine, cn.mainScenario.situation)) {
+                monitor("s.isDefinedAt(cn) so the scenario cannot be added")
+                throw new CannotAddScenarioException(s, cn.mainScenario, actual)
+              } else
+                monitor[DT]("Situation comes to wrong conclusion in this condition node")(makeDecisionNode(mockEngine, s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios))
+            } else
+              monitor[DT]("cn.isNOTDefinedAt(situation)")(makeDecisionNode(mockEngine, cn.mainScenario, trueAnchor = cn.mainScenario, falseAnchor = s, otherScenarios = cn.scenarios))
+          }
+        })
     }
   }
+
+  def apply[P, R](mockEngine: P => R, scenarios: Seq[Scenario[P, R]])(implicit monitor: Monitor): DecisionTree[P, R] = {
+    type DT = DecisionTree[P, R]
+    monitor[DT](s"DecisionTree.apply(count of Scenarios is ${scenarios.size}", dt => s"DecisionTree.apply produces\n$dt") {
+      scenarios match {
+        case h :: tail => tail.foldLeft[DecisionTree[P, R]](monitor[DT](s"Initial tree is formed from $h")(ConclusionNode(h))) {
+          (dt, s) => addOne(mockEngine, dt, s)
+        }
+      }
+    }
+  }
+
+
 }
 
 object DecisionTreeLens {
@@ -187,6 +203,7 @@ case class ConclusionNode[P, R](mainScenario: Scenario[P, R], scenarios: List[Sc
 case class DecisionNode[P, R](mainScenario: Scenario[P, R], falseNode: DecisionTree[P, R], trueNode: DecisionTree[P, R]) extends DecisionTree[P, R] {
 
   import DecisionTreeLens._
+
   def title = "Decision: " + mainScenario
 
   def apply(engine: P => R, p: P) = if (mainScenario.isDefinedAt(engine, p)) trueNode(engine, p) else falseNode(engine, p)

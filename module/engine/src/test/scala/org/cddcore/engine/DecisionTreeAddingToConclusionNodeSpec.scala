@@ -1,11 +1,11 @@
 package org.cddcore.engine
 
 import org.cddcore.engine.enginecomponents.Scenario
-import org.cddcore.utilities.CddSpec
+import org.cddcore.utilities.{Monitor, CddSpec}
 
 import scala.language.implicitConversions
 
-class DecisionTreeAddingToConclusionNodeSpec extends CddNonRecursiveSpec[String,String] {
+class DecisionTreeAddingToConclusionNodeSpec extends CddNonRecursiveSpec[String, String] {
 
   import Scenario._
 
@@ -90,8 +90,6 @@ class DecisionTreeAddingToConclusionNodeSpec extends CddNonRecursiveSpec[String,
 
   "A decistion three with different simple reasons, one of them with a by" should "use the by as the main scenario" in {
     if (FutureWorkFlags.noticingScenariosWithBy) fail
-
   }
-
 
 }

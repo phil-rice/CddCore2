@@ -1,9 +1,10 @@
 package org.cddcore.utilities
 
+import java.util.logging.Logger
+
 import org.scalatest.{FlatSpec, Matchers}
 
 trait CddSpec extends FlatSpec with Matchers {
-
   def safeMake[X](x: => X) = try {
     x
   } catch {

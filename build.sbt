@@ -14,6 +14,7 @@ lazy val commonSettings = baseSettings ++ Seq(
 )
 
 lazy val utilitiesSettings = commonSettings ++ Seq(
+//  libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.6",
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersionNo
 )
 
