@@ -82,7 +82,7 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
     }.toList
 
     if (!noMocks.isEmpty)
-      throw new RecursiveScenariosWithoutMocksException(builder.mocks.keySet, noMocks)
+      throw new RecursiveScenariosWithoutMocksException(definedInSourceCodeAt, builder.mocks.keySet, noMocks)
     DecisionTree(mocks, ss)
   }
 
@@ -113,8 +113,11 @@ class Engine[P, R](initialTitle: String = "Untitled", definedInSourceCodeAt: Str
 }
 
 class Engine2[P1, P2, R](initialTitle: String = "Untitled", definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt())(implicit val dp: DisplayProcessor) extends AbstractEngine[(P1, P2), R](initialTitle, definedInSourceCodeAt) with Function2[P1, P2, R] {
-  println("In engine2: dp is " + dp)
   def apply(p1: P1, p2: P2): R = apply((p1, p2))
+}
+
+class Engine3[P1, P2, P3, R](initialTitle: String = "Untitled", definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt())(implicit val dp: DisplayProcessor) extends AbstractEngine[(P1, P2, P3), R](initialTitle, definedInSourceCodeAt) with Function3[P1, P2, P3, R] {
+  def apply(p1: P1, p2: P2, p3: P3): R = apply((p1, p2, p3))
 }
 
 class FoldLeftEngine[Acc, V](implicit dp: DisplayProcessor) extends Engine2[Acc, V, Acc]

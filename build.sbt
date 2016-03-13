@@ -27,7 +27,8 @@ lazy val utilitiesSettings = commonSettings ++ Seq(
 //)
 
 lazy val renderingSettings = commonSettings ++ Seq(
-  libraryDependencies += "com.github.spullara.mustache.java" % "scala-extensions-2.11" % "0.9.1"
+  libraryDependencies += "com.github.spullara.mustache.java" % "scala-extensions-2.11" % "0.9.1",
+  libraryDependencies += "org.json4s" %% "json4s-jackson" % "3.3.0"
 )
 
 lazy val utilities = (project in file("module/utilities")).

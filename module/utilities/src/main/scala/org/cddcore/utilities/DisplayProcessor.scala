@@ -13,8 +13,14 @@ object DisplayProcessor {
         case _ => value match {
           case (a, b) => s"(${fn(a)},${fn(b)})"
           case (a, b, c) => s"(${fn(a)},${fn(b)},${fn(c)})"
-          case x: List[_] => x.map(fn).mkString("List(", ",", ")")
-          case m: Map[_, _] => m.map { case (k, v) => (fn(k), fn(v)) }.mkString("Map(", ",", ")")
+          case m: Map[_, _] => m.map {
+            case kv@(k, v) =>
+              list.find(_.isDefinedAt(this, kv)) match {
+                case Some(f) => f(this, kv)
+                case _ => s"${fn(k)} -> ${fn(v)}"
+              }
+          }.mkString("Map(", ",", ")")
+          case l: List[_] => l.map(fn).mkString("List(", ",", ")")
           case _ => value.toString
         }
       }

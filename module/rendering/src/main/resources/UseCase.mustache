@@ -1,7 +1,9 @@
     <div id='{{ id }}' class='usecase'>
-        <div class='usecaseTitle'> {{> link}} </div>
+        <div class='usecaseTitle'> {{> Link}} </div>
+        <div class="useCasesScenariosSummary">
+{{#scenarioIcons}}{{>scenarioIcon}}{{/scenarioIcons}}        </div>
         <div class='useCasesScenarios'>
 {{#scenarios}}{{>Scenario}}{{/scenarios}}
         </div><!--useCasesScenarios -->
-{{#UseCase}}{{>UseCase}}{{/UseCase}}
+{{#useCases}}{{>UseCase}}{{/useCases}}
     </div><!-- usecase' -->

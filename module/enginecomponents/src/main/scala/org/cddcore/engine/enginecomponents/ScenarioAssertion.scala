@@ -19,7 +19,6 @@ case class EqualsAssertion[P, R](expected: R) extends ScenarioAssertion[P, R] {
   def prettyDescription: String = s"produces $expected"
 
   override def toSummary(dp: DisplayProcessor): String = {
-    println(s"In equals assertion. DP is $dp. Result is ${dp(expected)}")
     s"produces ${dp(expected)}"
   }
 }

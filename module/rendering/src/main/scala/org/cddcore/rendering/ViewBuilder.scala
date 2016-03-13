@@ -28,17 +28,14 @@ object Renderer extends ExpectedForTemplates {
 
   def withDescendents(ec: EC): List[EC] = ec :: Templates.findChildren(ec).flatMap(withDescendents)
 
-  def scalaMap(ec: EC)(implicit rc: RenderContext): Map[String, Any] = Templates.renderDepth1(rc, ec)
+  def scalaMap(ec: EC)(implicit rc: RenderContext): Map[String, Any] = Templates.renderData(rc, ec)
 
   def templateName(ec: EC) = s"${Templates.findTypeName(ec)}.mustache"
 
   def javaMap(ec: EC)(implicit rc: RenderContext) = Templates.forMustache(scalaMap(ec))
 
   def toHtml(ec: EC)(implicit rc: RenderContext = renderContext(ec)) = {
-    val writer = new StringWriter()
-    Mustache.apply(templateName(ec)).execute(writer, javaMap(ec))
-    writer.flush()
-    writer.toString
+    Mustache.apply(templateName(ec)).apply(ec)
   }
 
   def mapList[X](list: List[Any], fn: EC => X): List[Any] = list.map { x =>
@@ -51,7 +48,28 @@ object Renderer extends ExpectedForTemplates {
 
   def main(args: Array[String]) {
     implicit val rc = engineWithUseCase.renderContext
-    println(useCase1.toSingleMaps)
+    val paths = engineWithUseCase.withChildrenPaths.map(path => path.map(_.title).mkString(","))
+    println("paths")
+    println(paths.mkString("\n"))
+    println
+    println
+    println
+    println
+
+    val maps = engineWithUseCase.withChildrenPaths.map(Templates.renderPath(rc, _))
+    println(maps.map(JsonForRendering.pretty).zip(paths).map { case (json, path) => path + "\n" + json }.mkString("\n\n"))
+    println
+    println
+    //    println(scenario1.toSingleMaps.map(m => Mustache.apply("Report.mustache").apply(m)).mkString("\n\n"))
+    //    println(useCase1.toSingleMaps.map(m => Mustache.apply("Report.mustache").apply(m)).mkString("\n\n"))
+    println(maps.zip(paths).map { case (m, path) => path + "\n" + Mustache.apply("Report.mustache").apply(m) }.mkString("\n\n"))
+
+
+    for (path <- engineWithUseCase.withChildrenPaths) {
+      val map = Templates.renderPath(rc, path)
+      val html = Mustache.apply("Report.mustache").apply(map)
+      rc.makeFile(path.head, html)
+    }
   }
 }
 
@@ -62,11 +80,12 @@ class EngineComponentPimper(ec: EngineComponent[_, _]) {
 
   def toHtml(implicit rc: RenderContext = renderContext) = Renderer.toHtml(ec)
 
-  def withChildrenPaths(implicit renderContext: RenderContext = renderContext): List[List[EC]] = withChildrenPaths(ec, List())
 
   def toJavaMap(implicit renderContext: RenderContext = renderContext) = Renderer.javaMap(ec)
 
   def toMap(implicit renderContext: RenderContext = renderContext) = Renderer.scalaMap(ec)
+
+  def withChildrenPaths(implicit renderContext: RenderContext = renderContext): List[List[EC]] = withChildrenPaths(ec, List())
 
   protected def withChildrenPaths(ec: EngineComponent[_, _], path: List[EC])(implicit renderContext: RenderContext): List[List[EC]] = {
     val thisPath = ec :: path
