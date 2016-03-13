@@ -17,3 +17,21 @@ div {
 	width: auto;
 	overflow: auto;
 }
+
+.usecaseOnPath{
+   border: 1px solid green;
+}
+
+.usecaseSelected{
+   border: 2px solid green;
+}
+.scenarioSelected{
+   border: 2px solid green;
+}
+
+.ifOnPath{
+   border: 1px solid green;
+}
+.conclusionNodeSelected{
+   border: 2px solid green;
+}

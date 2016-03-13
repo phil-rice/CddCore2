@@ -153,11 +153,13 @@ trait KeysForRendering {
 
   val definedAtKey = "definedAt"
   val selectedPostFixKey = "selected"
+  val trueFalseKey = "trueFalseKey"
 
   val conclusionNodeKey = "conclusionNode"
   val decisionNodeKey = "decisionNode"
   val conditionKey = "condition"
   val conclusionKey = "conclusion"
+  val reasonKey = "reason"
   val trueNodeKey = "trueNode"
   val falseNodeKey = "falseNode"
 
@@ -518,36 +520,52 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
 
 object DecisionTreeRendering extends KeysForRendering {
 
-  def findSelected[P, R](engine: P => R, path: List[DecisionTree[P, R]], ec: EngineComponent[P, R]) = {
-    val raw = mapHoldingSelected(path, ec)
-    (path.headOption, ec) match {
-      case (Some(dn: DecisionNode[P, R]), s: Scenario[P, R]) if (raw(selectedPostFixKey) == "" && dn.mainScenario.isDefinedAt(engine, s.situation)) =>
-        Map(selectedPostFixKey -> "WouldBeTrue")
-      case _ => raw
+  object DecisionTreeRenderData {
+    def apply[P, R](engine: Engine[P, R], currentComponent: EngineComponent[P, R])(implicit dp: DisplayProcessor): DecisionTreeRenderData[P, R] = {
+      val (path, scenario) = currentComponent match {
+        case s: Scenario[P, R] => (engine.decisionTree.pathFor(engine, s).reverse, Some(s))
+        case _ => (List(), None)
+      }
+      DecisionTreeRenderData(engine, scenario, path)
     }
   }
 
-  def renderConclusionNode[P, R](engine: P => R, cn: ConclusionNode[P, R], path: List[DecisionTree[P, R]])(implicit dp: DisplayProcessor): Map[String, Any] = {
-    findSelected(engine, path, cn) ++ Map(conclusionKey -> cn.mainScenario.toSummary(dp))
+  case class DecisionTreeRenderData[P, R](engine: P => R, selectedScenario: Option[Scenario[P, R]], pathThroughDecisionTree: List[DecisionTree[P, R]])(implicit val dp: DisplayProcessor) {
+    def findTrueFalse(dt: DecisionTree[P, R]): Map[String, Any] = Map(trueFalseKey -> (selectedScenario match {
+      case Some(s) => dt.mainScenario.isDefinedAt(engine, s.situation).toString
+      case _ => ""
+    }))
+
+    def selectedMap(dt: DecisionTree[P, R]): Map[String, Any] = mapHoldingSelected(pathThroughDecisionTree, dt)
+
+    def selectedAndTrueFalseMap(dt: DecisionTree[P, R]): Map[String, Any] = findTrueFalse(dt) ++ selectedMap(dt)
   }
 
-  def renderDecisionNode[P, R](engine: P => R, dn: DecisionNode[P, R], path: List[DecisionTree[P, R]])(implicit dp: DisplayProcessor): Map[String, Any] = {
-    findSelected(engine, path, dn) ++ Map(
-      conditionKey -> dn.mainScenario.toSummary(dp),
-      trueNodeKey -> render(engine, dn.trueNode, path),
-      falseNodeKey -> render(engine, dn.falseNode, path))
-  }
+  def findSelected[P, R](rd: DecisionTreeRenderData[P, R], dt: DecisionTree[P, R]) = rd.findTrueFalse(dt) ++ rd.selectedMap(dt)
 
   def renderEngine[P, R](engine: Engine[P, R], ec: EngineComponent[P, R]): Map[String, Any] = {
-    val path: List[DecisionTree[P, R]] = ec match {
-      case s: Scenario[P, R] => engine.decisionTree.pathFor(engine, s)
-      case _ => List()
-    }
-    render(engine, engine.decisionTree, path.reverse)
+    val rd = DecisionTreeRenderData(engine, ec)
+    render(rd, engine.decisionTree)
   }
 
-  def render[P, R](engine: P => R, dt: DecisionTree[P, R], path: List[DecisionTree[P, R]]): Map[String, Any] = dt match {
-    case cn: ConclusionNode[_, _] => Map(conclusionNodeKey -> renderConclusionNode(engine, cn, path), decisionNodeKey -> List())
-    case dn: DecisionNode[_, _] => Map(conclusionNodeKey -> List(), decisionNodeKey -> renderDecisionNode(engine, dn, path))
+  def render[P, R](rd: DecisionTreeRenderData[P, R], dt: DecisionTree[P, R]): Map[String, Any] = dt match {
+    case cn: ConclusionNode[_, _] => Map(conclusionNodeKey -> renderConclusionNode(rd, cn), decisionNodeKey -> List())
+    case dn: DecisionNode[_, _] => Map(conclusionNodeKey -> List(), decisionNodeKey -> renderDecisionNode(rd, dn))
   }
+
+  def renderConclusionNode[P, R](rd: DecisionTreeRenderData[P, R], cn: ConclusionNode[P, R]): Map[String, Any] = {
+    rd.selectedAndTrueFalseMap(cn) ++ Map(
+      conclusionKey -> cn.mainScenario.assertion.toSummary(rd.dp),
+      reasonKey -> cn.mainScenario.reason.prettyDescription
+    )
+  }
+
+  def renderDecisionNode[P, R](rd: DecisionTreeRenderData[P, R], dn: DecisionNode[P, R]): Map[String, Any] = {
+    rd.selectedAndTrueFalseMap(dn) ++ Map(
+      reasonKey -> dn.mainScenario.reason.prettyDescription,
+      trueNodeKey -> render(rd, dn.trueNode),
+      falseNodeKey -> render(rd, dn.falseNode))
+  }
+
+
 }
