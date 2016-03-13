@@ -7,7 +7,17 @@
       <link href="stylesheets/css.css" rel="stylesheet"/>
   </head>
   <body>
-  <h1>{{title}} {{definedAt}}</h1>
+  <div class="engineAndDecisionTreeHolder">
+     <div class="engineHolder">
+       <h1>{{title}} {{definedAt}}</h1>
 {{#engine}}{{>Engine}}{{/engine}}
+     </div> <!--engineHolder -->
+      <div class="decisionTreeHolder">
+{{#decisionTree}}{{>DecisionTree}}{{/decisionTree}}
+      </div><!--decisionTreeHolder -->
+     </div> <!--engineAndDecisionTreeHolder -->
+
+  <h1>Json</h1>
+  <pre>{{json}}</pre>
   </body>
 </html>

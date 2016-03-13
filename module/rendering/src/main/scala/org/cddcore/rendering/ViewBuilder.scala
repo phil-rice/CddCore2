@@ -65,12 +65,16 @@ object Renderer extends ExpectedForTemplates {
     println(maps.zip(paths).map { case (m, path) => path + "\n" + Mustache.apply("templates/Report.mustache").apply(m) }.mkString("\n\n"))
 
     rc.urlManipulations.populateInitialFiles(rc.urlBase)
-//    rc.urlManipulations.copyFromClassPathToFile("images/engine.png", new File("./target/cdd/images/engine.png"))
+    //    rc.urlManipulations.copyFromClassPathToFile("images/engine.png", new File("./target/cdd/images/engine.png"))
 
 
     for (path <- engineWithUseCase.withChildrenPaths) {
-      val map = Templates.renderPath(rc, path)
-      val html = Mustache.apply("templates/Report.mustache").apply(map)
+      val engineMap = Templates.renderPath(rc, path)
+      val decisionTreeMap = DecisionTreeRendering.render(engineWithUseCase.decisionTree, List())
+      val withJson = engineMap ++ Map(
+        decisionTreeKey -> decisionTreeMap,
+        "json" -> (JsonForRendering.pretty(decisionTreeMap) + "\n\n\n\n\n" + JsonForRendering.pretty(engineMap)))
+      val html = Mustache.apply("templates/Report.mustache").apply(withJson)
       rc.makeFile(path.head, html)
     }
   }

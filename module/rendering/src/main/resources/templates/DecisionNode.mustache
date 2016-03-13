@@ -1,0 +1,10 @@
+<div class="decisionNode">
+    <div class="if">if <span class="condition">{{condition}}</span></div>
+    <div class="trueNode">
+{{#trueNode}}{{>DecisionTree}}{{/trueNode}}
+    </div><!--trueNode -->
+    <div class="else">else</div>
+    <div class="falseNode">
+{{#falseNode}}{{>DecisionTree}}{{/falseNode}}
+    </div><!--falseNode -->
+</div><!-- decisionNode -->

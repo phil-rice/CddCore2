@@ -7,7 +7,7 @@ import java.util.Date
 
 import com.github.mustachejava.{Mustache => JMustache, DefaultMustacheFactory}
 import org.cddcore.engine.enginecomponents._
-import org.cddcore.engine.{Engine3, Engine, Engine2}
+import org.cddcore.engine._
 import org.cddcore.rendering.Renderer._
 import org.cddcore.utilities.{DisplayProcessor, Maps}
 
@@ -130,6 +130,9 @@ trait TestObjectsForRendering {
 }
 
 trait KeysForRendering {
+  val mainEngineKey = "mainEngine"
+  val decisionTreeKey = "decisionTree"
+
   val engineTypeName = "Engine"
   val useCaseTypeName = "UseCase"
   val scenarioTypeName = "Scenario"
@@ -148,12 +151,32 @@ trait KeysForRendering {
   val linkUrlKey = "linkUrl"
   val iconUrlKey = "iconUrl"
 
+  val definedAtKey = "definedAt"
+  val selectedPostFixKey = "selected"
+
+  val conclusionNodeKey = "conclusionNode"
+  val decisionNodeKey = "decisionNode"
+  val conditionKey = "condition"
+  val conclusionKey = "conclusion"
+  val trueNodeKey = "trueNode"
+  val falseNodeKey = "falseNode"
+
+
+  def mapHoldingSelected(path: Seq[EngineComponent[_, _]], ec: EngineComponent[_, _]): Map[String, _] = ec match {
+    case _ if path.isEmpty =>  Map(selectedPostFixKey -> "")
+    case _ if path.head eq ec => Map(selectedPostFixKey -> "Selected")
+    case _ if path.contains(ec) => Map(selectedPostFixKey -> "OnPath")
+    case _ => Map(selectedPostFixKey -> "")
+  }
+
 }
 
 trait Icons {
-  val engineWithTestsIcon = "images/engine.png"//http://i782.photobucket.com/albums/yy108/phil-rice/engine_zps9a86cef4.png"
-  val useCasesIcon = "images/usecase.png"//http://i782.photobucket.com/albums/yy108/phil-rice/useCase_zps23a7250c.png"
-  val scenarioIcon = "images/scenario.png"//http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
+  val engineWithTestsIcon = "images/engine.png"
+  //http://i782.photobucket.com/albums/yy108/phil-rice/engine_zps9a86cef4.png"
+  val useCasesIcon = "images/usecase.png"
+  //http://i782.photobucket.com/albums/yy108/phil-rice/useCase_zps23a7250c.png"
+  val scenarioIcon = "images/scenario.png" //http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
 }
 
 object Mustache {
@@ -176,13 +199,13 @@ class Mustache(mustache: JMustache) {
 }
 
 trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering with Icons {
-  protected val linkForScenario1 = Map(titleKey -> scenario1.title, linkUrlKey -> rc.url(scenario1), iconUrlKey -> scenarioIcon)
-  protected val linkForScenario2 = Map(titleKey -> scenario2.title, linkUrlKey -> rc.url(scenario2), iconUrlKey -> scenarioIcon)
-  protected val linkForScenario3 = Map(titleKey -> scenario3.title, linkUrlKey -> rc.url(scenario3), iconUrlKey -> scenarioIcon)
-  protected val linkForScenario4 = Map(titleKey -> scenario4.title, linkUrlKey -> rc.url(scenario4), iconUrlKey -> scenarioIcon)
-  protected val linkForUseCase1 = Map(titleKey -> useCase1.title, linkUrlKey -> rc.url(useCase1), iconUrlKey -> useCasesIcon)
-  protected val linkForUseCase2 = Map(titleKey -> useCase2.title, linkUrlKey -> rc.url(useCase2), iconUrlKey -> useCasesIcon)
-  protected val linkForEngine = Map(titleKey -> engineWithUseCase.title, linkUrlKey -> rc.url(engineWithUseCase), iconUrlKey -> engineWithTestsIcon)
+  protected val linkForScenario1 = Map(titleKey -> scenario1.title, linkUrlKey -> rc.url(scenario1), iconUrlKey -> scenarioIcon, definedAtKey -> scenario1.definedInSourceCodeAt)
+  protected val linkForScenario2 = Map(titleKey -> scenario2.title, linkUrlKey -> rc.url(scenario2), iconUrlKey -> scenarioIcon, definedAtKey -> scenario2.definedInSourceCodeAt)
+  protected val linkForScenario3 = Map(titleKey -> scenario3.title, linkUrlKey -> rc.url(scenario3), iconUrlKey -> scenarioIcon, definedAtKey -> scenario3.definedInSourceCodeAt)
+  protected val linkForScenario4 = Map(titleKey -> scenario4.title, linkUrlKey -> rc.url(scenario4), iconUrlKey -> scenarioIcon, definedAtKey -> scenario4.definedInSourceCodeAt)
+  protected val linkForUseCase1 = Map(titleKey -> useCase1.title, linkUrlKey -> rc.url(useCase1), iconUrlKey -> useCasesIcon, definedAtKey -> useCase1.definedInSourceCodeAt)
+  protected val linkForUseCase2 = Map(titleKey -> useCase2.title, linkUrlKey -> rc.url(useCase2), iconUrlKey -> useCasesIcon, definedAtKey -> useCase2.definedInSourceCodeAt)
+  protected val linkForEngine = Map(titleKey -> engineWithUseCase.title, linkUrlKey -> rc.url(engineWithUseCase), iconUrlKey -> engineWithTestsIcon, definedAtKey -> engineWithUseCase.definedInSourceCodeAt)
 
   protected val emptyUsecasesAndScenarios = Map(scenariosKey -> List(), useCasesKey -> List())
 
@@ -324,10 +347,9 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
   }
 
   val makeLink = new Engine2[RenderContext, EngineComponent[_, _], Map[String, _]]("Produces the maps for a link to a component") {
-    (rc, emptyEngine) produces Map(titleKey -> "someEngineTitle", linkUrlKey -> rc.url(emptyEngine), iconUrlKey -> engineWithTestsIcon) by {
-      case (rc, ec) => Map(titleKey -> ec.title, linkUrlKey -> rc.url(ec), iconUrlKey -> findIconUrl(ec))
+    (rc, engineWithUseCase) produces linkForEngine by {
+      case (rc, ec) => Map(titleKey -> ec.title, linkUrlKey -> rc.url(ec), iconUrlKey -> findIconUrl(ec), definedAtKey -> ec.definedInSourceCodeAt)
     }
-    (rc, engineWithUseCase) produces linkForEngine
     (rc, useCase1) produces linkForUseCase1
     (rc, useCase2) produces linkForUseCase2
     (rc, scenario2) produces linkForScenario2
@@ -418,17 +440,20 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
 
 
   def renderFocus(rc: RenderContext, ec: EngineComponent[_, _], path: Seq[EngineComponent[_, _]]): Map[String, _] = {
-    if (path.contains(ec))
+
+    val mapFromData = if (path.contains(ec))
       renderData(rc, ec) ++ Map(
         useCasesKey -> findUseCaseChildren(ec).map(uc =>
           if (path.contains(uc))
             renderFocus(rc, uc, path)
           else
-            renderData(rc, uc) ++ emptyUsecasesAndScenarios),
-        scenariosKey -> findScenarioChildren(ec).map(renderData(rc, _))
+            renderData(rc, uc) ++ emptyUsecasesAndScenarios ++ mapHoldingSelected(path, uc)),
+        scenariosKey -> findScenarioChildren(ec).map(s => renderData(rc, s) ++ mapHoldingSelected(path, ec))
       )
     else
       Map()
+
+    mapHoldingSelected(path, ec) ++ mapFromData
   }
 
   def renderPath(rc: RenderContext, path: List[EngineComponent[_, _]]) =
@@ -489,4 +514,27 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
     case _ => s
   }
 
+}
+
+object DecisionTreeRendering extends KeysForRendering {
+
+
+  def renderConclusionNode(cn: ConclusionNode[_, _], path: List[DecisionTree[_, _]])(implicit dp: DisplayProcessor): Map[String, Any] = {
+    mapHoldingSelected(path, cn) ++ Map(
+      conclusionKey -> cn.mainScenario.toSummary(dp)
+    )
+  }
+
+  def renderDecisionNode(dn: DecisionNode[_, _], path: List[DecisionTree[_, _]])(implicit dp: DisplayProcessor): Map[String, Any] = {
+    mapHoldingSelected(path, dn) ++ Map(
+      conditionKey -> dn.mainScenario.toSummary(dp),
+      trueNodeKey -> render(dn.trueNode, path),
+      falseNodeKey -> render(dn.falseNode, path))
+  }
+
+  def render(dt: DecisionTree[_, _], path: List[DecisionTree[_, _]]): Map[String, Any] = dt match {
+    case cn: ConclusionNode[_, _] => Map(conclusionNodeKey -> renderConclusionNode(cn, path), decisionNodeKey -> List())
+    case dn: DecisionNode[_, _] => Map(conclusionNodeKey -> List(), decisionNodeKey -> renderDecisionNode(dn, path))
+
+  }
 }
