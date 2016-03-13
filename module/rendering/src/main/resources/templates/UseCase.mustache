@@ -1,9 +1,9 @@
     <div id='{{ id }}' class='usecase'>
-        <div class='usecaseTitle'> {{> Link}} </div>
-        <div class="useCasesScenariosSummary">
-{{#scenarioIcons}}{{>scenarioIcon}}{{/scenarioIcons}}        </div>
+        <div class='usecaseTitle'> {{> Link}}{{>ScenarioIcons}} </div>
         <div class='useCasesScenarios'>
 {{#scenarios}}{{>Scenario}}{{/scenarios}}
         </div><!--useCasesScenarios -->
+        <div class="useCaseUseCases">
 {{#useCases}}{{>UseCase}}{{/useCases}}
+        </div><!--useCaseUseCases -->
     </div><!-- usecase' -->

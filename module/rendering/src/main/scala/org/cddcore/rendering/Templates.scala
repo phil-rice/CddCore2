@@ -1,6 +1,6 @@
 package org.cddcore.rendering
 
-import java.io.{FileWriter, File, StringWriter, StringReader}
+import java.io._
 import java.net.URI
 import java.util
 import java.util.Date
@@ -18,6 +18,8 @@ trait RenderConfiguration {
 
   def urlBase: String
 
+  def urlManipulations: UrlManipulations
+
 }
 
 object RenderConfiguration {
@@ -25,30 +27,84 @@ object RenderConfiguration {
   implicit object DefaultRenderConfiguration extends RenderConfiguration {
     def date: Date = new Date
 
-    def urlBase: String = "./target/cdd/"
+    val urlBase: String = "./target/cdd/"
+
+    val urlManipulations: UrlManipulations = new FileUrlManipulations
   }
 
 }
 
-case class SimpleRenderConfiguration(urlBase: String, date: Date = new Date()) extends RenderConfiguration
+case class SimpleRenderConfiguration(urlBase: String, date: Date = new Date(), urlManipulations: UrlManipulations = new FileUrlManipulations) extends RenderConfiguration
 
-case class RenderContext(reportDate: Date, urlBase: String, pathMap: PathMap)(implicit val displayProcessor: DisplayProcessor) {
+trait UrlManipulations {
+
+  def makeUrl(urlBase: String, idPathResult: String): String
+
+  def makeFile(url: String, text: String)
+
+  def populateInitialFiles(urlBase: String)
+}
+
+class FileUrlManipulations extends UrlManipulations {
+
+  private def transfer(in: InputStream, out: OutputStream) {
+    val BufferSize = 8192
+    val buffer = new Array[Byte](BufferSize)
+    def read() {
+      val byteCount = in.read(buffer)
+      if (byteCount >= 0) {
+        out.write(buffer, 0, byteCount)
+        read()
+      }
+    }
+    read()
+  }
+
+  def copyFromClassPathToFile(resourceId: String, file: File): Unit = {
+    def useClosable[S <: Closeable, X](makeS: => S)(useS: S => X) = {
+      val s = makeS
+      try {
+        useS(s)
+      } finally {
+        s.close()
+      }
+    }
+    file.getParentFile.mkdirs()
+    file.createNewFile()
+    useClosable(getClass.getClassLoader.getResourceAsStream(resourceId))(
+      inputStream => useClosable(new FileOutputStream(file))(outputStream =>
+        transfer(inputStream, outputStream)))
+  }
+
+  def makeUrl(urlBase: String, idPathResult: String) = new File(urlBase + "/" + idPathResult + ".html").getCanonicalFile.toString
+
+  def makeFile(url: String, text: String): Unit = {
+    val file = new File(url)
+    file.getParentFile.mkdirs()
+    val writer = new FileWriter(file)
+    try {
+      writer.write(text)
+    } finally (writer.close)
+  }
+
+  private val initialFiles = List("images/engine.png", "images/scenario.png", "images/usecase.png", "stylesheets/css.css")
+
+  def populateInitialFiles(urlBase: String) = {
+    initialFiles.foreach(f => copyFromClassPathToFile(f, new File(urlBase + "/" + f)))
+
+  }
+}
+
+
+case class RenderContext(reportDate: Date, urlBase: String, pathMap: PathMap, urlManipulations: UrlManipulations)(implicit val displayProcessor: DisplayProcessor) {
   override def toString = getClass.getSimpleName()
 
   def idPath(ec: EngineComponent[_, _]) = pathMap(ec)
 
-  def urlBaseDirectory = new File(urlBase)
+  def url(ec: EngineComponent[_, _]) = urlManipulations.makeUrl(urlBase, idPath(ec))
 
-  def url(ec: EngineComponent[_, _]) = new File(urlBaseDirectory, idPath(ec) + ".html").getCanonicalFile.toString
+  def makeFile(ec: EngineComponent[_, _], textForEngine: String) = urlManipulations.makeFile(url(ec), textForEngine)
 
-  def makeFile(ec: EngineComponent[_, _], textForEngine: String) = {
-    val file = new File(url(ec))
-    urlBaseDirectory.mkdirs()
-    val writer = new FileWriter(file)
-    try {
-      writer.write(textForEngine)
-    } finally (writer.close)
-  }
 
 }
 
@@ -70,7 +126,7 @@ trait TestObjectsForRendering {
   val List(scenario3: Scenario[_, _]) = useCase2.components.reverse
 
 
-  protected val rc: RenderContext = RenderContext(new Date(), "urlBase", PathMap(emptyEngine, engineWithUseCase))(displayProcessorModifiedForSituations)
+  protected val rc: RenderContext = RenderContext(new Date(), "urlBase", PathMap(emptyEngine, engineWithUseCase), new FileUrlManipulations())(displayProcessorModifiedForSituations)
 }
 
 trait KeysForRendering {
@@ -95,10 +151,9 @@ trait KeysForRendering {
 }
 
 trait Icons {
-  val engineWithTestsIcon = "http://i782.photobucket.com/albums/yy108/phil-rice/engine_zps9a86cef4.png"
-  val foldingEngineIcon = "http://i782.photobucket.com/albums/yy108/phil-rice/engineFold2_zpsb62930b9.png"
-  val useCasesIcon = "http://i782.photobucket.com/albums/yy108/phil-rice/useCase_zps23a7250c.png"
-  val scenarioIcon = "http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
+  val engineWithTestsIcon = "images/engine.png"//http://i782.photobucket.com/albums/yy108/phil-rice/engine_zps9a86cef4.png"
+  val useCasesIcon = "images/usecase.png"//http://i782.photobucket.com/albums/yy108/phil-rice/useCase_zps23a7250c.png"
+  val scenarioIcon = "images/scenario.png"//http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
 }
 
 object Mustache {

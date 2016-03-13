@@ -1,6 +1,6 @@
 package org.cddcore.rendering
 
-import java.io.StringWriter
+import java.io.{File, StringWriter}
 
 import org.cddcore.engine.Engine
 import org.cddcore.engine.enginecomponents.{EngineComponent, Scenario, UseCase}
@@ -24,7 +24,7 @@ object Renderer extends ExpectedForTemplates {
   def pathMap(ec: EC) = PathMap(ec)
 
   def renderContext(ec: EC)(implicit renderConfiguration: RenderConfiguration, displayProcessor: DisplayProcessor) =
-    RenderContext(renderConfiguration.date, renderConfiguration.urlBase, pathMap(ec))
+    RenderContext(renderConfiguration.date, renderConfiguration.urlBase, pathMap(ec), renderConfiguration.urlManipulations)
 
   def withDescendents(ec: EC): List[EC] = ec :: Templates.findChildren(ec).flatMap(withDescendents)
 
@@ -62,12 +62,15 @@ object Renderer extends ExpectedForTemplates {
     println
     //    println(scenario1.toSingleMaps.map(m => Mustache.apply("Report.mustache").apply(m)).mkString("\n\n"))
     //    println(useCase1.toSingleMaps.map(m => Mustache.apply("Report.mustache").apply(m)).mkString("\n\n"))
-    println(maps.zip(paths).map { case (m, path) => path + "\n" + Mustache.apply("Report.mustache").apply(m) }.mkString("\n\n"))
+    println(maps.zip(paths).map { case (m, path) => path + "\n" + Mustache.apply("templates/Report.mustache").apply(m) }.mkString("\n\n"))
+
+    rc.urlManipulations.populateInitialFiles(rc.urlBase)
+//    rc.urlManipulations.copyFromClassPathToFile("images/engine.png", new File("./target/cdd/images/engine.png"))
 
 
     for (path <- engineWithUseCase.withChildrenPaths) {
       val map = Templates.renderPath(rc, path)
-      val html = Mustache.apply("Report.mustache").apply(map)
+      val html = Mustache.apply("templates/Report.mustache").apply(map)
       rc.makeFile(path.head, html)
     }
   }
