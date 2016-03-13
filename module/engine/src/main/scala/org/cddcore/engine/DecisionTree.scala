@@ -112,7 +112,7 @@ object DecisionTree extends DecisionTreeValidator {
 
   def apply[P, R](mockEngine: P => R, scenarios: Seq[Scenario[P, R]])(implicit monitor: Monitor, dp: DisplayProcessor): DecisionTree[P, R] = {
     type DT = DecisionTree[P, R]
-    monitor[DT](s"DecisionTree.apply(count of Scenarios is ${scenarios.size}",{
+    monitor[DT](s"DecisionTree.apply(count of Scenarios is ${scenarios.size}", {
       scenarios match {
         case h :: tail => tail.foldLeft[DecisionTree[P, R]](monitor[DT](s"Initial tree is formed from $h", ConclusionNode(h))) {
           (dt, s) => addOne(mockEngine, dt, s)
@@ -164,6 +164,8 @@ trait DecisionTree[P, R] extends EngineComponent[P, R] {
 
   def lensFor(mockEngine: P => R, s: Scenario[P, R]): Lens[DecisionTree[P, R], DecisionTree[P, R]]
 
+  def pathFor(mockEngine: P => R, s: Scenario[P, R]): List[DecisionTree[P,R]]
+
   def mainScenario: Scenario[P, R]
 
   def isDefinedAt(engine: P => R, p: P) = mainScenario.isDefinedAt(engine, p)
@@ -187,6 +189,8 @@ case class ConclusionNode[P, R](mainScenario: Scenario[P, R], scenarios: List[Sc
   def withScenario(s: Scenario[P, R]) = copy(scenarios = s :: scenarios)
 
   def lensFor(mockEngine: P => R, s: Scenario[P, R]) = identityLens
+
+  def pathFor(mockEngine: P => R, s: Scenario[P, R]) = List(this)
 
   def apply(engine: P => R, p: P) = mainScenario(engine, p)
 
@@ -212,9 +216,15 @@ case class DecisionNode[P, R](mainScenario: Scenario[P, R], falseNode: DecisionT
     case false => dtToDN.andThen(dtFalse[P, R]).andThen(falseNode.lensFor(mockEngine, s))
   }
 
+  def pathFor(mockEngine: (P) => R, s: Scenario[P, R]) = isDefinedAt(mockEngine, s.situation) match {
+    case true => this :: trueNode.pathFor(mockEngine, s)
+    case false => this :: falseNode.pathFor(mockEngine, s)
+  }
+
   def allScenarios: TraversableOnce[Scenario[P, R]] = trueNode.allScenarios.toIterator ++ falseNode.allScenarios
 
   override def toString = s"DecisionNode(${mainScenario} ifTrue $trueNode ifFalse $falseNode"
 
   override def allConclusionNodes: TraversableOnce[ConclusionNode[P, R]] = trueNode.allConclusionNodes.toIterator ++ falseNode.allConclusionNodes
+
 }

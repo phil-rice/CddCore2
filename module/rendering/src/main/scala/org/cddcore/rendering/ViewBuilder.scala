@@ -19,7 +19,7 @@ case class TemplateNames(engineName: String, useCaseName: String, scenarioName: 
 object Renderer extends ExpectedForTemplates {
   type EC = EngineComponent[_, _]
 
-  implicit def ecToViewBuilder(ec: EC)(implicit renderConfiguration: RenderConfiguration) = new EngineComponentPimper(ec)
+  implicit def ecToViewBuilder[P,R](ec: EngineComponent[P,R])(implicit renderConfiguration: RenderConfiguration) = new EngineComponentPimper(ec)
 
   def pathMap(ec: EC) = PathMap(ec)
 
@@ -70,7 +70,7 @@ object Renderer extends ExpectedForTemplates {
 
     for (path <- engineWithUseCase.withChildrenPaths) {
       val engineMap = Templates.renderPath(rc, path)
-      val decisionTreeMap = DecisionTreeRendering.render(engineWithUseCase.decisionTree, List())
+      val decisionTreeMap = DecisionTreeRendering.renderEngine[Int,String](engineWithUseCase, path.head)
       val withJson = engineMap ++ Map(
         decisionTreeKey -> decisionTreeMap,
         "json" -> (JsonForRendering.pretty(decisionTreeMap) + "\n\n\n\n\n" + JsonForRendering.pretty(engineMap)))
@@ -80,8 +80,8 @@ object Renderer extends ExpectedForTemplates {
   }
 }
 
-class EngineComponentPimper(ec: EngineComponent[_, _]) {
-  type EC = EngineComponent[_, _]
+class EngineComponentPimper[P, R](ec: EngineComponent[P, R]) {
+  type EC = EngineComponent[P, R]
 
   def renderContext(implicit renderConfiguration: RenderConfiguration, displayProcessor: DisplayProcessor) = Renderer.renderContext((ec))
 
@@ -94,9 +94,9 @@ class EngineComponentPimper(ec: EngineComponent[_, _]) {
 
   def withChildrenPaths(implicit renderContext: RenderContext = renderContext): List[List[EC]] = withChildrenPaths(ec, List())
 
-  protected def withChildrenPaths(ec: EngineComponent[_, _], path: List[EC])(implicit renderContext: RenderContext): List[List[EC]] = {
+  protected def withChildrenPaths(ec: EngineComponent[P, R], path: List[EC])(implicit renderContext: RenderContext): List[List[EC]] = {
     val thisPath = ec :: path
-    thisPath :: Templates.findChildren(ec).flatMap(withChildrenPaths(_, thisPath))
+    thisPath :: Templates.findChildren(ec).asInstanceOf[List[EC]].flatMap(withChildrenPaths(_, thisPath))
   }
 
   def withDescendents = Renderer.withDescendents(ec)

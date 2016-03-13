@@ -163,7 +163,7 @@ trait KeysForRendering {
 
 
   def mapHoldingSelected(path: Seq[EngineComponent[_, _]], ec: EngineComponent[_, _]): Map[String, _] = ec match {
-    case _ if path.isEmpty =>  Map(selectedPostFixKey -> "")
+    case _ if path.isEmpty => Map(selectedPostFixKey -> "")
     case _ if path.head eq ec => Map(selectedPostFixKey -> "Selected")
     case _ if path.contains(ec) => Map(selectedPostFixKey -> "OnPath")
     case _ => Map(selectedPostFixKey -> "")
@@ -448,7 +448,7 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
             renderFocus(rc, uc, path)
           else
             renderData(rc, uc) ++ emptyUsecasesAndScenarios ++ mapHoldingSelected(path, uc)),
-        scenariosKey -> findScenarioChildren(ec).map(s => renderData(rc, s) ++ mapHoldingSelected(path, ec))
+        scenariosKey -> findScenarioChildren(ec).map(s => renderData(rc, s) ++ mapHoldingSelected(path, s))
       )
     else
       Map()
@@ -518,23 +518,36 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
 
 object DecisionTreeRendering extends KeysForRendering {
 
-
-  def renderConclusionNode(cn: ConclusionNode[_, _], path: List[DecisionTree[_, _]])(implicit dp: DisplayProcessor): Map[String, Any] = {
-    mapHoldingSelected(path, cn) ++ Map(
-      conclusionKey -> cn.mainScenario.toSummary(dp)
-    )
+  def findSelected[P, R](engine: P => R, path: List[DecisionTree[P, R]], ec: EngineComponent[P, R]) = {
+    val raw = mapHoldingSelected(path, ec)
+    (path.headOption, ec) match {
+      case (Some(dn: DecisionNode[P, R]), s: Scenario[P, R]) if (raw(selectedPostFixKey) == "" && dn.mainScenario.isDefinedAt(engine, s.situation)) =>
+        Map(selectedPostFixKey -> "WouldBeTrue")
+      case _ => raw
+    }
   }
 
-  def renderDecisionNode(dn: DecisionNode[_, _], path: List[DecisionTree[_, _]])(implicit dp: DisplayProcessor): Map[String, Any] = {
-    mapHoldingSelected(path, dn) ++ Map(
+  def renderConclusionNode[P, R](engine: P => R, cn: ConclusionNode[P, R], path: List[DecisionTree[P, R]])(implicit dp: DisplayProcessor): Map[String, Any] = {
+    findSelected(engine, path, cn) ++ Map(conclusionKey -> cn.mainScenario.toSummary(dp))
+  }
+
+  def renderDecisionNode[P, R](engine: P => R, dn: DecisionNode[P, R], path: List[DecisionTree[P, R]])(implicit dp: DisplayProcessor): Map[String, Any] = {
+    findSelected(engine, path, dn) ++ Map(
       conditionKey -> dn.mainScenario.toSummary(dp),
-      trueNodeKey -> render(dn.trueNode, path),
-      falseNodeKey -> render(dn.falseNode, path))
+      trueNodeKey -> render(engine, dn.trueNode, path),
+      falseNodeKey -> render(engine, dn.falseNode, path))
   }
 
-  def render(dt: DecisionTree[_, _], path: List[DecisionTree[_, _]]): Map[String, Any] = dt match {
-    case cn: ConclusionNode[_, _] => Map(conclusionNodeKey -> renderConclusionNode(cn, path), decisionNodeKey -> List())
-    case dn: DecisionNode[_, _] => Map(conclusionNodeKey -> List(), decisionNodeKey -> renderDecisionNode(dn, path))
+  def renderEngine[P, R](engine: Engine[P, R], ec: EngineComponent[P, R]): Map[String, Any] = {
+    val path: List[DecisionTree[P, R]] = ec match {
+      case s: Scenario[P, R] => engine.decisionTree.pathFor(engine, s)
+      case _ => List()
+    }
+    render(engine, engine.decisionTree, path.reverse)
+  }
 
+  def render[P, R](engine: P => R, dt: DecisionTree[P, R], path: List[DecisionTree[P, R]]): Map[String, Any] = dt match {
+    case cn: ConclusionNode[_, _] => Map(conclusionNodeKey -> renderConclusionNode(engine, cn, path), decisionNodeKey -> List())
+    case dn: DecisionNode[_, _] => Map(conclusionNodeKey -> List(), decisionNodeKey -> renderDecisionNode(engine, dn, path))
   }
 }
