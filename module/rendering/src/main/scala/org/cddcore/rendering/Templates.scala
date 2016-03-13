@@ -37,12 +37,13 @@ case class RenderContext(reportDate: Date, urlBase: String, pathMap: PathMap)(im
 
   def idPath(ec: EngineComponent[_, _]) = pathMap(ec)
 
-  def url(ec: EngineComponent[_, _]) = urlBase + "/" + ec.getClass.getSimpleName + "/" + idPath(ec) +".html"
+  def urlBaseDirectory = new File(urlBase)
+
+  def url(ec: EngineComponent[_, _]) = new File(urlBaseDirectory, idPath(ec) + ".html").getCanonicalFile.toString
 
   def makeFile(ec: EngineComponent[_, _], textForEngine: String) = {
     val file = new File(url(ec))
-    println("Making File: " + file)
-    file.getParentFile.mkdirs()
+    urlBaseDirectory.mkdirs()
     val writer = new FileWriter(file)
     try {
       writer.write(textForEngine)

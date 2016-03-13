@@ -72,14 +72,14 @@ class EngineRecursionSpec extends CddEngineSpec {
     intercept[RecursiveScenariosWithoutMocksException](
       new Engine[Int, Int] {
         2 produces 2 byRecursion { case (engine, i) if i > 1 => i * engine(i - 1) }
-      }.decisionTree).getMessage should startWith(expectedMsgPrefix(74))
+      }.decisionTree).getMessage should include (expectedMsgPrefix(74))
 
   }
   it should "explain it hasn't got a mock value if needed, when only multiple scenarios, first one not matched by situation" in {
     intercept[RecursiveScenariosWithoutMocksException](new Engine[Int, Int] {
       -1 produces 0
       2 produces 2 byRecursion { case (engine, i) if i > 1 => i * engine(i - 1) }
-    }.decisionTree).getMessage should startWith(expectedMsgPrefix(81))
+    }.decisionTree).getMessage should include (expectedMsgPrefix(81))
   }
 
   it should "explain it hasn't got a mock value if needed, when only multiple scenarios, first one matched by situation" in {
@@ -87,7 +87,7 @@ class EngineRecursionSpec extends CddEngineSpec {
       new Engine[Int, Int] {
         7 produces 0
         2 produces 2 byRecursion { case (engine, i) if i > 1 => i * engine(i - 1) }
-      }.decisionTree).getMessage should startWith(expectedMsgPrefix(89))
+      }.decisionTree).getMessage should include (expectedMsgPrefix(89))
   }
 
 }

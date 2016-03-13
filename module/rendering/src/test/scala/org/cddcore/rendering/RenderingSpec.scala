@@ -9,11 +9,11 @@ class RenderingSpec extends CddSpec with ExpectedForTemplates {
   "The withChildrenPaths" should "return the objects, and then the children with paths to the root" in {
     scenario1.withChildrenPaths shouldBe List(List(scenario1))
     scenario2.withChildrenPaths shouldBe List(List(scenario2))
-    println(Renderer.mapList(useCase1.withChildrenPaths, _.title))
+//    println(Renderer.mapList(useCase1.withChildrenPaths, _.title))
     //
     useCase1.withChildrenPaths shouldBe List(
       List(useCase1),
-      List(scenario1, useCase1), List(scenario2, useCase1), List(scenario3, useCase1))
+      List(scenario1, useCase1), List(scenario2, useCase1))
 
 
     engineWithUseCase.withChildrenPaths shouldBe List(
@@ -21,7 +21,9 @@ class RenderingSpec extends CddSpec with ExpectedForTemplates {
       List(useCase1, engineWithUseCase),
       List(scenario1, useCase1, engineWithUseCase),
       List(scenario2, useCase1, engineWithUseCase),
-      List(scenario3, useCase1, engineWithUseCase)
+      List(useCase2, engineWithUseCase),
+      List(scenario3, useCase2, engineWithUseCase),
+      List(scenario4, engineWithUseCase)
     )
   }
 
