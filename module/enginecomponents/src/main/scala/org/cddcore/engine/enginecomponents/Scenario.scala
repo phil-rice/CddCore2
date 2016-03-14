@@ -13,7 +13,6 @@ trait DefinedInSourceCodeAt {
 
 object Scenario {
 
-
   implicit def pToScenarioBuilder[P, R](p: P) = FromSituationScenarioBuilder[P, R](p)
 
   implicit def scenarioToScenarioBuilder[P, R](s: Scenario[P, R])(implicit scl: ChildLifeCycle[Scenario[P, R]]) = ScenarioBuilder[P, R](s)
@@ -22,7 +21,7 @@ object Scenario {
 
 }
 
-case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: String, title: String) extends EngineComponent[P, R] with DefinedInSourceCodeAt with ToSummary {
+case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: String, title: String, comment: Option[String]) extends EngineComponent[P, R] with DefinedInSourceCodeAt with ToSummary with HasComment {
   def allScenarios = Seq(this)
 
   def apply(engine: P => R, p: P) = reason(engine, p)
@@ -58,7 +57,7 @@ case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion:
 
 case class FromSituationScenarioBuilder[P, R](situation: P) {
   private def producesPrim(definedAt: String, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R])(implicit scl: ChildLifeCycle[Scenario[P, R]]) = {
-    val s = Scenario[P, R](situation, reason, assertion, definedAt, situation.toString)
+    val s = Scenario[P, R](situation, reason, assertion, definedAt, situation.toString, None)
     scl.created(s)
     s
     //    new ScenarioBuilder[P,R](s)
@@ -146,6 +145,8 @@ case class ScenarioBuilder[P, R](scenario: Scenario[P, R])(implicit val scl: Chi
 
   def byRecursion(fn: PartialFunction[(P => R, P), R]) = macro ScenarioBuilder.byRecursionImpl[P, R]
 
-  def title(title: String) = ScenarioBuilder.changeScenario[P,R](this, _.copy(title = title))
+  def title(title: String) = ScenarioBuilder.changeScenario[P, R](this, _.copy(title = title))
+
+  def withComment(comment: String) = ScenarioBuilder.changeScenario[P, R](this, _.copy(comment = Some(comment)))
 }
 

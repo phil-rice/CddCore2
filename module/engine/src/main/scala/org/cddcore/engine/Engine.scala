@@ -1,6 +1,6 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents.{EngineComponent, Scenario, UseCase}
+import org.cddcore.engine.enginecomponents.{HasComment, EngineComponent, Scenario, UseCase}
 import org.cddcore.utilities.{ChildLifeCycle, DisplayProcessor, HierarchyBuilder}
 
 import scala.language.implicitConversions
@@ -48,7 +48,7 @@ class EngineBuilder[P, R](initialTitle: String, definedInSourceCodeAt: String) e
 
 }
 
-abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt())(implicit dp: DisplayProcessor) extends EngineComponent[P, R] {
+abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt())(implicit dp: DisplayProcessor) extends EngineComponent[P, R]  {
   implicit val builder = new EngineBuilder[P, R](initialTitle, definedInSourceCodeAt)
 
   def title: String = builder.title

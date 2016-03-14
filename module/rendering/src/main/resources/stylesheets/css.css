@@ -17,7 +17,12 @@ div {
 	width: auto;
 	overflow: auto;
 }
-
+.engineOnPath{
+   border: 1px solid green;
+}
+.engineSelected{
+   border: 2px solid green;
+}
 .usecaseOnPath{
    border: 1px solid green;
 }
@@ -35,3 +40,15 @@ div {
 .conclusionNodeSelected{
    border: 2px solid green;
 }
+.engineAndDecisionTreeHolder{
+ clear: left;
+ width: 100%;
+}
+.engineHolder{
+  width: 50%;
+  float: left;
+}
+.decisionTreeHolder{
+  width: 45%;
+   float: left;
+ }

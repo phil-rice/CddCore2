@@ -14,7 +14,7 @@ lazy val commonSettings = baseSettings ++ Seq(
 )
 
 lazy val utilitiesSettings = commonSettings ++ Seq(
-//  libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.6",
+  //  libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.6",
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersionNo
 )
 
@@ -68,8 +68,8 @@ lazy val rendering = (project in file("module/rendering")).
 
 lazy val examples = (project in file("module/examples")).
   settings(commonSettings: _*).
-  dependsOn(engine % "test->test;compile->compile").
-  aggregate(engine)
+  dependsOn(engine % "test->test;compile->compile", rendering).
+  aggregate(engine, rendering)
 
 lazy val test = (project in file("module/test")).
   settings(commonSettings: _*).

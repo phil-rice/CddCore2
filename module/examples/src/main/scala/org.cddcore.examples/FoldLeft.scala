@@ -9,8 +9,8 @@ object FoldLeft {
     (3, 2) produces 5
   }
 
-  def main(args: Array[String]) {
-    engine.validate
-    println(List(1, 2, 3).foldLeft(0)(engine))
-  }
+//  def main(args: Array[String]) {
+//    engine.validate
+//    println(List(1, 2, 3).foldLeft(0)(engine))
+//  }
 }

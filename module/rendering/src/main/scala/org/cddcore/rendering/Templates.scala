@@ -122,7 +122,7 @@ trait KeysForRendering {
   val useCasesKey = "useCases"
 
   val typeKey = "type"
-
+  val commentKey = "comment"
   val linkKey = "link"
   val idKey = "id"
   val titleKey = "title"
@@ -238,15 +238,16 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
     (rc, scenario1) produces Map(scenariosIconsKey -> List())
   }
 
+  def renderRawData[P, R](rc: RenderContext, ec: EngineComponent[P, R]) = findScenarioChildrenLinks(rc, ec) ++ Map(
+    linkKey -> makeLink(rc, ec),
+    idKey -> rc.idPath(ec),
+    typeKey -> findTypeName(ec),
+    titleKey -> ec.title)
+
   object renderData extends Engine2[RenderContext, EngineComponent[_, _], Map[String, _]] {
-    (rc, engineWithUseCase) produces dataForEngine by { case (rc, ec) =>
-      findScenarioChildrenLinks(rc, ec) ++ Map(
-        linkKey -> makeLink(rc, ec),
-        idKey -> rc.idPath(ec),
-        typeKey -> findTypeName(ec),
-        titleKey -> ec.title)
-    }
-    (rc, useCase1) produces dataForUseCase1
+    (rc, engineWithUseCase) produces dataForEngine by { case (rc, ec) => renderRawData(rc, ec) }
+
+    (rc, useCase1) produces dataForUseCase1 because { case (rc, uc: UseCase[_, _]) => renderRawData(rc, uc) ++ Map(commentKey -> uc.comment.getOrElse("")) }
     (rc, useCase2) produces dataForUseCase2
 
     (rc, scenario1) produces dataForScenario1 because { case (rc, s: Scenario[_, _]) =>
@@ -255,6 +256,7 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
         typeKey -> findTypeName(s),
         linkKey -> makeLink(rc, s),
         titleKey -> s.title,
+        commentKey -> s.comment.getOrElse(""),
         situationKey -> rc.displayProcessor(s.situation))
     }
 
@@ -265,20 +267,13 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
 
 
   def renderFocus(rc: RenderContext, ec: EngineComponent[_, _], path: Seq[EngineComponent[_, _]]): Map[String, _] = {
+    val scenarios = if (path.contains((ec))) findScenarioChildren(ec) else List()
 
-    val mapFromData = if (path.contains(ec))
-      renderData(rc, ec) ++ Map(
-        useCasesKey -> findUseCaseChildren(ec).map(uc =>
-          if (path.contains(uc))
-            renderFocus(rc, uc, path)
-          else
-            renderData(rc, uc) ++ emptyUsecasesAndScenarios ++ mapHoldingSelected(path, uc)),
-        scenariosKey -> findScenarioChildren(ec).map(s => renderData(rc, s) ++ mapHoldingSelected(path, s))
-      )
-    else
-      Map()
-
-    mapHoldingSelected(path, ec) ++ mapFromData
+    val scenariosMap = Map(scenariosKey -> scenarios.map(s => renderData(rc, s) ++ mapHoldingSelected(path, s)))
+    renderData(rc, ec) ++
+      Map(useCasesKey -> findUseCaseChildren(ec).map(renderFocus(rc, _, path))) ++
+      scenariosMap ++
+      mapHoldingSelected(path, ec)
   }
 
   def renderPath(rc: RenderContext, path: List[EngineComponent[_, _]]) =

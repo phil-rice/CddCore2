@@ -42,6 +42,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     typeKey -> scenarioTypeName,
     titleKey -> scenario1.title,
     linkKey -> linkForScenario1,
+    commentKey -> "",
     situationKey -> "Summary(1)")
 
 
@@ -50,6 +51,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     typeKey -> scenarioTypeName,
     titleKey -> scenario2.title,
     linkKey -> linkForScenario2,
+    commentKey -> "",
     situationKey -> "Summary(2)")
 
 
@@ -58,6 +60,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     typeKey -> scenarioTypeName,
     titleKey -> scenario3.title,
     linkKey -> linkForScenario3,
+    commentKey -> "",
     situationKey -> "Summary(3)")
 
 
@@ -66,6 +69,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     typeKey -> scenarioTypeName,
     titleKey -> scenario4.title,
     linkKey -> linkForScenario4,
+    commentKey -> "",
     situationKey -> "Summary(4)")
 
 
@@ -74,6 +78,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     typeKey -> useCaseTypeName,
     titleKey -> "someUseCase",
     linkKey -> linkForUseCase1,
+    commentKey -> "",
     scenariosIconsKey -> List(linkForScenario1, linkForScenario2))
 
   protected val dataForUseCase2 = Map(
@@ -81,6 +86,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     typeKey -> useCaseTypeName,
     titleKey -> "someOtherCase",
     linkKey -> linkForUseCase2,
+    commentKey -> "",
     scenariosIconsKey -> List(linkForScenario3))
 
   protected val dataForEngine = Map(

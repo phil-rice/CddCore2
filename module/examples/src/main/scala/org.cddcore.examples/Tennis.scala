@@ -1,7 +1,13 @@
 package org.cddcore.examples
 
 import org.cddcore.engine.Engine
+import org.cddcore.rendering.Renderer
 
+object Tennis {
+  def main(args: Array[String]) {
+    Renderer.makeReportFilesFor(new Tennis().tennis)
+  }
+}
 
 class Tennis {
   val (serverWon, receiverWon) = ("server won", "receiver won")
@@ -11,7 +17,7 @@ class Tennis {
     useCase("Winning", "A game is won by the first player to have won at least four points in total and at least two points more than the opponent.") {
       useCase("Server Winning") {
         (4, 0) produces serverWon when { case (l, r) => (l - r) >= 2 && l >= 4 }
-        (4, 1) produces serverWon
+        (4, 1) produces serverWon withComment "This was 4,1"
         (4, 2) produces serverWon
         (5, 3) produces serverWon
       }
@@ -31,7 +37,7 @@ class Tennis {
       }
 
       useCase("When both have the same running score", "The running score, if both scores are the same, is called xx all") {
-        (0, 0) produces "love all" when { case (l, r) => l == r && l < 3 } by (x=> s"${lookup(x._1)} all")
+        (0, 0) produces "love all" when { case (l, r) => l == r && l < 3 } by (x => s"${lookup(x._1)} all")
         (2, 2) produces "thirty all"
       }
     }

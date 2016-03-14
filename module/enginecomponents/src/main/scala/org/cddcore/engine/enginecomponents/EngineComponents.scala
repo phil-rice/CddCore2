@@ -23,6 +23,10 @@ trait EngineComponent[P, R] {
   def title: String
 }
 
+trait HasComment {
+  def comment: Option[String]
+}
+
 object UseCase {
   implicit def useCaseHierarcy[P, R] =
     new Hierarchy[UseCase[P, R], EngineComponent[P, R]] {
@@ -39,7 +43,7 @@ object UseCase {
     }
 }
 
-case class UseCase[P, R](title: String, components: List[EngineComponent[P, R]] = List(), comment: Option[String] = None, definedInSourceCodeAt: String) extends EngineComponent[P, R] with ToSummary {
+case class UseCase[P, R](title: String, components: List[EngineComponent[P, R]] = List(), comment: Option[String] = None, definedInSourceCodeAt: String) extends EngineComponent[P, R] with ToSummary with HasComment{
   def allScenarios = components.reverse.flatMap(_.allScenarios)
 
   override def toSummary(displayProcessor: DisplayProcessor): String = s"UseCase($title${comment.map(c => s",$c").getOrElse("")})"
