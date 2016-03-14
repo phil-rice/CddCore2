@@ -5,7 +5,7 @@ import java.net.URI
 import java.util
 import java.util.Date
 
-import com.github.mustachejava.{Mustache => JMustache, DefaultMustacheFactory}
+
 import org.cddcore.engine.enginecomponents._
 import org.cddcore.engine._
 import org.cddcore.rendering.Renderer._
@@ -104,30 +104,8 @@ case class RenderContext(reportDate: Date, urlBase: String, pathMap: PathMap, ur
   def url(ec: EngineComponent[_, _]) = urlManipulations.makeUrl(urlBase, idPath(ec))
 
   def makeFile(ec: EngineComponent[_, _], textForEngine: String) = urlManipulations.makeFile(url(ec), textForEngine)
-
-
 }
 
-trait TestObjectsForRendering {
-  val displayProcessorModifiedForSituations = DisplayProcessor.defaultDisplayProcessor.withSummarize { case (dp, x) => s"Summary($x)" }
-  protected val emptyEngine = new Engine[Int, String]("someEngineTitle") {}
-  protected val engineWithUseCase = new Engine[Int, String]("someEngineTitle2") {
-    useCase("someUseCase") {
-      1 produces "one" when (_ == 1)
-      2 produces "two" when (_ == 2)
-    }
-    useCase("someOtherCase") {
-      3 produces "three" when (_ == 3)
-    }
-    4 produces "four"
-  }
-  val List(useCase1: UseCase[Int, String], useCase2: UseCase[Int, String], scenario4: Scenario[Int, String]) = engineWithUseCase.builder.asUseCase.components.reverse
-  val List(scenario1: Scenario[_, _], scenario2: Scenario[_, _]) = useCase1.components.reverse
-  val List(scenario3: Scenario[_, _]) = useCase2.components.reverse
-
-
-  protected val rc: RenderContext = RenderContext(new Date(), "urlBase", PathMap(emptyEngine, engineWithUseCase), new FileUrlManipulations())(displayProcessorModifiedForSituations)
-}
 
 trait KeysForRendering {
   val mainEngineKey = "mainEngine"
@@ -181,161 +159,6 @@ trait Icons {
   val scenarioIcon = "images/scenario.png" //http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
 }
 
-object Mustache {
-  val mf = new DefaultMustacheFactory();
-
-  def apply(name: String, template: String) = new Mustache(mf.compile(new StringReader(template), name))
-
-  def apply(name: String) = new Mustache(mf.compile(name))
-
-
-}
-
-class Mustache(mustache: JMustache) {
-  def apply(item: Any) = {
-    val writer = new StringWriter()
-    mustache.execute(writer, Templates.forMustache(item))
-    writer.flush()
-    writer.toString
-  }
-}
-
-trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering with Icons {
-  protected val linkForScenario1 = Map(titleKey -> scenario1.title, linkUrlKey -> rc.url(scenario1), iconUrlKey -> scenarioIcon, definedAtKey -> scenario1.definedInSourceCodeAt)
-  protected val linkForScenario2 = Map(titleKey -> scenario2.title, linkUrlKey -> rc.url(scenario2), iconUrlKey -> scenarioIcon, definedAtKey -> scenario2.definedInSourceCodeAt)
-  protected val linkForScenario3 = Map(titleKey -> scenario3.title, linkUrlKey -> rc.url(scenario3), iconUrlKey -> scenarioIcon, definedAtKey -> scenario3.definedInSourceCodeAt)
-  protected val linkForScenario4 = Map(titleKey -> scenario4.title, linkUrlKey -> rc.url(scenario4), iconUrlKey -> scenarioIcon, definedAtKey -> scenario4.definedInSourceCodeAt)
-  protected val linkForUseCase1 = Map(titleKey -> useCase1.title, linkUrlKey -> rc.url(useCase1), iconUrlKey -> useCasesIcon, definedAtKey -> useCase1.definedInSourceCodeAt)
-  protected val linkForUseCase2 = Map(titleKey -> useCase2.title, linkUrlKey -> rc.url(useCase2), iconUrlKey -> useCasesIcon, definedAtKey -> useCase2.definedInSourceCodeAt)
-  protected val linkForEngine = Map(titleKey -> engineWithUseCase.title, linkUrlKey -> rc.url(engineWithUseCase), iconUrlKey -> engineWithTestsIcon, definedAtKey -> engineWithUseCase.definedInSourceCodeAt)
-
-  protected val emptyUsecasesAndScenarios = Map(scenariosKey -> List(), useCasesKey -> List())
-
-  protected val dataForScenario1 = Map(
-    idKey -> rc.idPath(scenario1),
-    typeKey -> scenarioTypeName,
-    titleKey -> scenario1.title,
-    linkKey -> linkForScenario1,
-    situationKey -> "Summary(1)")
-
-
-  protected val dataForScenario2 = Map(
-    idKey -> rc.idPath(scenario2),
-    typeKey -> scenarioTypeName,
-    titleKey -> scenario2.title,
-    linkKey -> linkForScenario2,
-    situationKey -> "Summary(2)")
-
-
-  protected val dataForScenario3 = Map(
-    idKey -> rc.idPath(scenario3),
-    typeKey -> scenarioTypeName,
-    titleKey -> scenario3.title,
-    linkKey -> linkForScenario3,
-    situationKey -> "Summary(3)")
-
-
-  protected val dataForScenario4 = Map(
-    idKey -> rc.idPath(scenario4),
-    typeKey -> scenarioTypeName,
-    titleKey -> scenario4.title,
-    linkKey -> linkForScenario4,
-    situationKey -> "Summary(4)")
-
-
-  protected val dataForUseCase1 = Map(
-    idKey -> rc.idPath(useCase1),
-    typeKey -> useCaseTypeName,
-    titleKey -> "someUseCase",
-    linkKey -> linkForUseCase1,
-    scenariosIconsKey -> List(linkForScenario1, linkForScenario2))
-
-  protected val dataForUseCase2 = Map(
-    idKey -> rc.idPath(useCase2),
-    typeKey -> useCaseTypeName,
-    titleKey -> "someOtherCase",
-    linkKey -> linkForUseCase2,
-    scenariosIconsKey -> List(linkForScenario3))
-
-  protected val dataForEngine = Map(
-    idKey -> rc.idPath(engineWithUseCase),
-    typeKey -> engineTypeName,
-    titleKey -> engineWithUseCase.title,
-    linkKey -> linkForEngine,
-    scenariosIconsKey -> List(linkForScenario4))
-
-  protected val pathForScenario1 = scenario1 :: useCase1 :: engineWithUseCase :: Nil
-  protected val focusOnScenario1 =
-    dataForEngine ++ Map(
-      scenariosKey -> List(),
-      useCasesKey -> List(
-        dataForUseCase1 ++ Map(
-          useCasesKey -> List(),
-          scenariosKey -> List(dataForScenario1)
-        )
-      ))
-  protected val pathForScenario2 = scenario2 :: useCase1 :: engineWithUseCase :: Nil
-  protected val focusOnScenario2 =
-    dataForEngine ++ Map(
-      scenariosKey -> List(),
-      useCasesKey -> List(
-        dataForUseCase1 ++ Map(
-          useCasesKey -> List(),
-          scenariosKey -> List(dataForScenario2)
-        )
-      ))
-
-  protected val pathForScenario3 = scenario3 :: useCase2 :: engineWithUseCase :: Nil
-  protected val focusOnScenario3 =
-    dataForEngine ++ Map(
-      scenariosKey -> List(),
-      useCasesKey -> List(
-        dataForUseCase2 ++ Map(
-          useCasesKey -> List(),
-          scenariosKey -> List(dataForScenario3)
-        )
-      ))
-
-  protected val pathForScenario4 = scenario4 :: useCase2 :: engineWithUseCase :: Nil
-  protected val focusOnScenario4 =
-    dataForEngine ++ Map(
-      scenariosKey -> List(dataForScenario4),
-      useCasesKey -> List())
-
-  protected val pathForUseCase1 = useCase1 :: engineWithUseCase :: Nil
-  protected val focusOnUseCase1FromUseCase1 =
-    dataForUseCase1 ++ Map(
-      useCasesKey -> List(),
-      scenariosKey -> List(dataForScenario1, dataForScenario2)
-    )
-
-  protected val focusOnUseCase1 =
-    dataForEngine ++ Map(
-      scenariosKey -> List(),
-      useCasesKey -> List(focusOnUseCase1FromUseCase1))
-
-  protected val pathForUseCase2 = useCase2 :: engineWithUseCase :: Nil
-  protected val focusOnUseCase2FromUseCase2 =
-    dataForUseCase2 ++ Map(
-      useCasesKey -> List(),
-      scenariosKey -> List(dataForScenario3))
-
-  protected val focusOnUseCase2 =
-    dataForEngine ++ Map(
-      scenariosKey -> List(),
-      useCasesKey -> List(focusOnUseCase2FromUseCase2))
-
-  protected val pathForEngine = engineWithUseCase :: Nil
-  protected val focusOnEngine =
-    dataForEngine ++ Map(
-      scenariosKey -> List(scenario4),
-      useCasesKey -> List(dataForUseCase1, dataForUseCase2))
-  protected val focusOnEngineFromUseCase1 =
-    dataForEngine ++ Map(
-      scenariosKey -> List(),
-      useCasesKey -> List(dataForUseCase1))
-
-}
 
 object Templates extends TestObjectsForRendering with Icons with KeysForRendering with ExpectedForTemplates {
 
@@ -462,60 +285,6 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
     Map("title" -> path.head.title,
       "definedAt" -> path.head.definedInSourceCodeAt,
       "engine" -> Templates.renderFocus(rc, path.last, path))
-
-
-  //  object RenderFocus extends Engine3[RenderContext, EngineComponent[_, _], Seq[EngineComponent[_, _]], Map[String, _]] {
-  //    useCase("Path for engine") {
-  //      (rc, engineWithUseCase, pathForEngine) produces focusOnEngine byRecursion { case (fn, (rc, e, path)) =>
-  //        renderData(rc, e) ++ Map(
-  //          useCasesKey -> findUseCaseChildren(e).filter(path.contains).map(fn(rc, _, path)),
-  //          scenariosKey -> findScenarioChildren(e).filter(path.contains).map(renderData(rc, _))
-  //        )
-  //      }
-  //      (rc, useCase1, pathForEngine) produces focusOnUseCase1
-  //      (rc, useCase2, pathForEngine) produces focusOnUseCase2FromUseCase2
-  //      (rc, scenario1, pathForEngine) produces dataForScenario1 ++ emptyUsecasesAndScenarios
-  //      (rc, scenario2, pathForEngine) produces dataForScenario2 ++ emptyUsecasesAndScenarios
-  //      (rc, scenario3, pathForEngine) produces dataForScenario3 ++ emptyUsecasesAndScenarios
-  //      (rc, scenario4, pathForEngine) produces dataForScenario4 ++ emptyUsecasesAndScenarios
-  //
-  //    }
-  //    useCase("Path for usecase1") {
-  //      (rc, engineWithUseCase, pathForUseCase1) produces focusOnEngineFromUseCase1
-  //      (rc, useCase1, pathForUseCase1) produces focusOnUseCase1FromUseCase1
-  //      (rc, scenario1, pathForUseCase1) produces dataForScenario1 ++ emptyUsecasesAndScenarios
-  //      (rc, scenario2, pathForUseCase1) produces dataForScenario2 ++ emptyUsecasesAndScenarios
-  //      (rc, useCase2, pathForUseCase1) produces Map[String, Any]()
-  //      (rc, scenario2, pathForUseCase1) produces Map[String, Any]()
-  //      //      (rc, engineWithUseCase, pathForUseCase2) produces focusOnUseCase2
-  //      //      (rc, engineWithUseCase, pathForScenario1) produces focusOnScenario1
-  //      //      (rc, engineWithUseCase, pathForScenario2) produces focusOnScenario2
-  //      //      (rc, engineWithUseCase, pathForScenario3) produces focusOnScenario3
-  //      //      (rc, engineWithUseCase, pathForScenario4) produces focusOnScenario4
-  //
-  //      //      (rc, useCase1, pathForUseCase1) produces focusOnUseCase1FromUseCase1
-  //      //      (rc, useCase2, pathForUseCase2) produces focusOnUseCase2FromUseCase2
-  //      //      (rc, scenario1, pathForScenario1) produces dataForScenario1
-  //      //      (rc, scenario2, pathForScenario2) produces dataForScenario2
-  //      //      (rc, scenario3, pathForScenario3) produces dataForScenario3
-  //      //      (rc, scenario4, pathForScenario4) produces dataForScenario4
-  //
-  //    }
-  //  }
-
-
-  def forMustache(s: Any): Any = s match {
-    case m: Map[_, _] => m.foldLeft(new util.HashMap[String, Any]) {
-      case (acc, (k: String, v)) => acc.put(k, forMustache(v))
-        acc
-    }
-    case l: List[_] => l.foldLeft(new util.ArrayList[Any]) {
-      (acc, v) => acc.add(forMustache(v))
-        acc
-    }
-    case _ => s
-  }
-
 }
 
 object DecisionTreeRendering extends KeysForRendering {

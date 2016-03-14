@@ -19,7 +19,7 @@ case class TemplateNames(engineName: String, useCaseName: String, scenarioName: 
 object Renderer extends ExpectedForTemplates {
   type EC = EngineComponent[_, _]
 
-  implicit def ecToViewBuilder[P,R](ec: EngineComponent[P,R])(implicit renderConfiguration: RenderConfiguration) = new EngineComponentPimper(ec)
+  implicit def ecToViewBuilder[P, R](ec: EngineComponent[P, R])(implicit renderConfiguration: RenderConfiguration) = new EngineComponentPimper(ec)
 
   def pathMap(ec: EC) = PathMap(ec)
 
@@ -32,7 +32,7 @@ object Renderer extends ExpectedForTemplates {
 
   def templateName(ec: EC) = s"${Templates.findTypeName(ec)}.mustache"
 
-  def javaMap(ec: EC)(implicit rc: RenderContext) = Templates.forMustache(scalaMap(ec))
+//  def javaMap(ec: EC)(implicit rc: RenderContext) = Templates.forMustache(scalaMap(ec))
 
   def toHtml(ec: EC)(implicit rc: RenderContext = renderContext(ec)) = {
     Mustache.apply(templateName(ec)).apply(ec)
@@ -46,31 +46,12 @@ object Renderer extends ExpectedForTemplates {
     }
   }
 
-  def main(args: Array[String]) {
-    implicit val rc = engineWithUseCase.renderContext
-    val paths = engineWithUseCase.withChildrenPaths.map(path => path.map(_.title).mkString(","))
-    println("paths")
-    println(paths.mkString("\n"))
-    println
-    println
-    println
-    println
-
-    val maps = engineWithUseCase.withChildrenPaths.map(Templates.renderPath(rc, _))
-    println(maps.map(JsonForRendering.pretty).zip(paths).map { case (json, path) => path + "\n" + json }.mkString("\n\n"))
-    println
-    println
-    //    println(scenario1.toSingleMaps.map(m => Mustache.apply("Report.mustache").apply(m)).mkString("\n\n"))
-    //    println(useCase1.toSingleMaps.map(m => Mustache.apply("Report.mustache").apply(m)).mkString("\n\n"))
-    println(maps.zip(paths).map { case (m, path) => path + "\n" + Mustache.apply("templates/Report.mustache").apply(m) }.mkString("\n\n"))
-
+  def makeReportFilesFor[P, R](engine: Engine[P, R])(implicit renderConfiguration: RenderConfiguration) = {
+    implicit val rc = renderContext(engine)
     rc.urlManipulations.populateInitialFiles(rc.urlBase)
-    //    rc.urlManipulations.copyFromClassPathToFile("images/engine.png", new File("./target/cdd/images/engine.png"))
-
-
-    for (path <- engineWithUseCase.withChildrenPaths) {
+    for (path <- engine.withChildrenPaths) {
       val engineMap = Templates.renderPath(rc, path)
-      val decisionTreeMap = DecisionTreeRendering.renderEngine[Int,String](engineWithUseCase, path.head)
+      val decisionTreeMap = DecisionTreeRendering.renderEngine(engine, path.head)
       val withJson = engineMap ++ Map(
         decisionTreeKey -> decisionTreeMap,
         "json" -> (JsonForRendering.pretty(decisionTreeMap) + "\n\n\n\n\n" + JsonForRendering.pretty(engineMap)))
@@ -78,6 +59,11 @@ object Renderer extends ExpectedForTemplates {
       rc.makeFile(path.head, html)
     }
   }
+
+  def main(args: Array[String]) {
+    makeReportFilesFor(engineWithUseCase)
+  }
+
 }
 
 class EngineComponentPimper[P, R](ec: EngineComponent[P, R]) {
@@ -88,7 +74,7 @@ class EngineComponentPimper[P, R](ec: EngineComponent[P, R]) {
   def toHtml(implicit rc: RenderContext = renderContext) = Renderer.toHtml(ec)
 
 
-  def toJavaMap(implicit renderContext: RenderContext = renderContext) = Renderer.javaMap(ec)
+//  def toJavaMap(implicit renderContext: RenderContext = renderContext) = Renderer.javaMap(ec)
 
   def toMap(implicit renderContext: RenderContext = renderContext) = Renderer.scalaMap(ec)
 
