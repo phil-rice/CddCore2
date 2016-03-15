@@ -17,6 +17,23 @@ div {
 	width: auto;
 	overflow: auto;
 }
+table {
+	table-layout: fixed;
+	background-color: #ffffff;
+	position: relative;
+	border-collapse: collapse;
+	margin: 4px;
+	padding: 0px;
+	border: 0px;
+	background-color: #ffffff;
+}
+td {
+	vertical-align: top;
+	margin: 2px;
+	padding: 2px;
+	border: 1px solid black;
+}
+
 .engineOnPath{
    border: 1px solid green;
 }

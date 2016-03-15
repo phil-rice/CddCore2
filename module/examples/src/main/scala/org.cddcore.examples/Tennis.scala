@@ -30,7 +30,7 @@ class Tennis {
     }
 
     useCase("Running Score", "The running score of each game is described in a manner peculiar to tennis: scores from zero to three points are described as 'love', 'fifteen', 'thirty', and 'forty' respectively.") {
-      useCase("different scorts") {
+      useCase("different scores") {
         (2, 3) produces "thirty, forty" because { case (l, r) if l < 4 && r < 4 => s"${lookup(l)}, ${lookup(r)}" }
         (2, 1) produces "thirty, fifteen"
         //        (3, 2) produces something where (_.contains("thirty"))
