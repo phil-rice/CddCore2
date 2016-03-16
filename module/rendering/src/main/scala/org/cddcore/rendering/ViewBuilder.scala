@@ -19,12 +19,13 @@ case class TemplateNames(engineName: String, useCaseName: String, scenarioName: 
 object Renderer extends ExpectedForTemplates {
   type EC = EngineComponent[_, _]
 
-  implicit def ecToViewBuilder[P, R](ec: EngineComponent[P, R])(implicit renderConfiguration: RenderConfiguration) = new EngineComponentPimper(ec)
+  implicit def engineToPimper[P, R](ec: Engine[P, R])(implicit renderConfiguration: RenderConfiguration) = new EnginePimper(ec)
+  implicit def engineComponentToPimper[P, R](ec: EngineComponent[P, R])(implicit renderConfiguration: RenderConfiguration) = new EngineComponentPimper(ec)
 
-  def pathMap(ec: EC) = PathMap(ec)
+  def pathMap(engines: Engine[_, _]*) = PathMap(engines)
 
-  def renderContext(ec: EC)(implicit renderConfiguration: RenderConfiguration, displayProcessor: DisplayProcessor) =
-    RenderContext(renderConfiguration.date, renderConfiguration.urlBase, pathMap(ec), renderConfiguration.urlManipulations)
+  def renderContext(engines: Engine[_, _]*)(implicit renderConfiguration: RenderConfiguration, displayProcessor: DisplayProcessor) =
+    RenderContext(renderConfiguration.date, renderConfiguration.urlBase, pathMap(engines: _*), renderConfiguration.urlManipulations)
 
   def withDescendents(ec: EC): List[EC] = ec :: Templates.findChildren(ec).flatMap(withDescendents)
 
@@ -32,9 +33,9 @@ object Renderer extends ExpectedForTemplates {
 
   def templateName(ec: EC) = s"${Templates.findTypeName(ec)}.mustache"
 
-//  def javaMap(ec: EC)(implicit rc: RenderContext) = Templates.forMustache(scalaMap(ec))
+  //  def javaMap(ec: EC)(implicit rc: RenderContext) = Templates.forMustache(scalaMap(ec))
 
-  def toHtml(ec: EC)(implicit rc: RenderContext = renderContext(ec)) = {
+  def toHtml(ec: Engine[_, _])(implicit rc: RenderContext = renderContext(ec)) = {
     Mustache.apply(templateName(ec)).apply(ec)
   }
 
@@ -66,19 +67,29 @@ object Renderer extends ExpectedForTemplates {
 
 }
 
-class EngineComponentPimper[P, R](ec: EngineComponent[P, R]) {
-  type EC = EngineComponent[P, R]
+class EnginePimper[P, R](ec: Engine[P, R]) {
 
   def renderContext(implicit renderConfiguration: RenderConfiguration, displayProcessor: DisplayProcessor) = Renderer.renderContext((ec))
 
   def toHtml(implicit rc: RenderContext = renderContext) = Renderer.toHtml(ec)
 
 
-//  def toJavaMap(implicit renderContext: RenderContext = renderContext) = Renderer.javaMap(ec)
+  //  def toJavaMap(implicit renderContext: RenderContext = renderContext) = Renderer.javaMap(ec)
 
-  def toMap(implicit renderContext: RenderContext = renderContext) = Renderer.scalaMap(ec)
+  //  def toSingleMaps(implicit renderContext: RenderContext = renderContext) =
+  //    withChildrenPathMaps.map(path => Map(
+  //      "id" -> path.head("id"),
+  //      path.head("type") -> path.reduce((acc, v) => v + ("path" -> acc)))
+  //
+  //    )
+}
 
-  def withChildrenPaths(implicit renderContext: RenderContext = renderContext): List[List[EC]] = withChildrenPaths(ec, List())
+class EngineComponentPimper[P, R](ec: EngineComponent[P, R]) {
+  type EC = EngineComponent[P, R]
+
+  def toMap(implicit renderContext: RenderContext) = Renderer.scalaMap(ec)
+
+  def withChildrenPaths(implicit renderContext: RenderContext): List[List[EC]] = withChildrenPaths(ec, List())
 
   protected def withChildrenPaths(ec: EngineComponent[P, R], path: List[EC])(implicit renderContext: RenderContext): List[List[EC]] = {
     val thisPath = ec :: path
@@ -87,17 +98,9 @@ class EngineComponentPimper[P, R](ec: EngineComponent[P, R]) {
 
   def withDescendents = Renderer.withDescendents(ec)
 
-  def withChildrenPathMaps(implicit renderContext: RenderContext = renderContext) =
-    withChildrenPaths.map(path => path.map { case ec: EC => Renderer.scalaMap(ec) })
+  def withChildrenPathMaps(implicit renderContext: RenderContext) = withChildrenPaths.map(path => path.map { case ec: EC => Renderer.scalaMap(ec) })
 
-  def toSingleMaps(implicit renderContext: RenderContext = renderContext) =
-    withChildrenPathMaps.map(path => Map(
-      "id" -> path.head("id"),
-      path.head("type") -> path.reduce((acc, v) => v + ("path" -> acc)))
-
-    )
 
 }
-
 
 

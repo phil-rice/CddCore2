@@ -5,7 +5,20 @@ object Maps {
   implicit def toMapPimper[K, V](map: Map[K, V]) = new MapPimper[K, V](map)
 }
 
+object MapOfLists {
+  implicit def toMapOfListsPimper[K, V](map: Map[K, List[V]]) = new MapOfListsPimper(map)
+
+  class MapOfListsPimper[K, V](map: Map[K, List[V]]) {
+    def addToList(kv: (K, V)): Map[K, List[V]] = kv match {
+      case (k, v) => map.get(k).fold(map + (k -> List[V]()))(list => map + (k -> list))
+    }
+
+  }
+
+}
+
 class MapPimper[K, V](m: Map[K, V]) {
+
   def recursivelyNotFilter(f: PartialFunction[(Any, Any), Boolean]): Map[K, V] = recursivelyNotFilterPrim(m, f).asInstanceOf[Map[K, V]]
 
   def recursivelyNotFilterPrim(any: Any, f: PartialFunction[(Any, Any), Boolean]): Any =

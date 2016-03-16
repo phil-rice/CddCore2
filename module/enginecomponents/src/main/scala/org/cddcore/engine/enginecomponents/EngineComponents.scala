@@ -1,5 +1,7 @@
 package org.cddcore.engine.enginecomponents
 
+import java.io.File
+
 import org.cddcore.utilities.{DisplayProcessor, Hierarchy, ToSummary}
 
 class AddedFinderNotActuallAnException extends Exception

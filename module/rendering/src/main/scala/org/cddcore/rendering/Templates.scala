@@ -152,11 +152,11 @@ trait KeysForRendering {
 }
 
 trait Icons {
-  val engineWithTestsIcon = "images/engine.png"
+  val engineWithTestsIcon = "../images/engine.png"
   //http://i782.photobucket.com/albums/yy108/phil-rice/engine_zps9a86cef4.png"
-  val useCasesIcon = "images/usecase.png"
+  val useCasesIcon = "../images/usecase.png"
   //http://i782.photobucket.com/albums/yy108/phil-rice/useCase_zps23a7250c.png"
-  val scenarioIcon = "images/scenario.png" //http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
+  val scenarioIcon = "../images/scenario.png" //http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
 }
 
 

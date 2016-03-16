@@ -35,4 +35,11 @@ class StringsSpec extends CddSpec {
     Strings.removeLast(0)("asdasd") shouldBe "asdasd"
     Strings.removeLast(2)("asdasd") shouldBe "asda"
   }
+
+  "The Strings.cleanString" should "only allow A-Za-z _- in the name" in {
+    Strings.cleanString("") shouldBe ""
+    Strings.cleanString("abcABC 123_-") shouldBe "abcABC 123_-"
+    Strings.cleanString("abc$£*&^\"\'.ABC 123_-") shouldBe "abcABC 123_-"
+  }
+
 }

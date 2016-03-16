@@ -7,6 +7,7 @@ class RenderingSpec extends CddSpec with ExpectedForTemplates {
   import Renderer._
 
   "The withChildrenPaths" should "return the objects, and then the children with paths to the root" in {
+    implicit val renderContext = engineWithUseCase.renderContext
     scenario1.withChildrenPaths shouldBe List(List(scenario1))
     scenario2.withChildrenPaths shouldBe List(List(scenario2))
 //    println(Renderer.mapList(useCase1.withChildrenPaths, _.title))

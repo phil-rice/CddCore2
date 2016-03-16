@@ -11,11 +11,19 @@ class ScenarioBuilderSpec extends CddSpec {
   "A <situation> produces <result>" should "make a SituationAndResultScenario" in {
     val s = 1 produces "result"
     val expectedDefinedInSourceCodeAt = "(ScenarioBuilderSpec.scala:12)"
-    s shouldBe Scenario[Int, String](situation = 1, assertion = EqualsAssertion("result"), reason = SimpleReason("result", expectedDefinedInSourceCodeAt), definedInSourceCodeAt = expectedDefinedInSourceCodeAt, title = "1")
+    s shouldBe Scenario[Int, String](situation = 1, assertion = EqualsAssertion("result"), reason = SimpleReason("result", expectedDefinedInSourceCodeAt), definedInSourceCodeAt = expectedDefinedInSourceCodeAt, title = "1", comment = None)
     s.expectedOption shouldBe Some("result")
 
   }
 
+  it should "allow comments to be added" in {
+    (1 produces "result" withComment "someComment").comment shouldBe Some("someComment")
+    (1 produces "result" withComment "someComment" because { case 1 => "result" }).comment shouldBe Some("someComment")
+    (1 produces "result" because { case 1 => "result" } withComment "someComment").comment shouldBe Some("someComment")
+    (1 produces "result" when (_ == 1) withComment "someComment").comment shouldBe Some("someComment")
+    (1 produces "result" withComment "someComment" when (_ == 1)).comment shouldBe Some("someComment")
+
+  }
   it should "allow the 'by' word to have code generate the result" in {
     val sa = 1 produces "1"
     val sb = sa by (_.toString)
@@ -47,7 +55,7 @@ class ScenarioBuilderSpec extends CddSpec {
   it should "throw BecauseNotTrueException when the because is not true for the situation" in {
     intercept[ReasonInvalidException] {
       1 produces "result" because { case i if i == 2 => "result" }
-    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:49) cannot be added because the reason given isn't actually true"
+    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:57) cannot be added because the reason given isn't actually true"
   }
 
   it should "have allScenarios just including itself" in {
@@ -80,7 +88,7 @@ class ScenarioBuilderSpec extends CddSpec {
   it should "throw BecauseNotTrueException when the when is not true for the situation" in {
     intercept[ReasonInvalidException] {
       1 produces "result" when (_ == 2)
-    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:82) cannot be added because the reason given isn't actually true"
+    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:90) cannot be added because the reason given isn't actually true"
   }
 
   it should "allow the 'by' word to have code generate the result" in {
