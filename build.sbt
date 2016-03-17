@@ -31,6 +31,11 @@ lazy val renderingSettings = commonSettings ++ Seq(
   libraryDependencies += "org.json4s" %% "json4s-jackson" % "3.3.0"
 )
 
+lazy val junitSettings = commonSettings ++ Seq(
+  libraryDependencies += "junit" % "junit" % "4.11"
+
+)
+
 lazy val utilities = (project in file("module/utilities")).
   settings(utilitiesSettings: _*)
 
@@ -66,10 +71,17 @@ lazy val rendering = (project in file("module/rendering")).
 //  aggregate(mustache)
 
 
+lazy val cddunit = (project in file ("module/cddunit")).
+  settings(junitSettings: _*).
+  dependsOn(engine % "test->test;compile->compile").dependsOn(rendering).
+  aggregate(rendering)
+
 lazy val examples = (project in file("module/examples")).
   settings(commonSettings: _*).
   dependsOn(engine % "test->test;compile->compile", rendering).
   aggregate(engine, rendering)
+
+
 
 lazy val test = (project in file("module/test")).
   settings(commonSettings: _*).
@@ -80,4 +92,6 @@ lazy val test = (project in file("module/test")).
   dependsOn(engine).
   aggregate(engine).
   dependsOn(rendering).
-  aggregate(rendering)
+  dependsOn(cddunit).
+  aggregate(rendering).
+  aggregate(cddunit)

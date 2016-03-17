@@ -52,7 +52,7 @@ case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion:
 
   override def toString = s"Scenario($situation ${assertion.prettyDescription} ${reason.prettyDescription})/$definedInSourceCodeAt"
 
-  override def toSummary(dp: DisplayProcessor): String = s"Scenario $definedInSourceCodeAt ${dp(situation)} ${dp(assertion)})"
+  override def toSummary( dp: DisplayProcessor): String = s"Scenario $definedInSourceCodeAt ${dp(situation)} ${dp(assertion)})"
 }
 
 case class FromSituationScenarioBuilder[P, R](situation: P) {

@@ -45,5 +45,8 @@ object PathMap extends TestObjectsForRendering {
 
 
 class PathMap(map: Map[EngineComponent[_, _], String]) {
+  lazy val inversePathMap = map.foldLeft(Map[String, EngineComponent[_, _]]()) { case (acc, (k, v)) => acc + (v -> k) }
+
   def apply(ec: EngineComponent[_, _]) = map(ec)
+
 }

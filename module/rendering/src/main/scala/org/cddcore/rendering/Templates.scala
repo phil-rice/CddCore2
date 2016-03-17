@@ -99,7 +99,10 @@ class FileUrlManipulations extends UrlManipulations {
 case class RenderContext(reportDate: Date, urlBase: String, pathMap: PathMap, urlManipulations: UrlManipulations)(implicit val displayProcessor: DisplayProcessor) {
   override def toString = getClass.getSimpleName()
 
+  val inversePathMap = pathMap.inversePathMap
+
   def idPath(ec: EngineComponent[_, _]) = pathMap(ec)
+
 
   def url(ec: EngineComponent[_, _]) = urlManipulations.makeUrl(urlBase, idPath(ec))
 
