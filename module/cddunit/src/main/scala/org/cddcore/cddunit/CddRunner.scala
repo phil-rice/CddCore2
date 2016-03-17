@@ -55,42 +55,49 @@ trait AbstractCddRunner extends Runner {
   }
 
 
-  def run(notifier: RunNotifier): Unit = engineData match {
-    case Success(ed) =>
-      println("Starting the run")
-      val result = new Result
-      notifier.addListener(result.createListener)
-      notifier.fireTestRunStarted(getDescription)
-      for (engine <- ed.engines) {
-        def run[P, R](engineD: Engine[_,_], ecd: EngineComponent[_,_]): Unit = {
-          val engine =engineD.asInstanceOf[Engine[P,R]]
-          val ec = ecd.asInstanceOf[EngineComponent[P,R]]
-          val d = ecToDescription(ec)
-          ec match {
-            case s: Scenario[P, R] =>
-              notifier.fireTestStarted(d)
-              if (s.calcuateAssertionFor(engine, s.situation))
-                notifier.fireTestFinished(d)
-              else notifier.fireTestFailure(new Failure(d, new RuntimeException))
-            case uc: UseCase[P, R] =>
-              notifier.fireTestStarted(d)
-              uc.components.foreach(e => run(engine, e))
-              notifier.fireTestFinished(d)
-            case e: Engine[P, R] =>
-              notifier.fireTestStarted(d)
-              e.asUseCase.components.foreach(e => run(engine, e))
-              notifier.fireTestFinished(d)
-
-          }
-        }
-        run(engine, engine)
+  def run(notifier: RunNotifier): Unit = {
+    def runTest(d: Description)(block: => Boolean): Boolean = {
+      println(s"runTest: $d")
+      notifier.fireTestStarted(d)
+      try {
+        val result = block
+        if (result) notifier.fireTestFinished(d)
+        else
+          notifier.fireTestFailure(new Failure(d, new RuntimeException))
+        result
+      } catch {
+        case e: Exception => notifier.fireTestFailure(new Failure(d, e)); false
       }
-      notifier.fireTestRunFinished(result)
+    }
+    engineData match {
+      case Success(ed) =>
+        println("Starting the run")
+        val result = new Result
+        notifier.addListener(result.createListener)
+        notifier.fireTestRunStarted(getDescription)
+        val suceeded = ed.engines.foldLeft(true) { (acc, engine) =>
+          def run[P, R](engineD: Engine[_, _], ecd: EngineComponent[_, _]): Boolean = {
+            val engine = engineD.asInstanceOf[Engine[P, R]]
+            val ec = ecd.asInstanceOf[EngineComponent[P, R]]
+            val d = ecToDescription(ec)
+            ec match {
+              case s: Scenario[P, R] => runTest(d)(s.calcuateAssertionFor(engine, s.situation))
+              case uc: UseCase[P, R] => runTest(d)(uc.components.foldLeft(true)((acc, c) => run(engine, c) && acc))
+              case e: Engine[P, R] => runTest(d)(e.asUseCase.components.foldLeft(true)((acc, c) => run(engine, c) && acc))
+            }
+          }
+          println(s"Running engine ${engine.title}")
+          run(engine, engine) && acc
+        }
+        notifier.fireTestRunFinished(result)
+        suceeded
 
+      case util.Failure(e) =>
+        notifier.fireTestStarted(getDescription)
+        notifier.fireTestFailure(new Failure(getDescription, e))
+        false
+    }
 
-    case util.Failure(e) =>
-      notifier.fireTestStarted(getDescription)
-      notifier.fireTestFailure(new Failure(getDescription, e))
   }
 }
 
