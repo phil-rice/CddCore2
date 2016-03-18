@@ -1,7 +1,7 @@
 package org.cddcore.engine
 
 import org.cddcore.engine.enginecomponents._
-import org.cddcore.utilities.{DisplayProcessor, Lens, Monitor}
+import org.cddcore.utilities.{ChildLifeCycle, DisplayProcessor, Lens, Monitor}
 
 import scala.language.implicitConversions
 
@@ -95,7 +95,9 @@ object DecisionTree extends DecisionTreeValidator {
     DecisionNode(s, trueNode = ConclusionNode[P, R](trueAnchor, trueSituations), falseNode = ConclusionNode(falseAnchor, falseSituations))
   }
 
-  def addOne[P, R](mockEngine: P => R, dt: DecisionTree[P, R], s: Scenario[P, R])(implicit monitor: Monitor, dp: DisplayProcessor): DecisionTree[P, R] = {
+  def addOne[P, R](mockEngine: P => R, dt: DecisionTree[P, R], s: Scenario[P, R])
+                  (implicit monitor: Monitor, dp: DisplayProcessor, childLifeCycle: ChildLifeCycle[EngineComponent[P, R]]):
+  DecisionTree[P, R] = {
     monitor(s"DecisionTree.addOne($s)", {
       dt.lensFor(mockEngine, s).
         transform(dt, { case cn: ConclusionNode[P, R] =>
@@ -108,7 +110,8 @@ object DecisionTree extends DecisionTreeValidator {
                 monitor("Situation comes to correct conclusion in this condition node", addScenarioToConclusionNode(mockEngine, cn, s))
               else if (s.isDefinedAt(mockEngine, cn.mainScenario.situation)) {
                 monitor("s.isDefinedAt(cn) so the scenario cannot be added")
-                throw new CannotAddScenarioException(s, cn.mainScenario, actual)
+                childLifeCycle.childHasException(s, new CannotAddScenarioException(s, cn.mainScenario, actual))
+                cn
               } else
                 monitor("Situation comes to wrong conclusion in this condition node", makeDecisionNode(mockEngine, s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios))
             } else
@@ -118,13 +121,15 @@ object DecisionTree extends DecisionTreeValidator {
     })
   }
 
-  def apply[P, R](mockEngine: P => R, scenarios: Seq[Scenario[P, R]])(implicit monitor: Monitor, dp: DisplayProcessor): DecisionTree[P, R] = {
+  def apply[P, R](mockEngine: P => R, scenarios: Seq[Scenario[P, R]], errors: Map[EngineComponent[P, R], Exception] = Map[EngineComponent[P, R], Exception]())
+                 (implicit monitor: Monitor, dp: DisplayProcessor, childLifeCycle: ChildLifeCycle[EngineComponent[P, R]]): DecisionTree[P, R] = {
     type DT = DecisionTree[P, R]
     monitor[DT](s"DecisionTree.apply(count of Scenarios is ${scenarios.size}", {
-      scenarios match {
+      scenarios.filter(!errors.contains(_)) match {
         case h :: tail => tail.foldLeft[DecisionTree[P, R]](monitor[DT](s"Initial tree is formed from $h", ConclusionNode(h))) {
           (dt, s) => addOne(mockEngine, dt, s)
         }
+        case _ => EmptyDecisionTree.asInstanceOf[DT]
       }
     })
   }
@@ -188,6 +193,22 @@ trait DecisionTree[P, R] extends EngineComponent[P, R] {
 
 object ConclusionNode {
   def apply[P, R](s: Scenario[P, R]): ConclusionNode[P, R] = new ConclusionNode(s, List())
+}
+
+object EmptyDecisionTree extends DecisionTree[Nothing, Nothing] {
+  def allConclusionNodes: TraversableOnce[ConclusionNode[Nothing, Nothing]] = Nil
+
+  def lensFor(mockEngine: (Nothing) => Nothing, s: Scenario[Nothing, Nothing]): Lens[DecisionTree[Nothing, Nothing], DecisionTree[Nothing, Nothing]] = throw new IllegalStateException("An empty decision tree has no scenarios")
+
+  def apply(engine: (Nothing) => Nothing, p: Nothing): Nothing = throw new IllegalStateException("An empty decision tree has no scenarios")
+
+  def pathFor(mockEngine: (Nothing) => Nothing, s: Scenario[Nothing, Nothing]): List[DecisionTree[Nothing, Nothing]] = throw new IllegalStateException("An empty decision tree has no scenarios")
+
+  def mainScenario: Scenario[Nothing, Nothing] = throw new IllegalStateException("An empty decision tree has no scenarios")
+
+  def allScenarios: TraversableOnce[Scenario[Nothing, Nothing]] = Nil
+
+  def title: String = "Empty Decision Tree: there were no valid scenarios"
 }
 
 case class ConclusionNode[P, R](mainScenario: Scenario[P, R], scenarios: List[Scenario[P, R]]) extends DecisionTree[P, R] {

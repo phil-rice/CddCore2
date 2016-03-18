@@ -60,17 +60,25 @@ case class HierarchyBuilder[H <: C, C](holder: H, depth: Int = 0)(implicit hiera
 
 /** An example of this is the 'Engine' where scenarios and use cases are built using mutable state, because the DSL reads better
   *
+  * Another is the ThingDsl in ThingDslSpec
+  *
   * The methods are protected so that they are only availble from within a class extending this. They can of course be exposed: see SimpleMutableHierarchyBuilder */
 trait MutableHierarchyBuilder[H <: C, C] {
   implicit protected def hierarchy: Hierarchy[H, C]
 
   var hierarchyBuilder = new HierarchyBuilder[H, C](makeRootHolder, 0)
+  private var hasBeenSealed = false
 
-  protected def seal = ???
+  def postSealMessage: String
+
+  protected def seal = hasBeenSealed = true
 
   protected def makeRootHolder: H
 
-  protected def modBuilder(fn: HierarchyBuilder[H, C] => HierarchyBuilder[H, C]) = hierarchyBuilder = fn(hierarchyBuilder)
+  private def checkSeal[X](block: => X) = if (hasBeenSealed) throw new CannotAddItemsException(postSealMessage) else block
+
+  protected def modBuilder(fn: HierarchyBuilder[H, C] => HierarchyBuilder[H, C]) =
+    checkSeal(hierarchyBuilder = fn(hierarchyBuilder))
 
   protected def addChild(c: C) = modBuilder(_.addChild(c))
 
@@ -80,12 +88,12 @@ trait MutableHierarchyBuilder[H <: C, C] {
 
   protected def modCurrentChild(fn: C => C) = modBuilder(_.modCurrentChild(fn))
 
-  protected def getCurrentChild = hierarchyBuilder.currentChild
+  protected def getCurrentChild = checkSeal(hierarchyBuilder.currentChild)
 
   protected def childHasException(c: C, exception: Exception) = modBuilder(_.childHasException(c, exception))
 }
 
-class SimpleMutableHierarchyBuilder[H <: C, C](val makeRootHolder: H)(implicit val hierarchy: Hierarchy[H, C]) extends MutableHierarchyBuilder[H, C] {
+class SimpleMutableHierarchyBuilder[H <: C, C](val makeRootHolder: H, val postSealMessage: String = "")(implicit val hierarchy: Hierarchy[H, C]) extends MutableHierarchyBuilder[H, C] {
 
   override def addChild(c: C) = super.addChild(c)
 
@@ -112,14 +120,16 @@ trait MutableHierarchyBuilderWithChildLifeCycle[H <: C, C] extends MutableHierar
   }
 
   implicit val childLifeCycle = new ChildLifeCycle[C] {
+
     def created(child: C): Unit = addChild(child)
 
-
-    def update[X <: C](newChild: => X): X = {
-      modCurrentChild(_ => newChild)
+    def update[X <: C](block: => X): X = {
+      modCurrentChild(_ => block)
       getCurrentChild.getOrElse(throw new RuntimeException("Somehow don't have a current child after having modified it")).asInstanceOf[X]
     }
 
-    def wentWrong[E <: Throwable](c: C, e: E): Unit = ???
+    def childHasException(c: C, exception: Exception) = MutableHierarchyBuilderWithChildLifeCycle.this.childHasException(c, exception)
+
+
   }
 }

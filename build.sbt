@@ -55,9 +55,9 @@ lazy val enginecomponentstest = (project in file("module/enginecomponentstest"))
 lazy val engine = (project in file("module/engine")).
   settings(commonSettings: _*).
   dependsOn(utilities % "test->test").
-  aggregate(utilities).
   dependsOn(enginecomponents).
-  aggregate(enginecomponents)
+  dependsOn(enginecomponentstest % "test->test").
+  aggregate(enginecomponentstest)
 
 //lazy val mustache = (project in file("module/mustache")).
 //  settings(mustacheSettings: _*)

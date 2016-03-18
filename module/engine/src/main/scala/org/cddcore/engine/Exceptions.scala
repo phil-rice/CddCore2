@@ -7,7 +7,7 @@ class ValidationException(list: List[ValidationReport[_, _]]) extends Exception(
 
 class NoLastException(msg: String = "Last can only be used if the last item defined was a scenario") extends Exception(msg)
 
-class MockValueNotFoundException(val p: Any) extends Exception(s"Value[$p]")
+class MockValueNotFoundException[P](val p: P) extends Exception(s"Value[$p]")
 
 class RecursiveScenariosWithoutMocksException(definedInSourceCodeAt: String,mocks: Iterable[_], scenarioAndValue: List[(Scenario[_, _], Any)])(implicit dp: DisplayProcessor) extends
   Exception(s"EngineDefined at $definedInSourceCodeAt\nThe following scenarios don't have a mock:\n" +

@@ -1,6 +1,6 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents.{HasComment, EngineComponent, Scenario, UseCase}
+import org.cddcore.engine.enginecomponents._
 import org.cddcore.utilities._
 
 import scala.language.implicitConversions
@@ -52,8 +52,9 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
                                    (implicit val hierarchy: Hierarchy[UseCase[P, R], EngineComponent[P, R]], dp: DisplayProcessor)
   extends EngineComponent[P, R] with MutableHierarchyBuilderWithChildLifeCycle[UseCase[P, R], EngineComponent[P, R]] {
 
+  def postSealMessage = "Cannot modify the engine after it has been constructed"
 
-  def makeRootHolder = UseCase[P, R](initialTitle, definedInSourceCodeAt = definedInSourceCodeAt)
+  def makeRootHolder = UseCase[P, R](initialTitle, comment = None, definedInSourceCodeAt = definedInSourceCodeAt, errors = Map())
 
   def title: String = hierarchyBuilder.holder.title
 
@@ -73,25 +74,39 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
   protected def useCase(title: String, comment: String)(blockThatScenariosAreDefinedIn: => Unit) = useCasePrim(title, Some(comment))(blockThatScenariosAreDefinedIn)
 
   private def useCasePrim(title: String, comment: Option[String])(blockThatScenariosAreDefinedIn: => Unit) =
-    addParentChildrenDefinedInBlock(UseCase[P, R](title, comment = comment, definedInSourceCodeAt = EngineComponent.definedInSourceCodeAt(6)))(blockThatScenariosAreDefinedIn)
+    addParentChildrenDefinedInBlock(UseCase[P, R](title, comment = comment, definedInSourceCodeAt = EngineComponent.definedInSourceCodeAt(7), errors = Map()))(blockThatScenariosAreDefinedIn)
 
-  def mocks = allScenarios.foldLeft(Map[P, R]()) { (acc, s) => s.expectedOption.fold(acc)(expected => acc + (s.situation -> expected)) }
+  private def calculateMocksAndNoMocks: (Map[P, R], List[(Scenario[P, R], P)]) = {
+    val mocks: Map[P, R] = allScenarios.foldLeft(Map[P, R]()) { (acc, s) => s.expectedOption.fold(acc)(expected => acc + (s.situation -> expected)) }
+    def evalMock(p: P) = mocks.getOrElse(p, throw new MockValueNotFoundException(p))
+    val noMocks = allScenarios.toList.flatMap {
+      s: Scenario[P, R] => try {
+        s(evalMock, s.situation)
+        Nil
+      } catch {
+        case e: MockValueNotFoundException[P] => List((s, e.p))
+        case e: CalculatorNotGivenException => childHasException(s, e); Nil
+      }
+    }
+    (mocks, noMocks)
+  }
+
+  protected lazy val rawMocks: Map[P, R] = {
+    val (result, noMocks) = calculateMocksAndNoMocks
+    noMocks.foreach { case (s, p) => childHasException(s, new MockValueNotFoundException(p)) }
+    result
+  }
+
+  def mocks(p: P): R = rawMocks.getOrElse(p, throw new MockValueNotFoundException(p))
+
 
   lazy val decisionTree = {
-    seal
-    val actualMocks = mocks
     val ss: List[Scenario[P, R]] = allScenarios.toList
-    val noMocks = allScenarios.flatMap { s => try {
-      s(actualMocks, s.situation)
-      Nil
-    } catch {
-      case e: MockValueNotFoundException => List((s, e.p))
-    }
-    }.toList
-
-    if (!noMocks.isEmpty)
-      throw new RecursiveScenariosWithoutMocksException(definedInSourceCodeAt, actualMocks.keySet, noMocks)
-    DecisionTree(mocks, ss)
+    val mocks = rawMocks
+    val initialErrors = hierarchyBuilder.holder.errors
+    val result = DecisionTree[P, R](mocks, ss, initialErrors)
+    seal
+    result
   }
 
   def something = Scenario.something[R]

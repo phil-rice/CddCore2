@@ -2,7 +2,7 @@ package org.cddcore.utilities
 
 class ThingDslSpec extends CddSpec with HierarchyTestFramework {
 
-  class ThingHolderDSL(val makeRootHolder: ThingHolder)(implicit val hierarchy: Hierarchy[ThingHolder, Thing]) extends MutableHierarchyBuilderWithChildLifeCycle[ThingHolder, Thing] {
+  class ThingHolderDSL(val makeRootHolder: ThingHolder, val postSealMessage: String = "Cannot change after seal")(implicit val hierarchy: Hierarchy[ThingHolder, Thing]) extends MutableHierarchyBuilderWithChildLifeCycle[ThingHolder, Thing] {
 
     implicit def thingToPimper(thing: Thing) = new ThingPimper(thing)
 

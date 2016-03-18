@@ -4,7 +4,7 @@ import org.cddcore.utilities.{NullLifeCycle, CddSpec, HierarchyBuilder}
 
 
 class UseCaseBuilderSpec extends CddSpec {
-  def uc(s: String, ec: EngineComponent[Int, String]*) = UseCase[Int, String](s, ec.toList, None, "")
+  def uc(s: String, ec: EngineComponent[Int, String]*) = UseCase[Int, String](s, ec.toList, None, "",Map())
 
   val useCase1 = uc("useCase1")
   val useCase2 = uc("useCase2")
