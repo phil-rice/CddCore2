@@ -39,7 +39,7 @@ class EngineBuilder[P, R](initialTitle: String, definedInSourceCodeAt: String) e
 
   def asUseCase = builder.holder
 
-  def last = builder.getCurrentChild match {
+  def last = builder.currentChild match {
     case Some(s: Scenario[P, R]) => s.expectedOption.getOrElse(throw new NoLastException("No result specified"))
     case None => throw new NoLastException
   }

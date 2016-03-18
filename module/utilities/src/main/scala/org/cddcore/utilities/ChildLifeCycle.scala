@@ -7,12 +7,15 @@ object ChildLifeCycle {
 trait ChildLifeCycle[C] {
   def created(child: C)
 
-  def modified(oldChild: C, newChild: C)
+  def modify( newChild: C)
+
+  def wentWrong[E <: Throwable](c: C, e: E)
 }
 
 class NullLifeCycle[C] extends ChildLifeCycle[C] {
   def created(child: C) {}
 
-  def modified(oldChild: C, newChild: C) {}
-}
+  def modify( newChild: C) {}
 
+  def wentWrong[E <: Throwable](c: C, e: E) {}
+}

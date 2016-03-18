@@ -7,16 +7,7 @@ import org.cddcore.utilities.{CddSpec, ChildLifeCycle}
 class ScenarioBuilderAndLifeCycleSpec extends CddSpec {
   type S = Scenario[Int, String]
 
-  class RememberingLifeCycle extends ChildLifeCycle[S] {
-    var created = List[S]()
-    var modified = List[String]()
 
-    def asString(s: S) = s.situation + "/" + s.assertion + "/" + s.reason.getClass.getSimpleName
-
-    def created(child: S) = created = created :+ child
-
-    def modified(oldChild: S, newChild: S) = modified = modified :+ (asString(oldChild) + "==>" + asString(newChild))
-  }
 
   import Scenario._
 

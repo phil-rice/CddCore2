@@ -39,7 +39,7 @@ object UseCase {
         case oldHead :: tail => h.copy(components = fn(oldHead) :: tail)
       }
 
-      def currentChild(h: UseCase[P, R]) = h.components.headOption
+      def lastAddedChild(h: UseCase[P, R]) = h.components.headOption
 
       def childToHolder(child: EngineComponent[P, R]): UseCase[P, R] = child.asInstanceOf[UseCase[P, R]]
     }

@@ -67,6 +67,14 @@ trait DecisionTreeValidator {
       conclusionNodeValidators[P, R].flatMap(validateConclusionNodes(engine, dt, _))
 }
 
+trait BuildContext[P, R] {
+  def errors: List[ScenarioException[P, R]]
+
+  def errorScenario(s: Scenario[P, R]) = errors.find(_.scenario == s)
+}
+
+case class BuildData[P, R](errors: List[ScenarioException[P, R]], decisionTree: Option[DecisionTree[P, R]], mockEngine: P => R)
+
 object DecisionTree extends DecisionTreeValidator {
 
   private def addScenarioToConclusionNode[P, R](mockEngine: P => R, cn: ConclusionNode[P, R], s: Scenario[P, R]) = {
@@ -164,7 +172,7 @@ trait DecisionTree[P, R] extends EngineComponent[P, R] {
 
   def lensFor(mockEngine: P => R, s: Scenario[P, R]): Lens[DecisionTree[P, R], DecisionTree[P, R]]
 
-  def pathFor(mockEngine: P => R, s: Scenario[P, R]): List[DecisionTree[P,R]]
+  def pathFor(mockEngine: P => R, s: Scenario[P, R]): List[DecisionTree[P, R]]
 
   def mainScenario: Scenario[P, R]
 

@@ -41,7 +41,7 @@ trait AbstractCddRunner extends Runner {
     import renderContext._
 
     val id = renderContext.idPath(ec)
-    def create(uc: UseCase[_, _]) = uc.components.foldLeft(Description.createSuiteDescription(Strings.cleanString(uc.title), id)) {
+    def create(uc: UseCase[_, _]) = uc.components.reverse.foldLeft(Description.createSuiteDescription(Strings.cleanString(uc.title), id)) {
       (d, child) => d.getChildren.add(makeDescription(child));
         d
     }
@@ -75,27 +75,27 @@ trait AbstractCddRunner extends Runner {
         val result = new Result
         notifier.addListener(result.createListener)
         notifier.fireTestRunStarted(getDescription)
-        val suceeded = ed.engines.foldLeft(true) { (acc, engine) =>
+        ed.engines.foreach { engine =>
+          println(s"... broken scenarios\n.....${engine.brokenScenarios.mkString("\n.....")}")
           def run[P, R](engineD: Engine[_, _], ecd: EngineComponent[_, _]): Boolean = {
             val engine = engineD.asInstanceOf[Engine[P, R]]
             val ec = ecd.asInstanceOf[EngineComponent[P, R]]
             val d = ecToDescription(ec)
             ec match {
+              case s: Scenario[P, R] if engine.brokenScenarios.contains(s) => notifier.fireTestStarted(d); notifier.fireTestFailure(new Failure(d, s.exception.get)); true
               case s: Scenario[P, R] => runTest(d)(s.calcuateAssertionFor(engine, s.situation))
               case uc: UseCase[P, R] => runTest(d)(uc.components.foldLeft(true)((acc, c) => run(engine, c) && acc))
               case e: Engine[P, R] => runTest(d)(e.asUseCase.components.foldLeft(true)((acc, c) => run(engine, c) && acc))
             }
           }
           println(s"Running engine ${engine.title}")
-          run(engine, engine) && acc
+          run(engine, engine)
         }
         notifier.fireTestRunFinished(result)
-        suceeded
 
       case util.Failure(e) =>
         notifier.fireTestStarted(getDescription)
         notifier.fireTestFailure(new Failure(getDescription, e))
-        false
     }
 
   }

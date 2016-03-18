@@ -7,10 +7,15 @@ import org.junit.runner.{JUnitCore, RunWith}
 @RunWith(classOf[CddRunner])
 class ExampleJUnit extends CddContinuousIntegrationTest {
 
-  val engine = new Engine[Int, String] {
-    1 produces "one"
+  val engine = new Engine[Int, String]("An engine") {
     useCase("a use case") {
-      2 produces "two"
+      1 produces "one"
+      2 produces "two" when (_ == 1)
+//    }
+//    useCase("another use case") {
+      3 produces "three" when (_ == 3)
+      4 produces "four"
+      5 produces "five"
     }
   }
 
