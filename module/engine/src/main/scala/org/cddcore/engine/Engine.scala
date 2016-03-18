@@ -3,6 +3,7 @@ package org.cddcore.engine
 import org.cddcore.engine.enginecomponents._
 import org.cddcore.utilities._
 
+import scala.collection.immutable.ListMap
 import scala.language.implicitConversions
 
 
@@ -52,9 +53,11 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
                                    (implicit val hierarchy: Hierarchy[UseCase[P, R], EngineComponent[P, R]], dp: DisplayProcessor)
   extends EngineComponent[P, R] with MutableHierarchyBuilderWithChildLifeCycle[UseCase[P, R], EngineComponent[P, R]] {
 
+  def errors = hierarchyBuilder.holder.errors
+
   def postSealMessage = "Cannot modify the engine after it has been constructed"
 
-  def makeRootHolder = UseCase[P, R](initialTitle, comment = None, definedInSourceCodeAt = definedInSourceCodeAt, errors = Map())
+  def makeRootHolder = UseCase[P, R](initialTitle, comment = None, definedInSourceCodeAt = definedInSourceCodeAt, errors = ListMap())
 
   def title: String = hierarchyBuilder.holder.title
 
@@ -74,7 +77,7 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
   protected def useCase(title: String, comment: String)(blockThatScenariosAreDefinedIn: => Unit) = useCasePrim(title, Some(comment))(blockThatScenariosAreDefinedIn)
 
   private def useCasePrim(title: String, comment: Option[String])(blockThatScenariosAreDefinedIn: => Unit) =
-    addParentChildrenDefinedInBlock(UseCase[P, R](title, comment = comment, definedInSourceCodeAt = EngineComponent.definedInSourceCodeAt(7), errors = Map()))(blockThatScenariosAreDefinedIn)
+    addParentChildrenDefinedInBlock(UseCase[P, R](title, comment = comment, definedInSourceCodeAt = EngineComponent.definedInSourceCodeAt(7), errors = ListMap()))(blockThatScenariosAreDefinedIn)
 
   private def calculateMocksAndNoMocks: (Map[P, R], List[(Scenario[P, R], P)]) = {
     val mocks: Map[P, R] = allScenarios.foldLeft(Map[P, R]()) { (acc, s) => s.expectedOption.fold(acc)(expected => acc + (s.situation -> expected)) }
@@ -111,7 +114,7 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
 
   def something = Scenario.something[R]
 
-  def apply(p: P): R = decisionTree(apply, p)
+  def apply(p: P): R = if (hierarchyBuilder.holder.errors.isEmpty) decisionTree(apply, p) else throw hierarchyBuilder.holder.errors.head._2
 
   def allScenarios: TraversableOnce[Scenario[P, R]] = asUseCase.allScenarios
 

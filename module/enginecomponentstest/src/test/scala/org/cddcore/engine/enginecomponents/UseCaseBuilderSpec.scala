@@ -2,9 +2,11 @@ package org.cddcore.engine.enginecomponents
 
 import org.cddcore.utilities.{NullLifeCycle, CddSpec, HierarchyBuilder}
 
+import scala.collection.immutable.ListMap
+
 
 class UseCaseBuilderSpec extends CddSpec {
-  def uc(s: String, ec: EngineComponent[Int, String]*) = UseCase[Int, String](s, ec.toList, None, "",Map())
+  def uc(s: String, ec: EngineComponent[Int, String]*) = UseCase[Int, String](s, ec.toList, None, "", ListMap())
 
   val useCase1 = uc("useCase1")
   val useCase2 = uc("useCase2")
@@ -12,6 +14,7 @@ class UseCaseBuilderSpec extends CddSpec {
   val useCase4 = uc("useCase4")
 
   import Scenario._
+
   implicit def nullLifeCycle[C] = new NullLifeCycle[C]
 
   val s1 = 1 produces "result"

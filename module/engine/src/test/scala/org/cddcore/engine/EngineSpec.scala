@@ -2,6 +2,8 @@ package org.cddcore.engine
 
 import org.cddcore.engine.enginecomponents.UseCase
 
+import scala.collection.immutable.ListMap
+
 
 class EngineSpec extends CddEngineSpec {
 
@@ -26,9 +28,9 @@ class EngineSpec extends CddEngineSpec {
       useCase("usecase3")()
     }
     val List(uc3, uc2, uc1) = e.asUseCase.components
-    uc1 shouldBe UseCase[Person,String]("some usecase1", List(), None, "(EngineSpec.scala:24)", Map())
-    uc2 shouldBe UseCase[Person,String]("some usecase2", List(), Some("comment"), "(EngineSpec.scala:25)", Map())
-    uc3 shouldBe UseCase[Person,String]("usecase3", List(), None, "(EngineSpec.scala:26)", Map())
+    uc1 shouldBe UseCase[Person, String]("some usecase1", List(), None, "(EngineSpec.scala:26)", ListMap())
+    uc2 shouldBe UseCase[Person, String]("some usecase2", List(), Some("comment"), "(EngineSpec.scala:27)", ListMap())
+    uc3 shouldBe UseCase[Person, String]("usecase3", List(), None, "(EngineSpec.scala:28)", ListMap())
   }
 
   it should "be possible to nest use cases" in {

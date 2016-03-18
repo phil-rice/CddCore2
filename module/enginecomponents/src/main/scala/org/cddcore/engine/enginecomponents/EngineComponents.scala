@@ -4,6 +4,8 @@ import java.io.File
 
 import org.cddcore.utilities.{DisplayProcessor, Hierarchy, ToSummary}
 
+import scala.collection.immutable.ListMap
+
 class AddedFinderNotActuallAnException extends Exception
 
 object EngineComponent {
@@ -50,7 +52,7 @@ object UseCase {
     }
 }
 
-case class UseCase[P, R](title: String, components: List[EngineComponent[P, R]] = List(), comment: Option[String], definedInSourceCodeAt: String, errors: Map[EngineComponent[P, R], Exception]) extends EngineComponent[P, R] with ToSummary with HasComment {
+case class UseCase[P, R](title: String, components: List[EngineComponent[P, R]] = List(), comment: Option[String], definedInSourceCodeAt: String, errors: ListMap[EngineComponent[P, R], Exception]) extends EngineComponent[P, R] with ToSummary with HasComment {
   def allScenarios = components.reverse.flatMap(_.allScenarios)
 
   override def toSummary(displayProcessor: DisplayProcessor): String = s"UseCase($title${comment.map(c => s",$c").getOrElse("")})"

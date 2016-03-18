@@ -1,6 +1,6 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents.{Scenario, EngineComponent}
+import org.cddcore.engine.enginecomponents.{CannotAddScenarioException, Scenario, EngineComponent}
 import org.cddcore.utilities.ChildLifeCycle
 
 class EngineWithFaultyScenariosSpec extends CddEngineSpec {
@@ -26,4 +26,22 @@ class EngineWithFaultyScenariosSpec extends CddEngineSpec {
     errors shouldBe Map(s -> "ReasonInvalidException")
   }
 
+  it should "throw an exception" in {
+    val e = new Engine[Int, String] {
+      1 produces "one"
+      2 produces "two"
+      3 produces "three"
+      4 produces "four"
+      5 produces "five"
+      6 produces "six"
+    }
+    e.hierarchyBuilder.holder.errors.size shouldBe 0
+    e.decisionTree
+    e.hierarchyBuilder.holder.errors.size shouldBe 5
+    val ex = intercept[CannotAddScenarioException[Int,String]](e(1))
+    withClue(ex.getMessage)(ex  .getMessage.contains("2 produces two") shouldBe true)
+  }
+  it should "throw an exception with the first broken scenario when the engine is used" in {
+    fail
+  }
 }

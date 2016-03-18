@@ -76,13 +76,14 @@ trait AbstractCddRunner extends Runner {
         notifier.addListener(result.createListener)
         notifier.fireTestRunStarted(getDescription)
         ed.engines.foreach { engine =>
-          println(s"... broken scenarios\n.....${engine.brokenScenarios.mkString("\n.....")}")
+          engine.decisionTree
+          println(s"... error scenarios\n.....${engine.errors.mkString("\n.....")}")
           def run[P, R](engineD: Engine[_, _], ecd: EngineComponent[_, _]): Boolean = {
             val engine = engineD.asInstanceOf[Engine[P, R]]
             val ec = ecd.asInstanceOf[EngineComponent[P, R]]
             val d = ecToDescription(ec)
             ec match {
-              case s: Scenario[P, R] if engine.brokenScenarios.contains(s) => notifier.fireTestStarted(d); notifier.fireTestFailure(new Failure(d, s.exception.get)); true
+              case s: Scenario[P, R] if engine.errors.contains(s) => notifier.fireTestStarted(d); notifier.fireTestFailure(new Failure(d, engine.errors(s))); true
               case s: Scenario[P, R] => runTest(d)(s.calcuateAssertionFor(engine, s.situation))
               case uc: UseCase[P, R] => runTest(d)(uc.components.foldLeft(true)((acc, c) => run(engine, c) && acc))
               case e: Engine[P, R] => runTest(d)(e.asUseCase.components.foldLeft(true)((acc, c) => run(engine, c) && acc))
