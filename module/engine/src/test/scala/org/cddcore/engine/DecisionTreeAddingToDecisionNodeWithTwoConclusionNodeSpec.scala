@@ -1,11 +1,14 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents.Scenario
+import org.cddcore.engine.enginecomponents.{EngineComponent, Scenario}
+import org.cddcore.utilities.NullLifeCycle
 
 class DecisionTreeAddingToDecisionNodeWithTwoConclusionNodeSpec extends CddNonRecursiveSpec[Int, String] {
 
   import DecisionTreeBuilder._
   import Scenario._
+
+  implicit val lifeCycle = new NullLifeCycle[EngineComponent[Int, String]]
 
   val mainS = 1 produces "result 1" when (_ == 1)
   val falseS = 2 produces "result 2"

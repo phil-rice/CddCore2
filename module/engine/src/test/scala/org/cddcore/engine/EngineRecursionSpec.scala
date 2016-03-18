@@ -9,7 +9,7 @@ class EngineRecursionSpec extends CddEngineSpec {
       3 produces last * 3
       4 produces last * 4
     }
-    e.builder.mocks shouldBe Map(1 -> 1, 2 -> 2, 3 -> 6, 4 -> 24)
+    e.mocks shouldBe Map(1 -> 1, 2 -> 2, 3 -> 6, 4 -> 24)
   }
 
   it should "not have mocks if only an assertion is available" in {
@@ -21,7 +21,7 @@ class EngineRecursionSpec extends CddEngineSpec {
       7 produces something where (_ => true)
       4 produces 24
     }
-    e.builder.mocks shouldBe Map(1 -> 1, 2 -> 2, 3 -> 6, 4 -> 24)
+    e.mocks shouldBe Map(1 -> 1, 2 -> 2, 3 -> 6, 4 -> 24)
   }
 
   "A recursive engine" should "compute the expected values" in {

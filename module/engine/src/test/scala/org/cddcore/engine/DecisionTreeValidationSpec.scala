@@ -1,12 +1,14 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents.Scenario
+import org.cddcore.engine.enginecomponents.{EngineComponent, Scenario}
+import org.cddcore.utilities.NullLifeCycle
 
 class DecisionTreeValidationSpec extends CddNonRecursiveSpec[Int, String] with DecisionTreeValidator {
 
   import DecisionTree.ValidationIssues._
   import Scenario._
 
+  implicit val lifeCycle = new NullLifeCycle[EngineComponent[Int, String]]
   implicit def toSeq[X](x: X) = Seq(x)
 
   val s1 = 1 produces "result"

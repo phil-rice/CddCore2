@@ -49,8 +49,6 @@ trait HierarchyTestFramework {
   val t1 = new Thing("1")
   val t2 = new Thing("2")
   val t3 = new Thing("3")
-
-
 }
 
 class HierarchySpec extends CddSpec with HierarchyTestFramework {

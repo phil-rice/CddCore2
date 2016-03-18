@@ -1,6 +1,6 @@
 package org.cddcore.engine.enginecomponents
 
-import org.cddcore.utilities.CddSpec
+import org.cddcore.utilities.{NullLifeCycle, CddSpec}
 
 class ScenarioBuilderSpec extends CddSpec {
 
@@ -8,9 +8,11 @@ class ScenarioBuilderSpec extends CddSpec {
 
   val mockEngine: Int => String = _ => throw new RuntimeException("Should not call mockEngine")
 
+  implicit def nullLifeCycle[C] = new NullLifeCycle[C]
+
   "A <situation> produces <result>" should "make a SituationAndResultScenario" in {
     val s = 1 produces "result"
-    val expectedDefinedInSourceCodeAt = "(ScenarioBuilderSpec.scala:12)"
+    val expectedDefinedInSourceCodeAt = "(ScenarioBuilderSpec.scala:14)"
     s shouldBe Scenario[Int, String](situation = 1, assertion = EqualsAssertion("result"), reason = SimpleReason("result", expectedDefinedInSourceCodeAt), definedInSourceCodeAt = expectedDefinedInSourceCodeAt, title = "1", comment = None)
     s.expectedOption shouldBe Some("result")
 
@@ -53,9 +55,9 @@ class ScenarioBuilderSpec extends CddSpec {
   }
 
   it should "throw BecauseNotTrueException when the because is not true for the situation" in {
-    intercept[ReasonInvalidException] {
+    intercept[ReasonInvalidException[_, _]] {
       1 produces "result" because { case i if i == 2 => "result" }
-    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:57) cannot be added because the reason given isn't actually true"
+    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:59) cannot be added because the reason given isn't actually true"
   }
 
   it should "have allScenarios just including itself" in {
@@ -64,7 +66,7 @@ class ScenarioBuilderSpec extends CddSpec {
   }
 
   it should "throw WrongReasonProducesException when the apply method applied to the situation doesn't produce the expected" in {
-    intercept[AssertionInvalidException] {
+    intercept[AssertionInvalidException[_, _]] {
       1 produces "result" because { case i if i == 1 => "wrongResult" }
     }
   }
@@ -86,9 +88,9 @@ class ScenarioBuilderSpec extends CddSpec {
   }
 
   it should "throw BecauseNotTrueException when the when is not true for the situation" in {
-    intercept[ReasonInvalidException] {
+    intercept[ReasonInvalidException[_, _]] {
       1 produces "result" when (_ == 2)
-    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:90) cannot be added because the reason given isn't actually true"
+    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:92) cannot be added because the reason given isn't actually true"
   }
 
   it should "allow the 'by' word to have code generate the result" in {

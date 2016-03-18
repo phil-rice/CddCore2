@@ -1,13 +1,15 @@
 package org.cddcore.engine.enginecomponents
 
-import org.cddcore.utilities.CddSpec
+import org.cddcore.utilities.{NullLifeCycle, CddSpec}
 
 class ScenarioLimitsOnWhatYouCanBuildSpec extends CddSpec {
 
   import Scenario._
 
+  implicit def nullLifeCycle[C] = new NullLifeCycle[C]
+
   val oneProducesOne = 1 produces "1"
-  val oneProducesOneMessage = "Scenario defined at (ScenarioLimitsOnWhatYouCanBuildSpec.scala:9)"
+  val oneProducesOneMessage = "Scenario defined at (ScenarioLimitsOnWhatYouCanBuildSpec.scala:11)"
 
   val oneProducesOneWhere = oneProducesOne where (_ == 1)
   val oneProducesOneBy = oneProducesOne by (_.toString)

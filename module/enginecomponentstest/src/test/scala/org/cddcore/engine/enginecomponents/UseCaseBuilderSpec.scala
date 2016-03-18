@@ -1,6 +1,6 @@
 package org.cddcore.engine.enginecomponents
 
-import org.cddcore.utilities.{CddSpec, HierarchyBuilder}
+import org.cddcore.utilities.{NullLifeCycle, CddSpec, HierarchyBuilder}
 
 
 class UseCaseBuilderSpec extends CddSpec {
@@ -12,6 +12,7 @@ class UseCaseBuilderSpec extends CddSpec {
   val useCase4 = uc("useCase4")
 
   import Scenario._
+  implicit def nullLifeCycle[C] = new NullLifeCycle[C]
 
   val s1 = 1 produces "result"
   val s2 = 2 produces "result"

@@ -19,7 +19,7 @@ trait TestObjectsForRendering {
     }
     4 produces "four"
   }
-  val List(useCase1: UseCase[Int, String], useCase2: UseCase[Int, String], scenario4: Scenario[Int, String]) = engineWithUseCase.builder.asUseCase.components.reverse
+  val List(useCase1: UseCase[Int, String], useCase2: UseCase[Int, String], scenario4: Scenario[Int, String]) = engineWithUseCase.asUseCase.components.reverse
   val List(scenario1: Scenario[_, _], scenario2: Scenario[_, _]) = useCase1.components.reverse
   val List(scenario3: Scenario[_, _]) = useCase2.components.reverse
 

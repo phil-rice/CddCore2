@@ -1,6 +1,5 @@
 package org.cddcore.utilities
 
-
 trait Hierarchy[H <: C, C] {
   def withNewChild(h: H, child: C): H
 
@@ -59,39 +58,68 @@ case class HierarchyBuilder[H <: C, C](holder: H, depth: Int = 0)(implicit hiera
 }
 
 
-/** An example of this is the 'Engine' where scenarios and use cases are built using mutable state, because the DSL reads better */
+/** An example of this is the 'Engine' where scenarios and use cases are built using mutable state, because the DSL reads better
+  *
+  * The methods are protected so that they are only availble from within a class extending this. They can of course be exposed: see SimpleMutableHierarchyBuilder */
 trait MutableHierarchyBuilder[H <: C, C] {
-  implicit def hierarchy: Hierarchy[H, C]
+  implicit protected def hierarchy: Hierarchy[H, C]
 
-  def rootHolder: H
+  var hierarchyBuilder = new HierarchyBuilder[H, C](makeRootHolder, 0)
 
-  var hierachyBuilder = new HierarchyBuilder[H, C](rootHolder, 0)
+  protected def seal = ???
 
-  private def modBuilder(fn: HierarchyBuilder[H, C] => HierarchyBuilder[H, C]) = hierachyBuilder = fn(hierachyBuilder)
+  protected def makeRootHolder: H
 
-  def addChild(c: C) = modBuilder(_.addChild(c))
+  protected def modBuilder(fn: HierarchyBuilder[H, C] => HierarchyBuilder[H, C]) = hierarchyBuilder = fn(hierarchyBuilder)
 
-  def addNewParent(c: C) = modBuilder(_.addNewParent(c))
+  protected def addChild(c: C) = modBuilder(_.addChild(c))
 
-  def popParent = modBuilder(_.popParent)
+  protected def addNewParent(c: C) = modBuilder(_.addNewParent(c))
 
-  def modCurrentChild(fn: C => C) = modBuilder(_.modCurrentChild(fn))
+  protected def popParent = modBuilder(_.popParent)
 
-  def getCurrentChild = hierachyBuilder.currentChild
+  protected def modCurrentChild(fn: C => C) = modBuilder(_.modCurrentChild(fn))
 
-  def childHasException(c: C, exception: Exception) = modBuilder(_.childHasException(c, exception))
+  protected def getCurrentChild = hierarchyBuilder.currentChild
+
+  protected def childHasException(c: C, exception: Exception) = modBuilder(_.childHasException(c, exception))
 }
 
-class SimpleMutableHierarchyBuilder[H <: C, C](val rootHolder: H)(implicit val hierarchy: Hierarchy[H, C]) extends MutableHierarchyBuilder[H, C]
+class SimpleMutableHierarchyBuilder[H <: C, C](val makeRootHolder: H)(implicit val hierarchy: Hierarchy[H, C]) extends MutableHierarchyBuilder[H, C] {
+
+  override def addChild(c: C) = super.addChild(c)
+
+  override def addNewParent(c: C) = super.addNewParent(c)
+
+  override def popParent = super.popParent
+
+  override def modCurrentChild(fn: C => C) = super.modCurrentChild(fn)
+
+  override def getCurrentChild = super.getCurrentChild
+
+  override def childHasException(c: C, exception: Exception) = super.childHasException(c, exception)
+
+  override def seal = super.seal
+
+}
 
 trait MutableHierarchyBuilderWithChildLifeCycle[H <: C, C] extends MutableHierarchyBuilder[H, C] {
+
+  protected def addParentChildrenDefinedInBlock(parent: => H)(block: => Unit) = {
+    addNewParent(parent)
+    block
+    popParent
+  }
 
   implicit val childLifeCycle = new ChildLifeCycle[C] {
     def created(child: C): Unit = addChild(child)
 
-    def modify(newChild: C): Unit = modCurrentChild(_ => newChild)
+
+    def update[X <: C](newChild: => X): X = {
+      modCurrentChild(_ => newChild)
+      getCurrentChild.getOrElse(throw new RuntimeException("Somehow don't have a current child after having modified it")).asInstanceOf[X]
+    }
 
     def wentWrong[E <: Throwable](c: C, e: E): Unit = ???
   }
-
 }

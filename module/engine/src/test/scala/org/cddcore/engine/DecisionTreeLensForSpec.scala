@@ -1,12 +1,16 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents.Scenario
+import org.cddcore.engine.enginecomponents.{EngineComponent, Scenario}
+import org.cddcore.utilities.NullLifeCycle
 
 
-class DecisionTreeLensForSpec extends CddNonRecursiveSpec[Int,String] {
+class DecisionTreeLensForSpec extends CddNonRecursiveSpec[Int, String] {
 
   import DecisionTreeBuilder._
   import Scenario._
+
+  implicit val lifeCycle = new NullLifeCycle[EngineComponent[Int, String]]
+
 
   "The decisiontree lensFor method called on a Conclusion Node" should "return a lens pointing to the conclusion node" in {
     val s1 = 1 produces "result"

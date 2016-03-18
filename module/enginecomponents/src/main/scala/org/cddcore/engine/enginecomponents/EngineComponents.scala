@@ -42,10 +42,12 @@ object UseCase {
       def lastAddedChild(h: UseCase[P, R]) = h.components.headOption
 
       def childToHolder(child: EngineComponent[P, R]): UseCase[P, R] = child.asInstanceOf[UseCase[P, R]]
+
+      def badChild(topParent: UseCase[P, R], child: EngineComponent[P, R], exception: Exception): UseCase[P, R] = ???
     }
 }
 
-case class UseCase[P, R](title: String, components: List[EngineComponent[P, R]] = List(), comment: Option[String] = None, definedInSourceCodeAt: String) extends EngineComponent[P, R] with ToSummary with HasComment{
+case class UseCase[P, R](title: String, components: List[EngineComponent[P, R]] = List(), comment: Option[String] = None, definedInSourceCodeAt: String) extends EngineComponent[P, R] with ToSummary with HasComment {
   def allScenarios = components.reverse.flatMap(_.allScenarios)
 
   override def toSummary(displayProcessor: DisplayProcessor): String = s"UseCase($title${comment.map(c => s",$c").getOrElse("")})"

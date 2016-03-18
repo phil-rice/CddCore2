@@ -1,12 +1,15 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents.Scenario
+import org.cddcore.engine.enginecomponents.{EngineComponent, Scenario}
+import org.cddcore.utilities.NullLifeCycle
 
 import scala.language.implicitConversions
 
 class DecisionTreeAddingToConclusionNodeSpec extends CddNonRecursiveSpec[String, String] {
 
   import Scenario._
+
+  implicit def lifeCycle[C] = new NullLifeCycle[C]
 
   implicit def toSeq[X](x: X) = Seq(x)
 

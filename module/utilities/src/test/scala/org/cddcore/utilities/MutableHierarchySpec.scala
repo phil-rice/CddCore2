@@ -28,7 +28,7 @@ class MutableHierarchySpec extends CddSpec with HierarchyTestFramework {
     addNewParent(holder4)
     addChild(t2)
     addChild(t3)
-    hierachyBuilder.holder shouldBe holder("useCase1", holder("useCase2", holder("useCase4", t3, t2), holder("useCase3", t1)))
+    hierarchyBuilder.holder shouldBe holder("useCase1", holder("useCase2", holder("useCase4", t3, t2), holder("useCase3", t1)))
   }
 
   it should "record changes to the held children" in {
@@ -37,7 +37,7 @@ class MutableHierarchySpec extends CddSpec with HierarchyTestFramework {
     addNewParent(holder2)
     addChild(t1)
     modCurrentChild(_ => t2)
-    hierachyBuilder.holder shouldBe holder("useCase1", holder("useCase2", t2))
+    hierarchyBuilder.holder shouldBe holder("useCase1", holder("useCase2", t2))
   }
 
   it should "handle exceptions during transforms" in {
@@ -47,7 +47,7 @@ class MutableHierarchySpec extends CddSpec with HierarchyTestFramework {
     addNewParent(holder2)
     addChild(t1)
     modCurrentChild(_ => throw e)
-    hierachyBuilder.holder shouldBe holder("useCase1", holder("useCase2", t1)).withErrors(Map(t1 -> e))
+    hierarchyBuilder.holder shouldBe holder("useCase1", holder("useCase2", t1)).withErrors(Map(t1 -> e))
   }
 
   it should "allow children to be marked as a problem with an exception" in {
@@ -57,8 +57,11 @@ class MutableHierarchySpec extends CddSpec with HierarchyTestFramework {
     addNewParent(holder2)
     addChild(t1)
     childHasException(t1, e)
-    hierachyBuilder.holder shouldBe holder("useCase1", holder("useCase2", t1)).withErrors(Map(t1 -> e))
+    hierarchyBuilder.holder shouldBe holder("useCase1", holder("useCase2", t1)).withErrors(Map(t1 -> e))
+  }
 
+  it should "throw exceptions if modification methods are called after seal" in {
+    fail
   }
 
 }

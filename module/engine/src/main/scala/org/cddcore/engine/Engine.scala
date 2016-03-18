@@ -1,7 +1,7 @@
 package org.cddcore.engine
 
 import org.cddcore.engine.enginecomponents.{HasComment, EngineComponent, Scenario, UseCase}
-import org.cddcore.utilities.{ChildLifeCycle, DisplayProcessor, HierarchyBuilder}
+import org.cddcore.utilities._
 
 import scala.language.implicitConversions
 
@@ -21,39 +21,48 @@ object Engine {
   }
 }
 
-class EngineBuilder[P, R](initialTitle: String, definedInSourceCodeAt: String) extends ChildLifeCycle[Scenario[P, R]] {
-  private var builder = HierarchyBuilder[UseCase[P, R], EngineComponent[P, R]](UseCase[P, R](initialTitle, definedInSourceCodeAt = definedInSourceCodeAt))
+//class EngineBuilder[P, R](initialTitle: String, definedInSourceCodeAt: String) extends ChildLifeCycle[Scenario[P, R]] {
+//  private var builder = HierarchyBuilder[UseCase[P, R], EngineComponent[P, R]](UseCase[P, R](initialTitle, definedInSourceCodeAt = definedInSourceCodeAt))
+//
+//  def mod(fn: HierarchyBuilder[UseCase[P, R], EngineComponent[P, R]] => HierarchyBuilder[UseCase[P, R], EngineComponent[P, R]]) =
+//    builder = fn(builder)
+//
+//  def title = builder.holder.title
+//
+//  def created(child: Scenario[P, R]) = mod(builder => builder.addChild(child))
+//
+//  def modified(oldChild: Scenario[P, R], newChild: Scenario[P, R]) = mod(builder => builder.modCurrentChild(_ => newChild))
+//
+//  def seal {}
+//
+//  def allScenarios = builder.holder.allScenarios
+//
+//  def asUseCase = builder.holder
+//
+//  def last = builder.currentChild match {
+//    case Some(s: Scenario[P, R]) => s.expectedOption.getOrElse(throw new NoLastException("No result specified"))
+//    case None => throw new NoLastException
+//  }
+//
+//  lazy val mocks = allScenarios.foldLeft(Map[P, R]()) { (acc, s) => s.expectedOption.fold(acc)(expected => acc + (s.situation -> expected)) }
+//
+//}
 
-  def mod(fn: HierarchyBuilder[UseCase[P, R], EngineComponent[P, R]] => HierarchyBuilder[UseCase[P, R], EngineComponent[P, R]]) =
-    builder = fn(builder)
+abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt())
+                                   (implicit val hierarchy: Hierarchy[UseCase[P, R], EngineComponent[P, R]], dp: DisplayProcessor)
+  extends EngineComponent[P, R] with MutableHierarchyBuilderWithChildLifeCycle[UseCase[P, R], EngineComponent[P, R]] {
 
-  def title = builder.holder.title
 
-  def created(child: Scenario[P, R]) = mod(builder => builder.addChild(child))
+  def makeRootHolder = UseCase[P, R](initialTitle, definedInSourceCodeAt = definedInSourceCodeAt)
 
-  def modified(oldChild: Scenario[P, R], newChild: Scenario[P, R]) = mod(builder => builder.modCurrentChild(_ => newChild))
+  def title: String = hierarchyBuilder.holder.title
 
-  def seal {}
-
-  def allScenarios = builder.holder.allScenarios
-
-  def asUseCase = builder.holder
-
-  def last = builder.currentChild match {
-    case Some(s: Scenario[P, R]) => s.expectedOption.getOrElse(throw new NoLastException("No result specified"))
-    case None => throw new NoLastException
-  }
-
-  lazy val mocks = allScenarios.foldLeft(Map[P, R]()) { (acc, s) => s.expectedOption.fold(acc)(expected => acc + (s.situation -> expected)) }
-
-}
-
-abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt())(implicit dp: DisplayProcessor) extends EngineComponent[P, R]  {
-  implicit val builder = new EngineBuilder[P, R](initialTitle, definedInSourceCodeAt)
-
-  def title: String = builder.title
-
-  def title(newTitle: String): Unit = builder.mod(b => b.copy(holder = b.holder.copy(title = newTitle)))
+  def title(newTitle: String): Unit =
+    hierarchyBuilder = {
+      val oldUseCase: UseCase[P, R] = hierarchyBuilder.holder
+      val newUseCase: UseCase[P, R] = oldUseCase.copy(title = newTitle)
+      new HierarchyBuilder[UseCase[P, R], EngineComponent[P, R]](newUseCase, hierarchyBuilder.depth)(hierarchy) // And I have no idea why I couldn't just use copy....
+    }
 
   protected implicit def toPartial(r: R): PartialFunction[P, R] = Engine.toPartial(r)
 
@@ -63,18 +72,17 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
 
   protected def useCase(title: String, comment: String)(blockThatScenariosAreDefinedIn: => Unit) = useCasePrim(title, Some(comment))(blockThatScenariosAreDefinedIn)
 
-  private def useCasePrim(title: String, comment: Option[String])(blockThatScenariosAreDefinedIn: => Unit) = {
-    val first = builder.mod(b => b.addNewParent(UseCase[P, R](title, comment = comment, definedInSourceCodeAt = EngineComponent.definedInSourceCodeAt(6))))
-    blockThatScenariosAreDefinedIn
-    builder.mod(_.popParent)
-  }
+  private def useCasePrim(title: String, comment: Option[String])(blockThatScenariosAreDefinedIn: => Unit) =
+    addParentChildrenDefinedInBlock(UseCase[P, R](title, comment = comment, definedInSourceCodeAt = EngineComponent.definedInSourceCodeAt(6)))(blockThatScenariosAreDefinedIn)
 
+  def mocks = allScenarios.foldLeft(Map[P, R]()) { (acc, s) => s.expectedOption.fold(acc)(expected => acc + (s.situation -> expected)) }
 
   lazy val decisionTree = {
-    builder.seal
+    seal
+    val actualMocks = mocks
     val ss: List[Scenario[P, R]] = allScenarios.toList
     val noMocks = allScenarios.flatMap { s => try {
-      s(mocks, s.situation)
+      s(actualMocks, s.situation)
       Nil
     } catch {
       case e: MockValueNotFoundException => List((s, e.p))
@@ -82,7 +90,7 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
     }.toList
 
     if (!noMocks.isEmpty)
-      throw new RecursiveScenariosWithoutMocksException(definedInSourceCodeAt, builder.mocks.keySet, noMocks)
+      throw new RecursiveScenariosWithoutMocksException(definedInSourceCodeAt, actualMocks.keySet, noMocks)
     DecisionTree(mocks, ss)
   }
 
@@ -90,11 +98,9 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
 
   def apply(p: P): R = decisionTree(apply, p)
 
-  def allScenarios: TraversableOnce[Scenario[P, R]] = builder.allScenarios
+  def allScenarios: TraversableOnce[Scenario[P, R]] = asUseCase.allScenarios
 
-  def asUseCase = builder.asUseCase
-
-  def mocks = (p: P) => builder.mocks.getOrElse(p, throw new MockValueNotFoundException(p))
+  def asUseCase = hierarchyBuilder.holder
 
 
   def validate = DecisionTree.validate(mocks, decisionTree) match {
@@ -106,7 +112,11 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
     s"Engine()"
   }
 
-  def last = builder.last
+  def last = hierarchyBuilder.currentChild match {
+    case Some(s: Scenario[P, R]) => s.expectedOption.getOrElse(throw new NoLastException("No result specified"))
+    case None => throw new NoLastException
+  }
+
 }
 
 class Engine[P, R](initialTitle: String = "Untitled", definedInSourceCodeAt: String = EngineComponent.definedInSourceCodeAt())(implicit dp: DisplayProcessor) extends AbstractEngine[P, R](initialTitle, definedInSourceCodeAt) with Function[P, R] {

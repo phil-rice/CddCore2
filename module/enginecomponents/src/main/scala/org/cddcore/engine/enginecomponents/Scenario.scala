@@ -15,7 +15,7 @@ object Scenario {
 
   implicit def pToScenarioBuilder[P, R](p: P) = FromSituationScenarioBuilder[P, R](p)
 
-  implicit def scenarioToScenarioBuilder[P, R](s: Scenario[P, R])(implicit scl: ChildLifeCycle[Scenario[P, R]]) = ScenarioBuilder[P, R](s)
+  implicit def scenarioToScenarioBuilder[P, R](s: Scenario[P, R])(implicit scl: ChildLifeCycle[EngineComponent[P, R]]) = ScenarioBuilder[P, R](s)
 
   def something[R] = new SomethingMarker[R]
 
@@ -52,23 +52,23 @@ case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion:
 
   override def toString = s"Scenario($situation ${assertion.prettyDescription} ${reason.prettyDescription})/$definedInSourceCodeAt"
 
-  override def toSummary( dp: DisplayProcessor): String = s"Scenario $definedInSourceCodeAt ${dp(situation)} ${dp(assertion)})"
+  override def toSummary(dp: DisplayProcessor): String = s"Scenario $definedInSourceCodeAt ${dp(situation)} ${dp(assertion)})"
 }
 
 case class FromSituationScenarioBuilder[P, R](situation: P) {
-  private def producesPrim(definedAt: String, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R])(implicit scl: ChildLifeCycle[Scenario[P, R]]) = {
+
+  private def producesPrim(definedAt: String, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R])(implicit scl: ChildLifeCycle[EngineComponent[P, R]]) = {
     val s = Scenario[P, R](situation, reason, assertion, definedAt, situation.toString, None)
     scl.created(s)
     s
-    //    new ScenarioBuilder[P,R](s)
   }
 
-  def produces(result: R)(implicit scl: ChildLifeCycle[Scenario[P, R]]) = {
+  def produces(result: R)(implicit scl: ChildLifeCycle[EngineComponent[P, R]]) = {
     val definedAt = EngineComponent.definedInSourceCodeAt()
     producesPrim(definedAt, SimpleReason(result, definedAt), EqualsAssertion(result))
   }
 
-  def produces(s: SomethingMarker[R])(implicit scl: ChildLifeCycle[Scenario[P, R]]) = {
+  def produces(s: SomethingMarker[R])(implicit scl: ChildLifeCycle[EngineComponent[P, R]]) = {
     val definedAt = EngineComponent.definedInSourceCodeAt()
     producesPrim(definedAt, NotYetValid(definedAt), new UnknownAssertion)
   }
@@ -118,10 +118,11 @@ object ScenarioBuilder {
 
   protected def changeScenario[P, R](scenarioBuilder: ScenarioBuilder[P, R], fn: Scenario[P, R] => Scenario[P, R]): Scenario[P, R] = {
     val scenario = scenarioBuilder.scenario
-    val result = fn(scenario)
-    scenarioBuilder.scl.modified(scenario, result)
-    result.validate
-    result
+    scenarioBuilder.scl.update {
+      val result = fn(scenario)
+      result.validate
+      result
+    }
   }
 
   protected def changeReason[P, R](scenarioBuilder: ScenarioBuilder[P, R], fn: ScenarioReason[P, R] => ScenarioReason[P, R]): Scenario[P, R] =
@@ -130,16 +131,12 @@ object ScenarioBuilder {
 }
 
 
-case class ScenarioBuilder[P, R](scenario: Scenario[P, R])(implicit val scl: ChildLifeCycle[Scenario[P, R]]) {
+case class ScenarioBuilder[P, R](scenario: Scenario[P, R])(implicit val scl: ChildLifeCycle[EngineComponent[P, R]]) {
   def because(because: PartialFunction[P, R]): Scenario[P, R] = macro ScenarioBuilder.becauseImpl[P, R]
 
   def when(when: P => Boolean): Scenario[P, R] = macro ScenarioBuilder.whenImpl[P, R]
 
-  def where(where: R => Boolean) = {
-    val result = scenario.copy(assertion = ResultAssertion[P, R](where))
-    scl.modified(scenario, result)
-    result
-  }
+  def where(where: R => Boolean) = scl.update(scenario.copy(assertion = ResultAssertion[P, R](where)))
 
   def by(fn: P => R): Scenario[P, R] = macro ScenarioBuilder.byImpl[P, R]
 

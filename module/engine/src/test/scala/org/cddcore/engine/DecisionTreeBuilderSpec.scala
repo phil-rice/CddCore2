@@ -1,12 +1,15 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents.Scenario
+import org.cddcore.engine.enginecomponents.{EngineComponent, Scenario}
+import org.cddcore.utilities.NullLifeCycle
 
 
 class DecisionTreeBuilderSpec extends CddEngineSpec {
 
   import DecisionTreeBuilder._
   import Scenario._
+
+  implicit val lifeCycle = new NullLifeCycle[EngineComponent[Int, String]]
 
   "Scenarios" should " chance to conclusion nodes" in {
     val s1 = 1 produces "result1"
