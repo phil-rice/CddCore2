@@ -7,18 +7,40 @@ import scala.collection.immutable.ListMap
 class AddedFinderNotActuallAnException extends Exception
 
 object EngineComponent {
-  protected val defaultStackTraceOffset = 2
 
-  def definedInSourceCodeAt(stackTraceOffset: Int = defaultStackTraceOffset) = {
-    val st = new AddedFinderNotActuallAnException().getStackTrace()(stackTraceOffset).toString
-    val i = st.lastIndexOf("(")
-    st.substring(i)
-  }
 
 }
 
-trait EngineComponent[P, R] {
-  def definedInSourceCodeAt: String
+object DefinedInSourceCodeAt {
+  protected val defaultStackTraceOffset = 2
+
+  def definedInSourceCodeAt(stackTraceOffset: Int = defaultStackTraceOffset) =
+    new DefinedInSourceCodeAt(new AddedFinderNotActuallAnException().getStackTrace()(stackTraceOffset))
+
+  def apply(declaringClass: String, methodName: String, fileName: String, lineNumber: Int) = new DefinedInSourceCodeAt(new StackTraceElement(declaringClass, methodName, fileName, lineNumber))
+}
+
+trait HasDefinedInSourceCodeAt {
+  def definedInSourceCodeAt: DefinedInSourceCodeAt
+}
+
+class DefinedInSourceCodeAt(val st: StackTraceElement) {
+  override lazy val toString = {
+    val s = st.toString
+    val i = s.lastIndexOf("(")
+    s.substring(i)
+  }
+
+  override def equals(other: Any) = other match {
+    case d: DefinedInSourceCodeAt => d.toString == toString && d.getClass == getClass
+    case _ => false
+  }
+
+  override def hashCode = toString.hashCode
+}
+
+trait EngineComponent[P, R] extends HasDefinedInSourceCodeAt {
+  def definedInSourceCodeAt: DefinedInSourceCodeAt
 
   def allScenarios: TraversableOnce[Scenario[P, R]]
 
@@ -50,7 +72,7 @@ object UseCase {
     }
 }
 
-case class UseCase[P, R](title: String, components: List[EngineComponent[P, R]] = List(), comment: Option[String], definedInSourceCodeAt: String, errors: ListMap[EngineComponent[P, R], Exception]) extends EngineComponent[P, R] with ToSummary with HasComment {
+case class UseCase[P, R](title: String, components: List[EngineComponent[P, R]] = List(), comment: Option[String], definedInSourceCodeAt: DefinedInSourceCodeAt, errors: ListMap[EngineComponent[P, R], Exception]) extends EngineComponent[P, R] with ToSummary with HasComment {
   def allScenarios = components.reverse.flatMap(_.allScenarios)
 
   override def toSummary(displayProcessor: DisplayProcessor): String = s"UseCase($title${comment.map(c => s",$c").getOrElse("")})"

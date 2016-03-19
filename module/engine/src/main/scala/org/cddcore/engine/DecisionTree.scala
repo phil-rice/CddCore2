@@ -185,7 +185,7 @@ trait DecisionTree[P, R] extends EngineComponent[P, R] {
 
   def apply(engine: P => R, p: P): R
 
-  def definedInSourceCodeAt: String = mainScenario.definedInSourceCodeAt
+  def definedInSourceCodeAt: DefinedInSourceCodeAt = mainScenario.definedInSourceCodeAt
 
   def allConclusionNodes: TraversableOnce[ConclusionNode[P, R]]
 

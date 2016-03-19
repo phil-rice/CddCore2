@@ -7,9 +7,7 @@ import scala.reflect.macros._
 
 class SomethingMarker[R]
 
-trait DefinedInSourceCodeAt {
-  def definedInSourceCodeAt: String
-}
+
 
 object Scenario {
 
@@ -21,7 +19,7 @@ object Scenario {
 
 }
 
-case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: String, title: String, comment: Option[String]) extends EngineComponent[P, R] with DefinedInSourceCodeAt with ToSummary with HasComment {
+case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: DefinedInSourceCodeAt, title: String, comment: Option[String]) extends EngineComponent[P, R]  with ToSummary with HasComment {
   def allScenarios = Seq(this)
 
   def apply(engine: P => R, p: P) = reason(engine, p)
@@ -57,19 +55,19 @@ case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion:
 
 case class FromSituationScenarioBuilder[P, R](situation: P) {
 
-  private def producesPrim(definedAt: String, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R])(implicit scl: ChildLifeCycle[EngineComponent[P, R]]) = {
+  private def producesPrim(definedAt: DefinedInSourceCodeAt, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R])(implicit scl: ChildLifeCycle[EngineComponent[P, R]]) = {
     val s = Scenario[P, R](situation, reason, assertion, definedAt, situation.toString, None)
     scl.created(s)
     s
   }
 
   def produces(result: R)(implicit scl: ChildLifeCycle[EngineComponent[P, R]]) = {
-    val definedAt = EngineComponent.definedInSourceCodeAt()
+    val definedAt = DefinedInSourceCodeAt.definedInSourceCodeAt()
     producesPrim(definedAt, SimpleReason(result, definedAt), EqualsAssertion(result))
   }
 
   def produces(s: SomethingMarker[R])(implicit scl: ChildLifeCycle[EngineComponent[P, R]]) = {
-    val definedAt = EngineComponent.definedInSourceCodeAt()
+    val definedAt = DefinedInSourceCodeAt.definedInSourceCodeAt()
     producesPrim(definedAt, NotYetValid(definedAt), new UnknownAssertion)
   }
 

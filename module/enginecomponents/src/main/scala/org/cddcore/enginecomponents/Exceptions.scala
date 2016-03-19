@@ -29,16 +29,16 @@ object AssertionInvalidException {
 class AssertionInvalidException[P,R](s: Scenario[P,R], actual: Any, msg: String) extends ScenarioException(s, msg)
 
 
-class CalculatorNotGivenException(scenarioDefinedAt: String) extends Exception(s"Scenario defined at $scenarioDefinedAt has not been given a way of calculating a result")
+class CalculatorNotGivenException(scenarioDefinedAt: DefinedInSourceCodeAt) extends Exception(s"Scenario defined at $scenarioDefinedAt has not been given a way of calculating a result")
 
-class ScenarioCannotHaveWhenByAndBecauseException(definedInSourceCodeAt: String) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
+class ScenarioCannotHaveWhenByAndBecauseException(definedInSourceCodeAt: DefinedInSourceCodeAt) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
 
-class ScenarioCannotHaveSecondByException(definedInSourceCodeAt: String) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
+class ScenarioCannotHaveSecondByException(definedInSourceCodeAt: DefinedInSourceCodeAt) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
 
-class ScenarioCannotHaveSecondBecauseException(definedInSourceCodeAt: String) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
+class ScenarioCannotHaveSecondBecauseException(definedInSourceCodeAt: DefinedInSourceCodeAt) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
 
-class ScenarioCannotHaveSeconByRecursionException(definedInSourceCodeAt: String) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
+class ScenarioCannotHaveSeconByRecursionException(definedInSourceCodeAt: DefinedInSourceCodeAt) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
 
-class ScenarioCannotHaveSecondWhenException(definedInSourceCodeAt: String) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
+class ScenarioCannotHaveSecondWhenException(definedInSourceCodeAt: DefinedInSourceCodeAt) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
 
-class ScenarioCannotHaveByRecursonIfWhenByOrBecauseAlreadyDefinedException(definedInSourceCodeAt: String) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
+class ScenarioCannotHaveByRecursonIfWhenByOrBecauseAlreadyDefinedException(definedInSourceCodeAt: DefinedInSourceCodeAt) extends Exception(s"Scenario defined at ${definedInSourceCodeAt}")
