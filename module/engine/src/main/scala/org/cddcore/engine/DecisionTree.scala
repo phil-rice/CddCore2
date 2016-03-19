@@ -1,6 +1,6 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents._
+import org.cddcore.enginecomponents._
 import org.cddcore.utilities.{ChildLifeCycle, DisplayProcessor, Lens, Monitor}
 
 import scala.language.implicitConversions

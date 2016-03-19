@@ -10,7 +10,7 @@ object MapOfLists {
 
   class MapOfListsPimper[K, V](map: Map[K, List[V]]) {
     def addToList(kv: (K, V)): Map[K, List[V]] = kv match {
-      case (k, v) => map.get(k).fold(map + (k -> List[V]()))(list => map + (k -> list))
+      case (k, v) => map.get(k).fold(map + (k -> List[V](v)))(list => map + (k -> (list :+ v)))
     }
 
   }

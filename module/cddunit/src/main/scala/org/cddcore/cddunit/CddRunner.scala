@@ -1,17 +1,17 @@
 package org.cddcore.cddunit
 
 import org.cddcore.engine.Engine
-import org.cddcore.engine.enginecomponents.{EngineComponent, Scenario, UseCase}
+import org.cddcore.enginecomponents.{EngineComponent, Scenario, UseCase}
 import org.cddcore.rendering.{RenderContext, Renderer}
 import org.cddcore.utilities.{DisplayProcessor, Reflection, Strings}
-import org.junit.runner.notification.{Failure, RunNotifier}
 import org.junit.runner._
+import org.junit.runner.notification.{Failure, RunNotifier}
 
 import scala.util.{Success, Try}
 
 trait AbstractCddRunner extends Runner {
 
-  protected def clazz: Class[Any]
+  protected def clazz: Class[_]
 
   protected def engineData: Try[EngineData]
 
@@ -38,15 +38,13 @@ trait AbstractCddRunner extends Runner {
 
   protected def makeDescription(ec: EngineComponent[_, _])(implicit renderContext: RenderContext): Description = {
 
-    import renderContext._
-
     val id = renderContext.idPath(ec)
-    def create(uc: UseCase[_, _]) = uc.components.reverse.foldLeft(Description.createSuiteDescription(Strings.cleanString(uc.title), id)) {
+    def create(uc: UseCase[_, _]) = uc.components.reverse.foldLeft(Description.createSuiteDescription(Strings.cleanStringForJunitName(uc.title), id)) {
       (d, child) => d.getChildren.add(makeDescription(child));
         d
     }
     val result = ec match {
-      case s: Scenario[_, _] => Description.createTestDescription(Strings.cleanString(s.toSummary(renderContext.displayProcessor)), id)
+      case s: Scenario[_, _] => Description.createSuiteDescription(Strings.cleanStringForJunitName(s.toSummary(renderContext.displayProcessor)), id)
       case e: Engine[_, _] => create(e.asUseCase)
       case uc: UseCase[_, _] => create(uc)
     }
@@ -102,7 +100,15 @@ trait AbstractCddRunner extends Runner {
   }
 }
 
-class CddRunner(val clazz: Class[Any]) extends AbstractCddRunner {
+object CddRunner {
+  def modifyException[E <: Exception](e: E, idDefinedAt: String) =
+    Reflection.modField[Array[StackTraceElement]](e, "stackTrace") { oldSt =>
+      Array() ++ oldSt
+    }
+
+}
+
+class CddRunner(val clazz: Class[_]) extends AbstractCddRunner {
 
   lazy val engineData = Try(new EngineData(Reflection.instantiate(clazz).asInstanceOf[HasEngines]))
 }

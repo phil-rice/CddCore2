@@ -1,10 +1,10 @@
 package org.cddcore.utilities
 
-import java.nio.file.{Paths, Path}
-
 
 object Strings {
   def cleanString(s: String, acceptedChars: String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_- ") = s.filter(acceptedChars.contains(_)).mkString
+
+  def cleanStringForJunitName(s: String) = cleanString(s, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_- ;.():")
 
   def findFirstIncludingPrefix(prefix: String, postfix: String)(s: String) = {
     val firstIndex = s.indexOf(prefix)

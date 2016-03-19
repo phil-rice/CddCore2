@@ -1,6 +1,6 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents.Scenario
+import org.cddcore.enginecomponents.Scenario
 
 class EngineLastResultSpec extends CddEngineSpec {
 

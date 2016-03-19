@@ -1,9 +1,7 @@
 package org.cddcore.rendering
 
-import java.io.{File, StringWriter}
-
 import org.cddcore.engine.Engine
-import org.cddcore.engine.enginecomponents.{EngineComponent, Scenario, UseCase}
+import org.cddcore.enginecomponents.{EngineComponent, Scenario, UseCase}
 import org.cddcore.utilities.DisplayProcessor
 
 
@@ -99,7 +97,6 @@ class EngineComponentPimper[P, R](ec: EngineComponent[P, R]) {
   def withDescendents = Renderer.withDescendents(ec)
 
   def withChildrenPathMaps(implicit renderContext: RenderContext) = withChildrenPaths.map(path => path.map { case ec: EC => Renderer.scalaMap(ec) })
-
 
 }
 

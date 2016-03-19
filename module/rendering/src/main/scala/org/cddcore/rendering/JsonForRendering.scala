@@ -1,7 +1,7 @@
 package org.cddcore.rendering
 
 import org.json4s.DefaultFormats
-import org.json4s.jackson.{Serialization, JsonMethods}
+import org.json4s.jackson.Serialization
 
 object JsonForRendering {
 

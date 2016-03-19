@@ -1,6 +1,6 @@
-package org.cddcore.engine.enginecomponents
+package org.cddcore.enginecomponents
 
-import org.cddcore.utilities.{NullLifeCycle, CddSpec, HierarchyBuilder}
+import org.cddcore.utilities.{CddSpec, HierarchyBuilder, NullLifeCycle}
 
 import scala.collection.immutable.ListMap
 

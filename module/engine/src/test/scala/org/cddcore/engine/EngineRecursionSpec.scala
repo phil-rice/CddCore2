@@ -1,6 +1,6 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents.{EngineComponent, Scenario}
+import org.cddcore.enginecomponents.{EngineComponent, Scenario}
 import org.cddcore.utilities.ChildLifeCycle
 
 class EngineRecursionSpec extends CddEngineSpec {

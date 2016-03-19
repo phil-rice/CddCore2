@@ -1,4 +1,4 @@
-package org.cddcore.engine.enginecomponents
+package org.cddcore.enginecomponents
 
 import org.cddcore.utilities.ChildLifeCycle
 

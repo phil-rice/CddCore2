@@ -1,10 +1,8 @@
 package org.cddcore.rendering
 
-import java.io.File
-
-import org.cddcore.engine.{Engine, AbstractEngine}
-import org.cddcore.engine.enginecomponents.{EngineComponent, UseCase}
-import org.cddcore.utilities.{MapOfLists, Maps, Strings}
+import org.cddcore.engine.{AbstractEngine, Engine}
+import org.cddcore.enginecomponents.{EngineComponent, UseCase}
+import org.cddcore.utilities.{MapOfLists, Strings}
 
 
 object PathMap extends TestObjectsForRendering {

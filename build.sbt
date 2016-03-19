@@ -6,7 +6,8 @@ lazy val baseSettings = Seq(
   version := "0.1.0",
   scalaVersion := scalaVersionNo,
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
-  javaOptions ++= Seq("-Xmx4G", "-XX:+UseConcMarkSweepGC")
+  javaOptions ++= Seq("-Xmx4G", "-XX:+UseConcMarkSweepGC"),
+  testOptions in Test += Tests.Argument("-oCOLHPQ")
 )
 
 lazy val commonSettings = baseSettings ++ Seq(
@@ -71,7 +72,7 @@ lazy val rendering = (project in file("module/rendering")).
 //  aggregate(mustache)
 
 
-lazy val cddunit = (project in file ("module/cddunit")).
+lazy val cddunit = (project in file("module/cddunit")).
   settings(junitSettings: _*).
   dependsOn(engine % "test->test;compile->compile").dependsOn(rendering).
   aggregate(rendering)

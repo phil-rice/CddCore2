@@ -1,17 +1,11 @@
 package org.cddcore.rendering
 
 import java.io._
-import java.net.URI
-import java.util
 import java.util.Date
 
-
-import org.cddcore.engine.enginecomponents._
 import org.cddcore.engine._
-import org.cddcore.rendering.Renderer._
-import org.cddcore.utilities.{DisplayProcessor, Maps}
-
-import scala.io.Source
+import org.cddcore.enginecomponents.{EngineComponent, Scenario, UseCase}
+import org.cddcore.utilities.DisplayProcessor
 
 trait RenderConfiguration {
   def date: Date
@@ -102,7 +96,6 @@ case class RenderContext(reportDate: Date, urlBase: String, pathMap: PathMap, ur
   val inversePathMap = pathMap.inversePathMap
 
   def idPath(ec: EngineComponent[_, _]) = pathMap(ec)
-
 
   def url(ec: EngineComponent[_, _]) = urlManipulations.makeUrl(urlBase, idPath(ec))
 

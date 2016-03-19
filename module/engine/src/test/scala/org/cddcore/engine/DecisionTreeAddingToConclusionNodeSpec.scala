@@ -1,6 +1,6 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents.{EngineComponent, Scenario}
+import org.cddcore.enginecomponents.Scenario
 import org.cddcore.utilities.NullLifeCycle
 
 import scala.language.implicitConversions

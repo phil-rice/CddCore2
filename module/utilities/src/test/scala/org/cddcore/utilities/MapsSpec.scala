@@ -24,3 +24,11 @@ class MapsSpec extends CddSpec {
   }
 
 }
+
+class MapOfListsSpec extends CddSpec{
+  import MapOfLists._
+
+  "The map of lists " should "allow items to be added to the list represented by a key" in {
+    Map[String, List[Int]]().addToList("a" -> 1).addToList("a" -> 2).addToList("b" -> 3) shouldBe Map("a" -> List(1,2), "b" -> List(3))
+  }
+}

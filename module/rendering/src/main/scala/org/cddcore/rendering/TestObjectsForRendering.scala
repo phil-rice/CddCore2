@@ -3,7 +3,7 @@ package org.cddcore.rendering
 import java.util.Date
 
 import org.cddcore.engine.Engine
-import org.cddcore.engine.enginecomponents.{Scenario, UseCase}
+import org.cddcore.enginecomponents.{Scenario, UseCase}
 import org.cddcore.utilities.DisplayProcessor
 
 trait TestObjectsForRendering {

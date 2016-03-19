@@ -1,9 +1,9 @@
 package org.cddcore.rendering
 
-import java.io.{StringWriter, StringReader}
+import java.io.{StringReader, StringWriter}
 import java.util
 
-import com.github.mustachejava.{Mustache => JMustache, DefaultMustacheFactory}
+import com.github.mustachejava.{DefaultMustacheFactory, Mustache => JMustache}
 
 
 object Mustache {

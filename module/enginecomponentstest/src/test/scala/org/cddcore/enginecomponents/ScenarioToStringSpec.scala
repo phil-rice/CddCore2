@@ -1,6 +1,6 @@
-package org.cddcore.engine.enginecomponents
+package org.cddcore.enginecomponents
 
-import org.cddcore.utilities.{NullLifeCycle, CddSpec}
+import org.cddcore.utilities.{CddSpec, NullLifeCycle}
 
 class ScenarioToStringSpec extends CddSpec {
 

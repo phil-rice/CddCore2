@@ -1,6 +1,6 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents._
+import org.cddcore.enginecomponents.{CalculatorNotGivenException, EngineComponent, Scenario, UseCase}
 import org.cddcore.utilities._
 
 import scala.collection.immutable.ListMap

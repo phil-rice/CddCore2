@@ -1,6 +1,4 @@
-package org.cddcore.engine.enginecomponents
-
-import java.io.File
+package org.cddcore.enginecomponents
 
 import org.cddcore.utilities.{DisplayProcessor, Hierarchy, ToSummary}
 

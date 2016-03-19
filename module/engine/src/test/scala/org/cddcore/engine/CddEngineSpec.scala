@@ -1,7 +1,7 @@
 package org.cddcore.engine
 
-import org.cddcore.engine.enginecomponents.{Scenario, EngineComponent}
-import org.cddcore.utilities.{ChildLifeCycle, CddSpec}
+import org.cddcore.enginecomponents.{EngineComponent, Scenario}
+import org.cddcore.utilities.{CddSpec, ChildLifeCycle}
 
 
 trait CddEngineSpec extends CddSpec {

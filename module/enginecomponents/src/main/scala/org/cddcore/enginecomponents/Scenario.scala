@@ -1,4 +1,4 @@
-package org.cddcore.engine.enginecomponents
+package org.cddcore.enginecomponents
 
 import org.cddcore.utilities.{ChildLifeCycle, CodeHolder, DisplayProcessor, ToSummary}
 
@@ -52,7 +52,7 @@ case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion:
 
   override def toString = s"Scenario($situation ${assertion.prettyDescription} ${reason.prettyDescription})/$definedInSourceCodeAt"
 
-  override def toSummary(dp: DisplayProcessor): String = s"Scenario $definedInSourceCodeAt ${dp(situation)} ${dp(assertion)})"
+  override def toSummary(dp: DisplayProcessor): String = comment.fold(s"$definedInSourceCodeAt ${dp(situation)} ${dp(assertion)})")(c => s"$definedInSourceCodeAt $c")
 }
 
 case class FromSituationScenarioBuilder[P, R](situation: P) {

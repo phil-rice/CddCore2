@@ -1,4 +1,4 @@
-package org.cddcore.engine.enginecomponents
+package org.cddcore.enginecomponents
 
 import org.cddcore.utilities.DisplayProcessor
 
@@ -14,7 +14,6 @@ class CannotAddScenarioException[P,R](s: Scenario[P,R], existing: Scenario[P,R],
     s"Scenario being added is ${dp(s)}\n" +
     s"Scenario already existing is ${dp(existing)}\n" +
     s"If it was added, would come to result ${dp(actual)}") {
-  println("In CannotAddScenarioException. dp is " + dp)
 }
 
 
