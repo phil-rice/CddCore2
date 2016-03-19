@@ -1,7 +1,7 @@
 package org.cddcore.cddunit
 
 import org.cddcore.engine.Engine
-import org.cddcore.enginecomponents.{EngineComponent, Scenario, UseCase}
+import org.cddcore.enginecomponents.{DefinedInSourceCodeAt, EngineComponent, Scenario, UseCase}
 import org.cddcore.rendering.{RenderContext, Renderer}
 import org.cddcore.utilities.{DisplayProcessor, Reflection, Strings}
 import org.junit.runner._
@@ -81,7 +81,7 @@ trait AbstractCddRunner extends Runner {
             val ec = ecd.asInstanceOf[EngineComponent[P, R]]
             val d = ecToDescription(ec)
             ec match {
-              case s: Scenario[P, R] if engine.errors.contains(s) => notifier.fireTestStarted(d); notifier.fireTestFailure(new Failure(d, engine.errors(s))); true
+              case s: Scenario[P, R] if engine.errors.contains(s) => notifier.fireTestStarted(d); notifier.fireTestFailure(new Failure(d, CddRunner.modifyException(engine.errors(s), s.definedInSourceCodeAt))); true
               case s: Scenario[P, R] => runTest(d)(s.calcuateAssertionFor(engine, s.situation))
               case uc: UseCase[P, R] => runTest(d)(uc.components.foldLeft(true)((acc, c) => run(engine, c) && acc))
               case e: Engine[P, R] => runTest(d)(e.asUseCase.components.foldLeft(true)((acc, c) => run(engine, c) && acc))
@@ -101,10 +101,16 @@ trait AbstractCddRunner extends Runner {
 }
 
 object CddRunner {
-  def modifyException[E <: Exception](e: E, idDefinedAt: String) =
+  def modifyException[E <: Exception](e: E, definedInSourceCodeAt: DefinedInSourceCodeAt): E = {
+    e.getStackTrace
     Reflection.modField[Array[StackTraceElement]](e, "stackTrace") { oldSt =>
-      Array() ++ oldSt
+      if (oldSt.size == 0 || oldSt(0) == definedInSourceCodeAt.st)
+        oldSt
+      else
+        Array(definedInSourceCodeAt.st) ++ oldSt
     }
+    e
+  }
 
 }
 

@@ -42,4 +42,14 @@ class ReflectionSpec extends CddSpec {
     }
     Reflection.getFieldValue[String](instance, "privateField") shouldBe "newValue"
   }
+
+  it should "allow that modification even of the field is in a parent class" in {
+    class NewClass extends ClassWIthPrivateField
+    val instance = new NewClass
+    Reflection.modField[String](instance, "privateField") { x =>
+      x shouldBe "somePrivateValue"
+      "newValue"
+    }
+    Reflection.getFieldValue[String](instance, "privateField") shouldBe "newValue"
+  }
 }

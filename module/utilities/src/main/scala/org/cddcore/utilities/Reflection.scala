@@ -13,19 +13,26 @@ object Reflection {
 
   def modField[T: ClassTag](instance: Any, fieldName: String)(fn: T => T) = {
     val field = getField[T](instance, fieldName)
-    val oldValue =  field.get(instance).asInstanceOf[T]
+    val oldValue = field.get(instance).asInstanceOf[T]
     val newValue = fn(oldValue)
     field.set(instance, newValue)
   }
+
+  def getAllFields(clazz: Class[_]): List[Field] =
+    clazz.getDeclaredFields.toList ::: (clazz.getSuperclass match {
+      case null => List();
+      case c => getAllFields(c)
+    })
+
 
   def getField[T: ClassTag](instance: Any, fieldName: String): Field = {
     val clazz = instance.getClass
     import scala.reflect.runtime.{universe => ru}
     val rm = ru.runtimeMirror(clazz.getClassLoader())
-    val field = try {
-      clazz.getDeclaredField(fieldName)
-    } catch {
-      case e: NoSuchFieldException => throw new NoSuchFieldException(s"Class is ${clazz} asked for field $fieldName, legal values are [${clazz.getDeclaredFields.mkString(", ")}]")
+    val allFields = getAllFields(clazz)
+    val field = allFields.filter(_.getName == fieldName) match {
+      case f :: _ => f
+      case Nil => throw new NoSuchFieldException(s"Class is ${clazz} asked for field $fieldName, legal values are [${clazz.getDeclaredFields.mkString(", ")}]")
     }
     val askedForClass = implicitly[ClassTag[T]].runtimeClass
     if (askedForClass != field.getType) throw new scala.ClassCastException(s"Actual class ${field.getType}, asked for is ${askedForClass}")
