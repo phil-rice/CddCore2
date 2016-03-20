@@ -40,7 +40,7 @@ object DescriptionDsl {
 }
 
 
-class DescriptionDsl[P, R](clazz: Class[_], engine: Engine[P, R])(implicit val renderContext: RenderContext) extends MutableHierarchyBuilderWithChildLifeCycle[DescriptionData, DescriptionData] {
+class DescriptionDsl[P, R](clazz: Class[_], val engine: Engine[P, R])(implicit val renderContext: RenderContext) extends MutableHierarchyBuilderWithChildLifeCycle[DescriptionData, DescriptionData] {
   protected implicit def hierarchy = DescriptionDsl.DescriptionHierarchy
 
   override val postSealMessage: String = "No messing after sealing"

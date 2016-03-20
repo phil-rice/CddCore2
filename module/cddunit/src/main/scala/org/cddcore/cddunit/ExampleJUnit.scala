@@ -25,16 +25,16 @@ object ExampleJUnit {
     }
   }
 
-  def main(args: Array[String]) {
-    println("Starting")
-    val result = JUnitCore.runClasses(classOf[ExampleJUnit])
-    println("Finished")
-    import scala.collection.JavaConversions._
-    for (failure <- result.getFailures())
-      println(failure)
-    println("Sucessful: " + result.wasSuccessful())
-    println("RunCount: " + result.getRunCount)
-    println("FailureCount: " + result.getFailureCount)
-
-  }
+//  def main(args: Array[String]) {
+//    println("Starting")
+//    val result = JUnitCore.runClasses(classOf[ExampleJUnit])
+//    println("Finished")
+//    import scala.collection.JavaConversions._
+//    for (failure <- result.getFailures())
+//      println(failure)
+//    println("Sucessful: " + result.wasSuccessful())
+//    println("RunCount: " + result.getRunCount)
+//    println("FailureCount: " + result.getFailureCount)
+//
+//  }
 }

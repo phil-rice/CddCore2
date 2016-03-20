@@ -83,8 +83,8 @@ trait AbstractCddRunner extends Runner {
             ec match {
               case s: Scenario[P, R] if engine.errors.contains(s) => notifier.fireTestStarted(d); notifier.fireTestFailure(new Failure(d, CddRunner.modifyException(engine.errors(s), s.definedInSourceCodeAt))); true
               case s: Scenario[P, R] => runTest(d)(s.calcuateAssertionFor(engine, s.situation))
-              case uc: UseCase[P, R] => runTest(d)(uc.components.foldLeft(true)((acc, c) => run(engine, c) && acc))
-              case e: Engine[P, R] => runTest(d)(e.asUseCase.components.foldLeft(true)((acc, c) => run(engine, c) && acc))
+              case uc: UseCase[P, R] => runTest(d)(uc.components.reverse.foldLeft(true)((acc, c) => run(engine, c) && acc))
+              case e: Engine[P, R] => runTest(d)(e.asUseCase.components.reverse.foldLeft(true)((acc, c) => run(engine, c) && acc))
             }
           }
           println(s"Running engine ${engine.title}")

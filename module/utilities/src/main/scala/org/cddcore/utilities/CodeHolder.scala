@@ -54,11 +54,11 @@ trait AbstractCodeHolder {
   def comment: String
 
   private val index = description.indexOf("=>");
-  lazy val pretty = (index match {
-    case -1 => description
-    case i => description.substring(index + 3, description.length - 1)
-  }).replace(".this.", ".").replace(".apply(", "(")
-  //TODO Need better extraction of parameters as the parameters could be functions
+//  lazy val pretty = (index match {
+//    case -1 => description
+//    case i => description.substring(index + 3, description.length - 1)
+//  }).replace(".this.", ".").replace(".apply(", "(")
+
   val parameters = index match {
     case -1 => description
     case i => description.substring(0, index);

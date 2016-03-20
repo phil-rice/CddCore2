@@ -16,8 +16,6 @@ object DefinedInSourceCodeAt {
 
   def definedInSourceCodeAt(stackTraceOffset: Int = defaultStackTraceOffset) =
     new DefinedInSourceCodeAt(new AddedFinderNotActuallAnException().getStackTrace()(stackTraceOffset))
-
-  def apply(declaringClass: String, methodName: String, fileName: String, lineNumber: Int) = new DefinedInSourceCodeAt(new StackTraceElement(declaringClass, methodName, fileName, lineNumber))
 }
 
 trait HasDefinedInSourceCodeAt {
