@@ -57,6 +57,7 @@ object UseCase {
 
       def modChild(h: UseCase[P, R], fn: (EngineComponent[P, R]) => EngineComponent[P, R]) = h.components match {
         case oldHead :: tail => h.copy(components = fn(oldHead) :: tail)
+        case _ => throw new IllegalStateException("Cannot modified child")
       }
 
       def lastAddedChild(h: UseCase[P, R]) = h.components.headOption

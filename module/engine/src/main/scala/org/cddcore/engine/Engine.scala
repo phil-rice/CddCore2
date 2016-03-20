@@ -133,6 +133,7 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
   def last = hierarchyBuilder.currentChild match {
     case Some(s: Scenario[P, R]) => s.expectedOption.getOrElse(throw new NoLastException("No result specified"))
     case None => throw new NoLastException
+    case x => throw new IllegalStateException(s"Somehow called last, and the last child wasn't a scenario, instead it was ${x.getClass}\n$x")
   }
 
 }

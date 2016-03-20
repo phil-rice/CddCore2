@@ -55,7 +55,7 @@ trait AbstractCddRunner extends Runner {
 
   def run(notifier: RunNotifier): Unit = {
     def runTest(d: Description)(block: => Boolean): Boolean = {
-      println(s"runTest: $d")
+//      println(s"runTest: $d")
       notifier.fireTestStarted(d)
       try {
         val result = block
@@ -69,13 +69,13 @@ trait AbstractCddRunner extends Runner {
     }
     engineData match {
       case Success(ed) =>
-        println("Starting the run")
+//        println("Starting the run")
         val result = new Result
         notifier.addListener(result.createListener)
         notifier.fireTestRunStarted(getDescription)
         ed.engines.foreach { engine =>
           engine.decisionTree
-          println(s"... error scenarios\n.....${engine.errors.mkString("\n.....")}")
+//          println(s"... error scenarios\n.....${engine.errors.mkString("\n.....")}")
           def run[P, R](engineD: Engine[_, _], ecd: EngineComponent[_, _]): Boolean = {
             val engine = engineD.asInstanceOf[Engine[P, R]]
             val ec = ecd.asInstanceOf[EngineComponent[P, R]]
@@ -91,7 +91,7 @@ trait AbstractCddRunner extends Runner {
               }
             }
           }
-          println(s"Running engine ${engine.title}")
+//          println(s"Running engine ${engine.title}")
           run(engine, engine)
         }
         notifier.fireTestRunFinished(result)
@@ -107,7 +107,7 @@ trait AbstractCddRunner extends Runner {
 object CddRunner {
 
   def makeReports[P, R](urlOffset: String, engine: Engine[P, R]) = try {
-    println(s"MakingAReport for $urlOffset and engine ${engine.title}")
+//    println(s"MakingAReport for $urlOffset and engine ${engine.title}")
     Renderer.makeReportFilesFor(urlOffset, engine)
   } catch {
     case e: Exception => println(e); e.printStackTrace()

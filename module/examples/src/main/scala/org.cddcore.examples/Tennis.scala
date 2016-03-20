@@ -5,11 +5,9 @@ import org.cddcore.rendering.Renderer
 
 object Tennis {
   def main(args: Array[String]) {
-    Renderer.makeReportFilesFor(new Tennis().tennis)
+    Renderer.makeReportFilesFor(tennis)
   }
-}
 
-class Tennis {
   val (serverWon, receiverWon) = ("server won", "receiver won")
   val lookup = Map(0 -> "love", 1 -> "fifteen", 2 -> "thirty", 3 -> "forty")
   lazy val tennis = new Engine[(Int, Int), String]() {

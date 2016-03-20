@@ -4,7 +4,7 @@ import org.cddcore.utilities.CddSpec
 
 class TennisSpec extends CddSpec {
 
-  val tennis = new Tennis().tennis
+  val tennis = Tennis.tennis
   "The tennis engine" should "build" in {
     tennis(0, 0) shouldBe "love all"
     tennis(0, 1) shouldBe "love, fifteen"

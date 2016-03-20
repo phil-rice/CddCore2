@@ -87,6 +87,7 @@ object DecisionTree extends DecisionTreeValidator {
         else
           makeDecisionNode(mockEngine, s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios)
       }
+      case _ => throw new IllegalStateException("Both main scenario and S have a reason, so I should not be adding the scenario to the main conclusion. ")
     }
   }
 
