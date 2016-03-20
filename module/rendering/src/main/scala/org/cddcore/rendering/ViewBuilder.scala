@@ -18,6 +18,7 @@ object Renderer extends ExpectedForTemplates {
   type EC = EngineComponent[_, _]
 
   implicit def engineToPimper[P, R](ec: Engine[P, R])(implicit renderConfiguration: RenderConfiguration) = new EnginePimper(ec)
+
   implicit def engineComponentToPimper[P, R](ec: EngineComponent[P, R])(implicit renderConfiguration: RenderConfiguration) = new EngineComponentPimper(ec)
 
   def pathMap(engines: Engine[_, _]*) = PathMap(engines)
@@ -45,7 +46,12 @@ object Renderer extends ExpectedForTemplates {
     }
   }
 
-  def makeReportFilesFor[P, R](engine: Engine[P, R])(implicit renderConfiguration: RenderConfiguration) = {
+  def makeReportFilesFor[P, R](urlOffset: String, engine: Engine[P, R])(implicit renderConfiguration: RenderConfiguration): Unit = {
+    val newRenderConfiguaration = renderConfiguration.copy(urlBase = renderConfiguration.urlBase + "/" + urlOffset)
+    makeReportFilesFor(engine)(newRenderConfiguaration)
+  }
+
+  def makeReportFilesFor[P, R](engine: Engine[P, R])(implicit renderConfiguration: RenderConfiguration): Unit = {
     implicit val rc = renderContext(engine)
     rc.urlManipulations.populateInitialFiles(rc.urlBase)
     for (path <- engine.withChildrenPaths) {

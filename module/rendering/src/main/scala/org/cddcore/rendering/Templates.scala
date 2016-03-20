@@ -7,28 +7,14 @@ import org.cddcore.engine._
 import org.cddcore.enginecomponents.{EngineComponent, Scenario, UseCase}
 import org.cddcore.utilities.DisplayProcessor
 
-trait RenderConfiguration {
-  def date: Date
-
-  def urlBase: String
-
-  def urlManipulations: UrlManipulations
-
-}
+case class RenderConfiguration(date: Date = new Date, urlBase: String = "./target/cdd", urlManipulations: UrlManipulations = new FileUrlManipulations)
 
 object RenderConfiguration {
 
-  implicit object DefaultRenderConfiguration extends RenderConfiguration {
-    def date: Date = new Date
-
-    val urlBase: String = "./target/cdd/"
-
-    val urlManipulations: UrlManipulations = new FileUrlManipulations
-  }
+  implicit val defaultRenderConfiguration = RenderConfiguration()
 
 }
 
-case class SimpleRenderConfiguration(urlBase: String, date: Date = new Date(), urlManipulations: UrlManipulations = new FileUrlManipulations) extends RenderConfiguration
 
 trait UrlManipulations {
 
@@ -74,6 +60,7 @@ class FileUrlManipulations extends UrlManipulations {
 
   def makeFile(url: String, text: String): Unit = {
     val file = new File(url)
+    println("Make file: " + file.getAbsoluteFile)
     file.getParentFile.mkdirs()
     val writer = new FileWriter(file)
     try {
