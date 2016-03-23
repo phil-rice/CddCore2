@@ -144,7 +144,7 @@ class NotifierDslSpec extends CddSpec with DescriptionDslTestFramework {
       result
     }
 
-    implicit def descriptionToId(description: Description) = Reflection.getFieldValue[java.io.Serializable](description, "fUniqueId").toString
+    implicit def descriptionToId(description: Description) = Reflection(description).getFieldValue[java.io.Serializable]("fUniqueId").toString
 
     override def fireTestFailure(failure: Failure): Unit = {
       val description = popDescriptions

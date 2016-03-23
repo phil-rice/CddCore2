@@ -1,42 +1,44 @@
-import Dependencies._
-
 name := "cddcore2"
+
+
+val versionNos = new {
+  val scala = "2.11.7"
+  val scalaTest = "2.2.6"
+  val mustache = "0.9.1"
+  val json4s = "3.3.0"
+  val junit = "4.11"
+  val scalaXml = "1.0.5"
+}
 
 lazy val baseSettings = Seq(
   version := "0.1.0",
-  scalaVersion := scalaVersionNo,
+  scalaVersion := versionNos.scala,
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   javaOptions ++= Seq("-Xmx4G", "-XX:+UseConcMarkSweepGC"),
   testOptions in Test += Tests.Argument("-oCOLHPQ")
 )
 
 lazy val commonSettings = baseSettings ++ Seq(
-  libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test"
+  libraryDependencies += "org.scalatest" %% "scalatest" % versionNos.scalaTest % "test"
 )
 
 lazy val utilitiesSettings = commonSettings ++ Seq(
-  //  libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.6",
-  libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersionNo
+  libraryDependencies += "org.scala-lang" % "scala-reflect" % versionNos.scala
 )
 
-//lazy val mustacheSettings = baseSettings ++ Seq(
-//  libraryDependencies ++= Seq(
-//    "junit" % "junit" % "4.8.1" % "test->default",
-//    "org.specs2" %% "specs2" % "2.3.12" % "test->default",
-//    "com.typesafe.akka" %% "akka-actor" % "2.3.3" % "test->default"
-//  )
-//)
-
 lazy val renderingSettings = commonSettings ++ Seq(
-  libraryDependencies += "com.github.spullara.mustache.java" % "scala-extensions-2.11" % "0.9.1",
-  libraryDependencies += "org.json4s" %% "json4s-jackson" % "3.3.0"
+  libraryDependencies += "com.github.spullara.mustache.java" % "scala-extensions-2.11" % versionNos.mustache,
+  libraryDependencies += "org.json4s" %% "json4s-jackson" % versionNos.json4s
 )
 
 lazy val junitSettings = commonSettings ++ Seq(
-  libraryDependencies += "junit" % "junit" % "4.11"
-
+  libraryDependencies += "junit" % "junit" % versionNos.junit
 )
 
+lazy val structureSettings = commonSettings ++ Seq(
+  libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % versionNos.scalaXml,
+  libraryDependencies += "junit" % "junit" % versionNos.junit % "test"
+)
 lazy val utilities = (project in file("module/utilities")).
   settings(utilitiesSettings: _*)
 
@@ -60,17 +62,11 @@ lazy val engine = (project in file("module/engine")).
   dependsOn(enginecomponentstest % "test->test").
   aggregate(enginecomponentstest)
 
-//lazy val mustache = (project in file("module/mustache")).
-//  settings(mustacheSettings: _*)
-
 
 lazy val rendering = (project in file("module/rendering")).
   settings(renderingSettings: _*).
   dependsOn(engine % "test->test;compile->compile").
   aggregate(engine)
-//  dependsOn(mustache).
-//  aggregate(mustache)
-
 
 lazy val cddunit = (project in file("module/cddunit")).
   settings(junitSettings: _*).
@@ -79,10 +75,13 @@ lazy val cddunit = (project in file("module/cddunit")).
 
 lazy val examples = (project in file("module/examples")).
   settings(commonSettings: _*).
-  dependsOn(engine % "test->test;compile->compile", rendering).
-  aggregate(engine, rendering)
+  dependsOn(engine % "test->test;compile->compile", rendering, cddunit).
+  aggregate(engine, rendering, cddunit)
 
-
+lazy val structure = (project in file("module/structure")).
+  settings(structureSettings: _*).
+  dependsOn(utilities % "test->test;compile->compile").
+  aggregate(utilities)
 
 lazy val test = (project in file("module/test")).
   settings(commonSettings: _*).

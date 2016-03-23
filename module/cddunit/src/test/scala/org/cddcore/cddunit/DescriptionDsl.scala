@@ -9,7 +9,7 @@ import scala.collection.JavaConversions._
 
 object DescriptionData {
   def apply(description: Description): DescriptionData = {
-    DescriptionData(description.getTestClass, description.getDisplayName, Reflection.getFieldValue[java.io.Serializable](description, "fUniqueId").toString, description.getChildren.toList.map(DescriptionData(_)))
+    DescriptionData(description.getTestClass, description.getDisplayName, Reflection(description).getFieldValue[java.io.Serializable]("fUniqueId").toString, description.getChildren.toList.map(DescriptionData(_)))
   }
 }
 

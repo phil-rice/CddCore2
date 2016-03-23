@@ -47,8 +47,19 @@ object Strings {
     s.substring(0, i)
   }
 
-//  def htmlEscape(raw: String) = raw.replace("&", "&amp;").replace("\"", "&quot;").replace("\'", "&apos;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br />")
-//
-//  def htmlTooltipEscape(raw: String) = raw.replace("&", "&amp;").replace("\"", "&quot;").replace("\'", "&apos;").replace("<", "&lt;").replace("&gt;", ">")
+  def oneLine(s: Any) = s.toString.replace('\n', ' ')
+
+  def bruteForceCompare(s1: String, s2: String) = {
+    val start = s"lengths(${s1.size}, ${s2.size}\n"
+    s1.zipAll(s2, null, null).zipWithIndex.foldLeft (start) {
+      case (acc: String, ((ch1: Char, ch2: Char), i: Int)) =>
+        if (ch1 != ch2) acc + s"Index $i ${ch1.toInt} ${ch2.toInt}\n" else acc
+    }
+
+  }
+
+  //  def htmlEscape(raw: String) = raw.replace("&", "&amp;").replace("\"", "&quot;").replace("\'", "&apos;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br />")
+  //
+  //  def htmlTooltipEscape(raw: String) = raw.replace("&", "&amp;").replace("\"", "&quot;").replace("\'", "&apos;").replace("<", "&lt;").replace("&gt;", ">")
 
 }

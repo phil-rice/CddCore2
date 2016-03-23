@@ -1,0 +1,12 @@
+__Possibly wrong behaviour__
+If there are two scenarios that come to the same conclusion and have different bys, at the moment one of the bys is ignored... Not entirely sure how to deal with this...
+
+
+__Needs to work better__
+The utilities Reflection class uses Java reflection. Thus it doesn't actually pick up things in traits in it's FieldMaps. It is desirable for that to be done
+The JUnit tests aren't picked up by SBT, although they are by IntelliJ. This will probably require a 'TestFramework' to be written
+
+
+__Untested areas of code__
+The decision tree 'path' code (which is used for the rendering) isn't tested
+The stacktrace manipulations by CddRunner

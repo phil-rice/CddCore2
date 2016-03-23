@@ -13,6 +13,29 @@ object ToBeCreatedByReflection {
   val someOtherValue = "someOverValue"
 }
 
+
+trait SuperTraitForTest {
+
+
+  lazy val lvZero = 0
+
+}
+
+class SuperClassForTest {
+  lazy val lvOne = "value1"
+  lazy val lvTwo = 2
+  @TestAnnotation
+  val three = "value3"
+}
+
+class ClassForTest extends SuperClassForTest {
+  @TestAnnotation
+  lazy val lvFour = "value4"
+  lazy val lvFive = 5
+  val six = "value6"
+
+}
+
 class ReflectionSpec extends CddSpec {
 
   "The Reflection object" should "be able to create instances of a class" in {
@@ -31,25 +54,46 @@ class ReflectionSpec extends CddSpec {
   }
 
   it should "allow the reading of private fields in java objects, even thought this is probably a very bad thing to do" in {
-    val instance = new ClassWIthPrivateField
-    Reflection.getFieldValue[String](instance, "privateField") shouldBe "somePrivateValue"
+    Reflection(new ClassWIthPrivateField).getFieldValue[String]("privateField") shouldBe "somePrivateValue"
   }
   it should "allow the modifications of private fields in java objects, even thought this is probably a very bad thing to do" in {
     val instance = new ClassWIthPrivateField
-    Reflection.modField[String](instance, "privateField") { x =>
+    Reflection(instance).modField[String]("privateField") { x =>
       x shouldBe "somePrivateValue"
       "newValue"
     }
-    Reflection.getFieldValue[String](instance, "privateField") shouldBe "newValue"
+    Reflection(instance).getFieldValue[String]("privateField") shouldBe "newValue"
   }
 
   it should "allow that modification even of the field is in a parent class" in {
     class NewClass extends ClassWIthPrivateField
     val instance = new NewClass
-    Reflection.modField[String](instance, "privateField") { x =>
+    Reflection(instance).modField[String]("privateField") { x =>
       x shouldBe "somePrivateValue"
       "newValue"
     }
-    Reflection.getFieldValue[String](instance, "privateField") shouldBe "newValue"
+    Reflection(instance).getFieldValue[String]("privateField") shouldBe "newValue"
+  }
+
+
+
+  it should "return a list of all the fields" in {
+
+    Reflection.getAllFields(classOf[ClassForTest]).map(_.getName) shouldBe
+      List( "lvFour", "lvFive", "six", "bitmap$0","lvOne", "lvTwo", "three", "bitmap$0")
+  }
+
+
+  it should "return a map from fields to values that share a return type" in {
+
+    Reflection(new ClassForTest).fieldMap[String].map { case (field, v) => (field.getName, v) } shouldBe
+      Map("lvFour" -> "value4", "six" -> "value6", "lvOne" -> "value1", "three" -> "value3")
+
+  }
+
+  it should "return a map from fields to values that are suitably annotated" in {
+    Reflection(new ClassForTest).fieldMapForAnnotation[TestAnnotation].map { case (field, v) => (field.getName, v) } shouldBe
+      Map("lvFour" -> "value4", "three" -> "value3")
+
   }
 }
