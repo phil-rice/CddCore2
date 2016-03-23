@@ -27,7 +27,10 @@ trait XmlTestMother {
     val one = xml(x) \ "one" \ string
   }
 
-  class XmlWithoutType(val x: Elem) extends Xml() {
+  class XmlWithJustRoot(val x: Elem) extends Xml() {
+    val one = xml(x)
+  }
+  class XmlWithJustRootAndStep(val x: Elem) extends Xml() {
     val one = xml(x) \ "one"
   }
 
@@ -35,8 +38,8 @@ trait XmlTestMother {
     val notIn = xml(x) \ "absent" \ string
   }
 
-  class XmlWithoutVariable extends Xml() {
-    val notIn = xml(x) \ "absent" \ string
+  class XmlWithoutVariable(val x: Elem) extends Xml() {
+    val notIn = xml(x) \ "absent" \ optString
   }
 
   class XmlThreeFragment(val x: Elem) extends Xml() {

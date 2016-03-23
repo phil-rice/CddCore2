@@ -106,7 +106,7 @@ class Reflection(instance: Any) {
       map((f) => (f -> getFieldValue[Any](f)))
   }
 
-  def fieldMapToString[V](fieldMap: Map[Field, V], valueFn: V => String, separator: String = ",") =
+  def fieldMapToString[V](fieldMap: Map[Field, V], valueFn: V => String = (v: V) => Strings.oneLine(v), separator: String = "\r\n") =
     fieldMap.map { case (f, v) => (f.getName, valueFn(v)) }.mkString(separator)
 
 

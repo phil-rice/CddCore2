@@ -52,17 +52,25 @@ abstract class StructureHolder[S: ClassTag, Result] {
   protected def structureTitle: String
 
   lazy val reflection = Reflection(this)
-  lazy val fieldMap = {
+  lazy val fieldMapForDisplay = {
     val displayFieldMap = reflection.fieldMapForAnnotation[Display]
-    val pathFieldMap = reflection.fieldMap[Path[S, Result, Any]]
-    Map[Field, Any]() ++ displayFieldMap ++ pathFieldMap
+    val pathFieldMap = reflection.fieldMap[Path[S, Result, Any]].map { case (field, v) => (field, v()) }
+    val unfinishedFieldMap =
+      reflection.fieldMap[PathRootAndSteps[S, Any]].map { case (field, v) => (field, "No Convertor") } ++
+      reflection.fieldMap[PathRoot[S, Any]].map { case (field, v) => (field, "No Convertor") }
+
+    Map[Field, Any]() ++ displayFieldMap ++ pathFieldMap ++ unfinishedFieldMap
   }
 
   lazy val structureMap = reflection.fieldMap[S]
 
 
   override def toString = {
-    val paths = ""
+
+    val paths = fieldMapForDisplay.size match {
+      case 0 => ""
+      case _ => "\r\n  " + reflection.fieldMapToString(fieldMapForDisplay, Strings.oneLine, "\r\n  ")
+    }
     val structureMapsAsString = "  " + reflection.fieldMapToString(structureMap, Strings.oneLine, "\r\n  ")
     val structures = structureMap.size match {
       case 0 => ""
@@ -71,36 +79,4 @@ abstract class StructureHolder[S: ClassTag, Result] {
     }
     s"${getClass.getSimpleName}($paths\r\n$structures)"
   }
-}
-
-object XMLStructure extends Structure[Node, NodeSeq] {
-  def findResult(pathRootAndSteps: PathRootAndSteps[Node, NodeSeq]): NodeSeq = {
-    import pathRootAndSteps._
-    steps.foldLeft(structureAsResult(root)) { case (acc, step) =>
-      step.linked match {
-        case true => acc \ step.element
-        case false => acc \\ step.element
-      }
-      acc
-    }
-  }
-
-  def structureAsResult(s: Node): NodeSeq = s
-}
-
-
-trait Xml extends StructureHolder[Node, NodeSeq] {
-  protected def structureTitle: String = "xml"
-
-  implicit val structure = XMLStructure
-
-  implicit def xml(s: Node) = new PathRoot(s)
-
-  def string = PathResult((nodeSeq: NodeSeq) => nodeSeq.text)
-
-  def int = PathResult((nodeSeq: NodeSeq) => nodeSeq.text.toInt)
-
-  def fold[Acc, T](raw: PathResult[NodeSeq, T], initial: => Acc, foldFn: (Acc, T) => Acc): PathResult[NodeSeq, Acc] =
-    PathResult(_.map(raw.convertor).foldLeft(initial)(foldFn)
-    )
 }

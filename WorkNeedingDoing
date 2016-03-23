@@ -5,7 +5,7 @@ If there are two scenarios that come to the same conclusion and have different b
 __Needs to work better__
 The utilities Reflection class uses Java reflection. Thus it doesn't actually pick up things in traits in it's FieldMaps. It is desirable for that to be done
 The JUnit tests aren't picked up by SBT, although they are by IntelliJ. This will probably require a 'TestFramework' to be written
-
+Currently the XML situation requires the xml to be a val for them to be picked up by reflection
 
 __Untested areas of code__
 The decision tree 'path' code (which is used for the rendering) isn't tested
