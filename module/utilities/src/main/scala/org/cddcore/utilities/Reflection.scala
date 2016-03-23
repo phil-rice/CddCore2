@@ -3,6 +3,7 @@ package org.cddcore.utilities
 import java.lang.annotation.Annotation
 import java.lang.reflect.{Field, Method}
 
+import scala.collection.immutable.ListMap
 import scala.reflect.ClassTag
 
 object Reflection {
@@ -107,7 +108,7 @@ class Reflection(instance: Any) {
   }
 
   def fieldMapToString[V](fieldMap: Map[Field, V], valueFn: V => String = (v: V) => Strings.oneLine(v), separator: String = "\r\n") =
-    fieldMap.map { case (f, v) => (f.getName, valueFn(v)) }.mkString(separator)
+    ListMap[Field, V](fieldMap.toList.sortBy { case (field, _) => allFields.indexOf(field) }: _*).map { case (f, v) => (f.getName, valueFn(v)) }.mkString(separator)
 
 
 }

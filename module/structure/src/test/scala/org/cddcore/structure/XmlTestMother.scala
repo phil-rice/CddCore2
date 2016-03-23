@@ -30,11 +30,12 @@ trait XmlTestMother {
   class XmlWithJustRoot(val x: Elem) extends Xml() {
     val one = xml(x)
   }
+
   class XmlWithJustRootAndStep(val x: Elem) extends Xml() {
     val one = xml(x) \ "one"
   }
 
-  class XmlOneFragmentNotFound(x: Elem) extends Xml() {
+  class XmlOneFragmentNotFound(val x: Elem) extends Xml() {
     val notIn = xml(x) \ "absent" \ string
   }
 
@@ -50,7 +51,7 @@ trait XmlTestMother {
     val repeatedFolded = xml(x) \ "repeated" \ fold[Int, Int](int, 0, (l, r) => l + r)
   }
 
-  class XmlRepeatingFragments extends Xml {
+  class XmlRepeatingNestedFragments extends Xml {
     val x = <root>
       <repeated>
         <nested>1</nested> <nested>2</nested>
@@ -61,12 +62,10 @@ trait XmlTestMother {
       <repeated></repeated>
     </root>
 
-    val repeatedString = xml(x) \ "repeated" \ string
-    val repeatedNestedString = xml(x) \ "repeated" \ string
-    val repeatedInteger = xml(x) \ "repeated" \ int
-    val repeatedFold = xml(x) \ "repeated" \ fold[Int, Int](int, 0, (l, r) => l + r)
+    val repeatedString = xml(x) \ "repeated" \ "nested" \ string
+    val repeatedNestedString = xml(x) \ "repeated" \ "nested" \ string
     val repeatedNestedFold = xml(x) \ "repeated" \ "nested" \ fold[Int, Int](int, 0, (l, r) => l + r)
-    val repeatedNestedList = xml(x) \ "repeated" \ "nested" \ fold[List[Int], Int](int, List(), (acc, v) => acc :+ v)
+    val repeatedNestedList = xml(x) \\ "nested" \ fold[List[Int], Int](int, List(), (acc, v) => acc :+ v)
   }
 
 }

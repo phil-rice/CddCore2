@@ -5,6 +5,7 @@ import java.lang.reflect.{Field, Method}
 
 import org.cddcore.utilities.{Reflection, Strings}
 
+import scala.collection.immutable.ListMap
 import scala.reflect.ClassTag
 import scala.xml.{Node, NodeSeq}
 
@@ -52,13 +53,12 @@ abstract class StructureHolder[S: ClassTag, Result] {
   protected def structureTitle: String
 
   lazy val reflection = Reflection(this)
-  lazy val fieldMapForDisplay = {
+  lazy val fieldMapForDisplay: Map[Field, Any] = {
     val displayFieldMap = reflection.fieldMapForAnnotation[Display]
     val pathFieldMap = reflection.fieldMap[Path[S, Result, Any]].map { case (field, v) => (field, v()) }
     val unfinishedFieldMap =
       reflection.fieldMap[PathRootAndSteps[S, Any]].map { case (field, v) => (field, "No Convertor") } ++
-      reflection.fieldMap[PathRoot[S, Any]].map { case (field, v) => (field, "No Convertor") }
-
+        reflection.fieldMap[PathRoot[S, Any]].map { case (field, v) => (field, "No Convertor") }
     Map[Field, Any]() ++ displayFieldMap ++ pathFieldMap ++ unfinishedFieldMap
   }
 
