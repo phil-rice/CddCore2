@@ -1,12 +1,15 @@
 package org.cddcore.utilities
 
 import java.lang.annotation.Annotation
-import java.lang.reflect.{Field, Method}
+import java.lang.reflect.{Field, InvocationTargetException, Method}
 
 import scala.collection.immutable.ListMap
 import scala.reflect.ClassTag
+import scala.util.{Failure, Success, Try}
 
 object Reflection {
+
+  implicit def toFieldMapPimper[V](fieldMap: Map[Field, Try[V]]) = new FieldMapPimper(fieldMap)
 
   def apply(instance: Any) = new Reflection(instance)
 
@@ -35,10 +38,28 @@ object Reflection {
       }
       obj.asInstanceOf[T]
     } catch {
-      case e: Throwable => throw new RuntimeException(s"Class: $clazz Field: $moduleField", e)
+      case e: Throwable => throw new RuntimeException(s"Instantiating class: $clazz moduleField (i.e. 'is an object not a class'): $moduleField", e)
     }
   }
 
+}
+
+class FieldMapPimper[V](fieldMap: Map[Field, Try[V]]) {
+  def sorted(allFields: List[Field]) = ListMap[Field, Try[V]](fieldMap.toList.sortBy { case (f, _) => allFields.indexOf(f) }: _*)
+
+  def displayStringMap(valueFn: V => String = (v: V) => Strings.oneLine(v)): Map[Field, Try[String]] = {
+    fieldMap.map { case (f, tryV) =>
+      val s = tryV.transform(x => Try(valueFn(x)), e => Success(s"<Error>${e.getClass.getSimpleName}/${e.getMessage}</error>"))
+      (f, s)
+    }
+  }
+
+  def displayString(separator: String = "\r\n") = fieldMap.toList.map{case (f, v) => f.getName +" -> " +v.get}.mkString(separator) //yes this throws the exception if v has one. if you don't want that, don't have an exception here
+
+  def removeAnnotationFromFieldMap[A <: Annotation : ClassTag]: Map[Field, Try[V]] = {
+    val aClass = implicitly[ClassTag[A]].runtimeClass.asInstanceOf[Class[A]]
+    fieldMap.filter { case (f, tryV) => f.getAnnotation(aClass) == null }
+  }
 }
 
 
@@ -52,7 +73,7 @@ class Reflection(instance: Any) {
 
   def instantiateIfLazyVal(field: Field) = {
     val methods = allMethods.
-      filter(m => (m.getParameterTypes().length == 0) && field.getType == m.getReturnType)
+      filter(m => (m.getParameterTypes().length == 0) && field.getType == m.getReturnType && field.getName == m.getName)
     for (m <- methods) {
       m.setAccessible(true)
       m.invoke(instance)
@@ -75,15 +96,18 @@ class Reflection(instance: Any) {
   }
 
 
-  def getFieldValue[T: ClassTag](fieldName: String): T = {
+  def getFieldValue[T: ClassTag](fieldName: String): Try[T] = {
     val field: Field = getField(fieldName)
     getFieldValue(field)
   }
 
-  def getFieldValue[T](field: Field): T = {
+  def getFieldValue[T](field: Field): Try[T] = try {
     instantiateIfLazyVal(field)
     field.setAccessible(true)
-    field.get(instance).asInstanceOf[T]
+    Success(field.get(instance).asInstanceOf[T])
+  } catch {
+    case e: InvocationTargetException => Failure(e.getCause)
+    case e: Exception => Failure(e)
   }
 
   def modField[T: ClassTag](fieldName: String)(fn: T => T) = {
@@ -93,22 +117,29 @@ class Reflection(instance: Any) {
     field.set(instance, newValue)
   }
 
-  def fieldMap[T: ClassTag]: Map[Field, T] = {
+  def fieldMap[T: ClassTag]: Map[Field, Try[T]] = {
     val returnType = implicitly[ClassTag[T]].runtimeClass
-    Map[Field, T]() ++ allFields.
+    Map[Field, Try[T]]() ++ allFields.
       filter(f => returnType.isAssignableFrom(f.getType)).
       map((f) => (f -> getFieldValue[T](f)))
   }
 
-  def fieldMapForAnnotation[A <: Annotation : ClassTag]: Map[Field, Any] = {
+
+  def fieldMapForAnnotation[A <: Annotation : ClassTag]: Map[Field, Try[Any]] = {
     val annotationType: Class[A] = implicitly[ClassTag[A]].runtimeClass.asInstanceOf[Class[A]]
-    Map[Field, Any]() ++ allFields.
+    Map[Field, Try[Any]]() ++ allFields.
       filter(f => f.getAnnotation(annotationType) != null).
       map((f) => (f -> getFieldValue[Any](f)))
   }
 
-  def fieldMapToString[V](fieldMap: Map[Field, V], valueFn: V => String = (v: V) => Strings.oneLine(v), separator: String = "\r\n") =
-    ListMap[Field, V](fieldMap.toList.sortBy { case (field, _) => allFields.indexOf(field) }: _*).map { case (f, v) => (f.getName, valueFn(v)) }.mkString(separator)
+  //  def fieldMapToString[V](fieldMap: Map[Field, Try[V]], valueFn: V => String = (v: V) => Strings.oneLine(v), separator: String = "\r\n") =
+  //    ListMap[Field, Try[V]](fieldMap.toList.sortBy { case (field, _) => allFields.indexOf(field) }: _*).map {
+  //      case (f, v) =>
+  //        val s = v.transform(x => Try(valueFn(x)), e => Success(s"<Error>${e.getClass.getSimpleName}/${e.getMessage}</error>")).get
+  //        (f.getName, s)
+  //    }.mkString(separator)
+  //
+  //  def removeAnnotationFromFieldMap[A <: Annotation : ClassTag](fieldMap: Map[Field, X])
 
 
 }

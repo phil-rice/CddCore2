@@ -24,12 +24,14 @@ trait AbstractCddRunner extends Runner {
     implicit val renderContext = Renderer.renderContext(engines: _*)
   }
 
+  var buildExceptionOption: Option[Throwable] = None
   lazy val getDescription: Description = {
     val description = Description.createSuiteDescription(clazz)
     engineData match {
       case Success(engineData) =>
         import engineData._
         engines.foreach(e => description.getChildren.add(makeDescription(e)))
+      case util.Failure(e) => buildExceptionOption = Some(e)
     }
     description
   }
@@ -67,40 +69,49 @@ trait AbstractCddRunner extends Runner {
         case e: Exception => notifier.fireTestFailure(new Failure(d, e)); false
       }
     }
-    engineData match {
-      case Success(ed) =>
-        //        println("Starting the run")
+    buildExceptionOption match {
+      case Some(e) =>
         val result = new Result
         notifier.addListener(result.createListener)
         notifier.fireTestRunStarted(getDescription)
-        ed.engines.foreach { engine =>
-          engine.decisionTree
-          //          println(s"... error scenarios\n.....${engine.errors.mkString("\n.....")}")
-          def run[P, R](engineD: Engine[_, _], ecd: EngineComponent[_, _]): Boolean = {
-            val engine = engineD.asInstanceOf[Engine[P, R]]
-            val ec = ecd.asInstanceOf[EngineComponent[P, R]]
-            val d = ecToDescription(ec)
-            ec match {
-              case s: Scenario[P, R] if engine.errors.contains(s) => notifier.fireTestStarted(d); notifier.fireTestFailure(new Failure(d, CddRunner.modifyException(engine.errors(s), s.definedInSourceCodeAt))); true
-              case s: Scenario[P, R] => runTest(d)(s.calcuateAssertionFor(engine, s.situation))
-              case uc: UseCase[P, R] => runTest(d)(uc.components.reverse.foldLeft(true)((acc, c) => run(engine, c) && acc))
-              case e: Engine[P, R] => {
-                val result = runTest(d)(e.asUseCase.components.reverse.foldLeft(true)((acc, c) => run(engine, c) && acc))
-                CddRunner.makeReports(clazz.getName, engine)
-                result
-              }
-            }
-          }
-          //          println(s"Running engine ${engine.title}")
-          run(engine, engine)
-        }
-        notifier.fireTestRunFinished(result)
-
-      case util.Failure(e) =>
         notifier.fireTestStarted(getDescription)
         notifier.fireTestFailure(new Failure(getDescription, e))
-    }
+        notifier.fireTestRunFinished(result)
+      case None =>
+        engineData match {
+          case Success(ed) =>
+            //        println("Starting the run")
+            val result = new Result
+            notifier.addListener(result.createListener)
+            notifier.fireTestRunStarted(getDescription)
+            ed.engines.foreach { engine =>
+              engine.decisionTree
+              //          println(s"... error scenarios\n.....${engine.errors.mkString("\n.....")}")
+              def run[P, R](engineD: Engine[_, _], ecd: EngineComponent[_, _]): Boolean = {
+                val engine = engineD.asInstanceOf[Engine[P, R]]
+                val ec = ecd.asInstanceOf[EngineComponent[P, R]]
+                val d = ecToDescription(ec)
+                ec match {
+                  case s: Scenario[P, R] if engine.errors.contains(s) => notifier.fireTestStarted(d); notifier.fireTestFailure(new Failure(d, CddRunner.modifyException(engine.errors(s), s.definedInSourceCodeAt))); true
+                  case s: Scenario[P, R] => runTest(d)(s.calcuateAssertionFor(engine, s.situation))
+                  case uc: UseCase[P, R] => runTest(d)(uc.components.reverse.foldLeft(true)((acc, c) => run(engine, c) && acc))
+                  case e: Engine[P, R] => {
+                    val result = runTest(d)(e.asUseCase.components.reverse.foldLeft(true)((acc, c) => run(engine, c) && acc))
+                    CddRunner.makeReports(clazz.getName, engine)
+                    result
+                  }
+                }
+              }
+              //          println(s"Running engine ${engine.title}")
+              run(engine, engine)
+            }
+            notifier.fireTestRunFinished(result)
 
+          case util.Failure(e) =>
+            notifier.fireTestStarted(getDescription)
+            notifier.fireTestFailure(new Failure(getDescription, e))
+        }
+    }
   }
 }
 

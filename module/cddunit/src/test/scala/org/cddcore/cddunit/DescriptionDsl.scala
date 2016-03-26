@@ -9,7 +9,8 @@ import scala.collection.JavaConversions._
 
 object DescriptionData {
   def apply(description: Description): DescriptionData = {
-    DescriptionData(description.getTestClass, description.getDisplayName, Reflection(description).getFieldValue[java.io.Serializable]("fUniqueId").toString, description.getChildren.toList.map(DescriptionData(_)))
+    DescriptionData(description.getTestClass, description.getDisplayName,
+      Reflection(description).getFieldValue[java.io.Serializable]("fUniqueId").getOrElse(throw new IllegalStateException("Somehow the description didn't have a fUniqueId")).toString, description.getChildren.toList.map(DescriptionData(_)))
   }
 }
 
@@ -81,7 +82,7 @@ class DescriptionDsl[P, R](clazz: Class[_], val engine: Engine[P, R])(implicit v
 
   protected def suite(useCaseName: String)(block: => Unit) = {
     val uc = findUsecaseWithName(useCaseName)
-    val id = renderContext.pathMap(uc)
+    val id: String = renderContext.pathMap(uc)
     addParentChildrenDefinedInBlock(DescriptionData(null, useCaseName, id))(block)
   }
 

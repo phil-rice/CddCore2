@@ -112,7 +112,6 @@ class DisplayProcessorSpec extends CddSpec {
   }
 
   it should "prefer an explicit summarizer to the default map behaviour" in {
-    println("Explicit")
     val dp = DisplayProcessor.defaultDisplayProcessor.withSummarize { case (dp, x: Map[_, _]) => "ProcessingMap" }
     val list = Map(st1 -> st2)
     dp(list) shouldBe "ProcessingMap"

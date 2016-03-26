@@ -3,80 +3,184 @@ package org.cddcore.structure
 import java.lang.annotation.Annotation
 import java.lang.reflect.{Field, Method}
 
-import org.cddcore.utilities.{Reflection, Strings}
+import org.cddcore.utilities.{Display, DontDisplay, Reflection, Strings}
 
 import scala.collection.immutable.ListMap
 import scala.reflect.ClassTag
-import scala.xml.{Node, NodeSeq}
+import scala.util.{Failure, Success, Try}
+import scala.xml.{Elem, Node, NodeSeq}
 
-/** This will be implemented by 'Json' and by 'XML' and any other 'structures'
-  * For XML S will be Elem, and Result will be NodeSeq
-  * */
-trait Structure[S, Result] {
 
-  def findResult(pathRootAndSteps: PathRootAndSteps[S, Result]): Result
+case class PathRoot[S](root: S, debug: Boolean)(implicit structure: Structure[S]) {
+  def \(path: String) = PathRootAndSteps(root, List(PathStep(true, path)), debug)
 
-  def structureAsResult(s: S): Result
-
-}
-
-case class PathRoot[S, Result](root: S)(implicit structure: Structure[S, Result]) {
-  def \(path: String) = PathRootAndSteps(root, List(PathStep(true, path)))
-
-  def \\(path: String) = PathRootAndSteps(root, List(PathStep(false, path)))
+  def \\(path: String) = PathRootAndSteps(root, List(PathStep(false, path)), debug)
 }
 
 case class PathStep(linked: Boolean, element: String) {
   override def toString() = (if (linked) """\""" else """\\""") + element
 }
 
-case class PathResult[Result, T](convertor: Result => T)
+trait PathResultStrategy[S, A] {
+  def resultToAggregate(result: Iterable[S]): Try[A]
 
-case class PathRootAndSteps[S, Result](root: S, steps: List[PathStep])(implicit structure: Structure[S, Result]) {
-  def \(path: String) = PathRootAndSteps(root, steps :+ PathStep(true, path))
-
-  def \\(path: String) = PathRootAndSteps(root, steps :+ PathStep(false, path))
-
-  def \[T](result: PathResult[Result, T]) = Path(this, result)
 }
 
-case class Path[S, Result, T](pathRootAndSteps: PathRootAndSteps[S, Result], result: PathResult[Result, T])(implicit structure: Structure[S, Result]) {
-  def apply(): T = {
-    val r = structure.findResult(pathRootAndSteps)
-    result.convertor(r)
+
+case class PathResult[S, A, T](convertor: A => T, strategy: PathResultStrategy[S, A])
+
+case class PathRootAndSteps[S: Structure](root: S, steps: List[PathStep], debug: Boolean) {
+  def \(path: String) = PathRootAndSteps(root, steps :+ PathStep(true, path), debug)
+
+  def \\(path: String) = PathRootAndSteps(root, steps :+ PathStep(false, path), debug)
+
+  def \[A, T](result: PathResult[S, A, T]) = Path(this, result, debug)
+}
+
+case class Path[S: Structure, A, T](pathRootAndSteps: PathRootAndSteps[S], result: PathResult[S, A, T], debug: Boolean) {
+  def apply(): T = get().get
+
+  def get(): Try[T] = {
+    val r = implicitly[Structure[S]].findResult(pathRootAndSteps)
+    result.strategy.resultToAggregate(r).map(result.convertor)
   }
 }
 
-abstract class StructureHolder[S: ClassTag, Result] {
-  implicit def structure: Structure[S, Result]
 
-  protected def structureTitle: String
+object Structure {
+
+  implicit object XMLStructure extends Structure[Node] {
+
+    def sToString(s: Node) = s match {
+      case e: Elem => e.text
+    }
+
+
+    def findResult(pathRootAndSteps: PathRootAndSteps[Node]) = {
+      import pathRootAndSteps._
+      steps.foldLeft(root: NodeSeq) { case (acc, step) =>
+        step.linked match {
+          case true => acc \ step.element
+          case false => acc \\ step.element
+        }
+      }
+    }
+
+    def structureAsResult(s: Node): NodeSeq = s
+
+    def structureTitle = "xml"
+  }
+
+}
+
+/** This will be implemented by 'Json' and by 'XML' and any other 'structures'
+  * For XML S will be Elem, and Result will be NodeSeq
+  * For JSON S will be object ,and Result will be a list of objects
+  * */
+trait Structure[S] {
+
+  def findResult(pathRootAndSteps: PathRootAndSteps[S]): Iterable[S]
+
+  def sToString(s: S): String
+
+  def structureTitle: String
+
+}
+
+
+class Situation[S: ClassTag : Structure] {
+  val structure = implicitly[Structure[S]]
+
+  object AggregateStringsStrategy extends PathResultStrategy[S, String] {
+    def resultToAggregate(result: Iterable[S]) = Success(result.foldLeft(StringBuilder.newBuilder)((acc, s) => acc.append(structure.sToString(s))).toString())
+  }
+
+  object AggregateOptionStringStrategy extends PathResultStrategy[S, Option[String]] {
+    def resultToAggregate(result: Iterable[S]): Try[Option[String]] =
+      if (result.isEmpty) Success(None) else AggregateStringsStrategy.resultToAggregate(result).map(Some(_))
+  }
+
+  object OneAndOnlyOneStringStrategy extends PathResultStrategy[S, String] {
+    def resultToAggregate(result: Iterable[S]): Try[String] = {
+      result.toList match {
+        case h :: Nil => AggregateStringsStrategy.resultToAggregate(result)
+        case Nil => throw new IllegalStateException("Expected one value, got none")
+        case l => throw new IllegalStateException(s"Expected one value, got ${l.size} which are ${Strings.oneLine(l.map(structure.sToString).mkString(","))}")
+      }
+    }
+  }
+
+  class FoldStrategy[Acc, A](mapFn: S => A, initialValue: => Acc, foldFn: (Acc, A) => Acc) extends PathResultStrategy[S, Acc] {
+    def resultToAggregate(result: Iterable[S]): Try[Acc] = Try {
+      result.map(mapFn).foldLeft(initialValue)(foldFn)
+    }
+  }
+
+  def root(s: S, debug: Boolean = false) = PathRoot(s, debug)
+
+  def customPathResult[A, X](fn: A => X, strategy: PathResultStrategy[S, A]) = PathResult(fn, strategy)
+
+  def string = PathResult((s: String) => s, AggregateStringsStrategy)
+
+  def optString = PathResult((option: Option[String]) => option, AggregateOptionStringStrategy)
+
+  def int = PathResult((s: String) => s.toInt, AggregateStringsStrategy)
+
+  object Fold {
+    def fold[Acc, A](mapFn: S => A)(initialValue: => Acc)(foldFn: (Acc, A) => Acc) =
+      PathResult((acc: Acc) => acc, new FoldStrategy[Acc, A](mapFn, initialValue, foldFn))
+
+    def string = fold[String, String](structure.sToString) _
+
+    def int = fold[Int, Int](s => structure.sToString(s).toInt) _
+
+    def double = fold[Double, Double](s => structure.sToString(s).toDouble) _
+
+    def list[A](mapFn: S => A) = fold[List[A], A](mapFn)(List())((acc, a) => acc :+ a)
+
+    def reverseList[A](mapFn: S => A) = fold[List[A], A](mapFn)(List())((acc, a) => a :: acc)
+
+    def vector[A](mapFn: S => A) = fold[Vector[A], A](mapFn)(Vector())((acc, a) => acc :+ a)
+
+    def set[A](mapFn: S => A) = fold[Set[A], A](mapFn)(Set())((acc, a) => acc + a)
+  }
 
   lazy val reflection = Reflection(this)
-  lazy val fieldMapForDisplay: Map[Field, Any] = {
-    val displayFieldMap = reflection.fieldMapForAnnotation[Display]
-    val pathFieldMap = reflection.fieldMap[Path[S, Result, Any]].map { case (field, v) => (field, v()) }
-    val unfinishedFieldMap =
-      reflection.fieldMap[PathRootAndSteps[S, Any]].map { case (field, v) => (field, "No Convertor") } ++
-        reflection.fieldMap[PathRoot[S, Any]].map { case (field, v) => (field, "No Convertor") }
-    Map[Field, Any]() ++ displayFieldMap ++ pathFieldMap ++ unfinishedFieldMap
+
+  import Reflection._
+
+  private type FieldMap = Map[Field, Try[Any]]
+
+  lazy val fieldMapForDisplay: FieldMap = {
+    val displayFieldMap: FieldMap = reflection.fieldMapForAnnotation[Display]
+    val pathFieldMap: FieldMap = reflection.fieldMap[Path[S, Any, Any]].map { case (field, tryPath) =>
+      val value = tryPath.flatMap(_.get).recover { case e => s"<error evaluating path>${e.getClass.getSimpleName}/${e.getMessage}" }
+      (field, value.map(Strings.oneLine))
+    }
+    val unfinishedFieldMap: FieldMap =
+      reflection.fieldMap[PathRootAndSteps[S]].map { case (field, v) => (field, Success("No Convertor")) } ++
+        reflection.fieldMap[PathRoot[S]].map { case (field, v) => (field, Success("No Convertor")) }
+    (Map[Field, Try[Any]]() ++ displayFieldMap ++ pathFieldMap ++ unfinishedFieldMap).removeAnnotationFromFieldMap[DontDisplay]
   }
 
-  lazy val structureMap = reflection.fieldMap[S]
 
+  lazy val structureMap = reflection.fieldMap[S].removeAnnotationFromFieldMap[DontDisplay].sorted(reflection.allFields)
 
   override def toString = {
-
     val paths = fieldMapForDisplay.size match {
       case 0 => ""
-      case _ => "\r\n  " + reflection.fieldMapToString(fieldMapForDisplay, Strings.oneLine, "\r\n  ")
+      case _ => "\r\n  " + fieldMapForDisplay.displayStringMap(Strings.oneLine).sorted(reflection.allFields).displayString("\r\n  ")
     }
-    val structureMapsAsString = "  " + reflection.fieldMapToString(structureMap, Strings.oneLine, "\r\n  ")
+    val structureMapsAsString = "  " + structureMap.displayStringMap(Strings.oneLine).sorted(reflection.allFields).displayString("\r\n  ")
     val structures = structureMap.size match {
       case 0 => ""
-      case 1 => structureTitle + "\r\n" + structureMapsAsString
-      case _ => structureTitle + "s\r\n" + structureMapsAsString
+      case 1 => structure.structureTitle + "\r\n" + structureMapsAsString
+      case _ => structure.structureTitle + "s\r\n" + structureMapsAsString
     }
-    s"${getClass.getSimpleName}($paths\r\n$structures)"
+    s"${
+      getClass.getSimpleName
+    }($paths\r\n$structures)"
   }
 }
+
+class Xml extends Situation[Node]

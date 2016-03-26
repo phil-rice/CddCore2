@@ -75,8 +75,8 @@ lazy val cddunit = (project in file("module/cddunit")).
 
 lazy val examples = (project in file("module/examples")).
   settings(commonSettings: _*).
-  dependsOn(engine % "test->test;compile->compile", rendering, cddunit).
-  aggregate(engine, rendering, cddunit)
+  dependsOn(engine % "test->test;compile->compile", rendering, cddunit, structure).
+  aggregate(engine, rendering, cddunit, structure)
 
 lazy val structure = (project in file("module/structure")).
   settings(structureSettings: _*).

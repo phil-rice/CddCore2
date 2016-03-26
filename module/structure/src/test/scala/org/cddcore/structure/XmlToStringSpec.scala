@@ -70,9 +70,16 @@ class XmlToStringSpec extends CddSpec with XmlTestMother {
   "An Xml Situation with a fragment that isn't present" should "produce a decent toString" in {
     new XmlOneFragmentNotFound(x).toString shouldBe
       s"""XmlOneFragmentNotFound(
-          |  notIn -> 
+          |  notIn -> !
           |xml
-          |  x -> $xOneLine)""".stripMargin
+          |  x -> $xOneLine)""".stripMargin.replace("!", "")
 
+  }
+  "A path result that throws an exception" should "still report that in the toString" in {
+    new XmlWithException().toString shouldBe
+      s"""XmlWithException(
+          |  path -> <error evaluating path>RuntimeException/some message
+          |xml
+          |  x -> <some><item>1</item></some>)""".stripMargin
   }
 }

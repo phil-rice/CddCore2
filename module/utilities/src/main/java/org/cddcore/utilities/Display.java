@@ -1,4 +1,4 @@
-package org.cddcore.structure;
+package org.cddcore.utilities;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
