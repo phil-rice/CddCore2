@@ -55,6 +55,7 @@ object Renderer extends ExpectedForTemplates {
     val engineMap = Templates.renderPath(renderContext, path)
     val decisionTreeMap = DecisionTreeRendering.renderEngine(engine, path.head)
     val withJson = engineMap ++ Map(
+      "urlBase" -> renderContext.urlBase,
       decisionTreeKey -> decisionTreeMap,
       "json" -> (JsonForRendering.pretty(decisionTreeMap) + "\n\n\n\n\n" + JsonForRendering.pretty(engineMap)))
     Mustache.apply("templates/Report.mustache").apply(withJson)

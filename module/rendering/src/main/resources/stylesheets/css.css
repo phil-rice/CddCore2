@@ -33,7 +33,9 @@ td {
 	padding: 2px;
 	border: 1px solid black;
 }
-
+.mainIcon{
+   height:80px;
+}
 .engineOnPath{
    border: 1px solid green;
 }

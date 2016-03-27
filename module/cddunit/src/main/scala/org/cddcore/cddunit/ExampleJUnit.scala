@@ -6,7 +6,6 @@ import org.junit.runner.{JUnitCore, RunWith}
 
 @RunWith(classOf[CddRunner])
 class ExampleJUnit extends CddContinuousIntegrationTest {
-
   val engines = List(ExampleJUnit.engine)
 }
 

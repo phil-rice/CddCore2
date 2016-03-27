@@ -55,13 +55,10 @@ class EngineComponentPathHandler extends PathHandler {
     val pathId = URLDecoder.decode(uriPath.drop(1), "UTF-8")
     val Array(engineName, id) = pathId.split("/")
     val idParts = id.split("\\.")
-    val raw = for (i <- 1 to idParts.size - 1) yield (engineName + "/" + idParts.take(i).mkString("."))
+    val raw = for (i <- 1 to idParts.size) yield (engineName + "/" + idParts.take(i).mkString("."))
     val idPaths = raw.reverse :+ (engineName + "/index")
-    println("Path as Ids: " + idPaths)
 
-    val path = idPaths.map(renderContext.pathMap.inversePathMap.apply(_).asInstanceOf[EngineComponent[P, R]]).toList
-    println("Path: \n" + path.map(e => "  " + e.title + " - " + e.definedInSourceCodeAt + " - " + e.getClass + " - " + renderContext.pathMap(e)).mkString("\n"))
-    path
+    idPaths.map(renderContext.pathMap.inversePathMap.apply(_).asInstanceOf[EngineComponent[P, R]]).toList
   }
 
   def html(context: HandlerContext, params: List[(String, String)]): String = {
@@ -72,7 +69,6 @@ class EngineComponentPathHandler extends PathHandler {
     //    println("Scenarios")
     //    ss.map(renderContext.pathMap(_)).foreach(println(_))
     Renderer.makeHtmlFor(path)(renderContext)
-
   }
 }
 

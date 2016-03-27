@@ -283,7 +283,8 @@ object DecisionTreeRendering extends KeysForRendering {
         case s: Scenario[P, R] => (engine.decisionTree.pathFor(engine, s).reverse, Some(s))
         case _ => (List(), None)
       }
-      DecisionTreeRenderData(engine, scenario, path)
+      val result = DecisionTreeRenderData(engine, scenario, path)
+      result
     }
   }
 
