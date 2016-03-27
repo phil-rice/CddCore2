@@ -1,3 +1,5 @@
+import sbt.Keys._
+
 name := "cddcore2"
 
 
@@ -8,6 +10,7 @@ val versionNos = new {
   val json4s = "3.3.0"
   val junit = "4.11"
   val scalaXml = "1.0.5"
+  val jetty = "9.3.8.v20160314"
 }
 
 lazy val baseSettings = Seq(
@@ -15,7 +18,11 @@ lazy val baseSettings = Seq(
   scalaVersion := versionNos.scala,
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   javaOptions ++= Seq("-Xmx4G", "-XX:+UseConcMarkSweepGC"),
-  testOptions in Test += Tests.Argument("-oCOLHPQ")
+  testOptions in Test += Tests.Argument("-oCOLHPQ"),
+  resolvers ++= Seq(
+    Resolver.sonatypeRepo("releases"),
+    "Twitter Maven" at "https://maven.twttr.com"
+  )
 )
 
 lazy val commonSettings = baseSettings ++ Seq(
@@ -33,6 +40,10 @@ lazy val renderingSettings = commonSettings ++ Seq(
 
 lazy val junitSettings = commonSettings ++ Seq(
   libraryDependencies += "junit" % "junit" % versionNos.junit
+)
+lazy val websiteSettings = commonSettings ++ Seq(
+  libraryDependencies += "org.eclipse.jetty" % "jetty-server" % versionNos.jetty,
+  libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % versionNos.jetty
 )
 
 lazy val structureSettings = commonSettings ++ Seq(
@@ -75,13 +86,18 @@ lazy val cddunit = (project in file("module/cddunit")).
 
 lazy val examples = (project in file("module/examples")).
   settings(commonSettings: _*).
-  dependsOn(engine % "test->test;compile->compile", rendering, cddunit, structure).
-  aggregate(engine, rendering, cddunit, structure)
+  dependsOn(engine % "test->test;compile->compile", website, cddunit, structure).
+  aggregate(engine, website, cddunit, structure)
 
 lazy val structure = (project in file("module/structure")).
   settings(structureSettings: _*).
   dependsOn(utilities % "test->test;compile->compile").
   aggregate(utilities)
+
+lazy val website = (project in file("module/website")).
+  settings(websiteSettings: _*).
+  dependsOn(utilities % "test->test;compile->compile", rendering).
+  aggregate(utilities, rendering)
 
 lazy val test = (project in file("module/test")).
   settings(commonSettings: _*).

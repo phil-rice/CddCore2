@@ -4,7 +4,6 @@ import org.cddcore.engine.Engine
 import org.cddcore.enginecomponents.{EngineComponent, Scenario, UseCase}
 import org.cddcore.utilities.DisplayProcessor
 
-
 case class TemplateNames(engineName: String, useCaseName: String, scenarioName: String) {
   def nameFor(ec: EngineComponent[_, _]) =
     ec match {
@@ -51,16 +50,28 @@ object Renderer extends ExpectedForTemplates {
     makeReportFilesFor(engine)(newRenderConfiguaration)
   }
 
+  def makeHtmlFor[P,R](path: List[EngineComponent[P,R]])(implicit renderContext: RenderContext) = {
+    val engine = path.last.asInstanceOf[Engine[P,R]]
+    val engineMap = Templates.renderPath(renderContext, path)
+    val decisionTreeMap = DecisionTreeRendering.renderEngine(engine, path.head)
+    val withJson = engineMap ++ Map(
+      decisionTreeKey -> decisionTreeMap,
+      "json" -> (JsonForRendering.pretty(decisionTreeMap) + "\n\n\n\n\n" + JsonForRendering.pretty(engineMap)))
+    Mustache.apply("templates/Report.mustache").apply(withJson)
+
+  }
+
   def makeReportFilesFor[P, R](engine: Engine[P, R])(implicit renderConfiguration: RenderConfiguration): Unit = {
     implicit val rc = renderContext(engine)
     rc.urlManipulations.populateInitialFiles(rc.urlBase)
     for (path <- engine.withChildrenPaths) {
-      val engineMap = Templates.renderPath(rc, path)
-      val decisionTreeMap = DecisionTreeRendering.renderEngine(engine, path.head)
-      val withJson = engineMap ++ Map(
-        decisionTreeKey -> decisionTreeMap,
-        "json" -> (JsonForRendering.pretty(decisionTreeMap) + "\n\n\n\n\n" + JsonForRendering.pretty(engineMap)))
-      val html = Mustache.apply("templates/Report.mustache").apply(withJson)
+      val html = makeHtmlFor(path)
+      //      val engineMap = Templates.renderPath(rc, path)
+      //      val decisionTreeMap = DecisionTreeRendering.renderEngine(engine, path.head)
+      //      val withJson = engineMap ++ Map(
+      //        decisionTreeKey -> decisionTreeMap,
+      //        "json" -> (JsonForRendering.pretty(decisionTreeMap) + "\n\n\n\n\n" + JsonForRendering.pretty(engineMap)))
+      //      val html = Mustache.apply("templates/Report.mustache").apply(withJson)
       rc.makeFile(path.head, html)
     }
   }

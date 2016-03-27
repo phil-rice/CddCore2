@@ -1,4 +1,4 @@
-package org.cddcore.example.processCheque_DM_Xml
+package org.cddcore.examples
 
 import scala.language.implicitConversions
 import scala.xml.Elem
@@ -93,9 +93,9 @@ case class ChequeSituation(world: World, cheque: Elem) extends Xml {
 
   import GBP._
 
-  def gbp = PathResult(stringToGBP, OneAndOnlyOneStringStrategy)
+  def gbp = PathResult(stringToGBP, OneAndOnlyOneString)
 
-  def bankId = PathResult((id: String) => BankId(id), OneAndOnlyOneStringStrategy)
+  def bankId = PathResult((id: String) => BankId(id), OneAndOnlyOneString)
 
   val chequeContents = root(cheque)
   val chequeFromContents = chequeContents \ "From"
@@ -130,7 +130,7 @@ object ProcessChequeXml {
 
   import ProcessChequeTestMother._
 
-  val processCheque = new Engine[ChequeSituation, ProcessChequeResult]() {
+  val processCheque = new Engine[ChequeSituation, ProcessChequeResult]("Process Cheques") {
     useCase("Cheques that are for a different bank should be rejected") {
       ChequeSituation(world, cheque("1", richRogerAtHsbcId, richRogerId, 1000)).
         produces(ProcessChequeResult(false, "processCheque.reject.fromBankNotThisBank")).
@@ -209,8 +209,8 @@ object ProcessChequeXml {
     }
   }
 
-  def main(args: Array[String]) {
-    println(processCheque(ChequeSituation(world, cheque("1", dodgyDaveId, richRogerAtHsbcId, 50))))
-  }
+//  def main(args: Array[String]) {
+//    println(processCheque(ChequeSituation(world, cheque("1", dodgyDaveId, richRogerAtHsbcId, 50))))
+//  }
 
 }

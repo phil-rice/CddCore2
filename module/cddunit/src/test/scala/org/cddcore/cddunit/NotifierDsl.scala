@@ -76,6 +76,7 @@ class NotifierDsl[P, R](descriptionDsl: DescriptionDsl[P, R]) extends MutableHie
         addChild(NotifierEvent(d.uniqueId, TestStarted))
         block
         addChild(NotifierEvent(d.uniqueId, TestFinished))
+      case None => throw new IllegalStateException(s"Description with id $id was not found")
     }
   }
 

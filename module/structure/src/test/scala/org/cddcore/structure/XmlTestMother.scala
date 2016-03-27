@@ -70,7 +70,7 @@ trait XmlTestMother {
 
   class XmlWithException extends Situation[Node] {
     val e = new RuntimeException("some message")
-    val exceptionPathResult = customPathResult[String, Int](_ => throw e, AggregateStringsStrategy)
+    val exceptionPathResult = customPathResult[String, Int](_ => throw e, AggregateStrings)
     val x = <some><item>1</item></some>
     val path = root(x) \ "item" \ exceptionPathResult
   }

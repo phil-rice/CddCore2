@@ -1,3 +1,7 @@
 package org.cddcore.rendering
 
-class DuplicateTitleException(duplicates: Map[String, List[String]]) extends Exception(s"Duplicate titles in engines ${duplicates}")
+import org.cddcore.enginecomponents.HasDefinedInSourceCodeAt
+
+
+class DuplicateTitleException(duplicates: Map[String, List[HasDefinedInSourceCodeAt]]) extends Exception(s"Duplicate titles in engines ${
+  duplicates.map{case (title, d) => title +"->" + d.map(_.definedInSourceCodeAt).mkString(",")}}")

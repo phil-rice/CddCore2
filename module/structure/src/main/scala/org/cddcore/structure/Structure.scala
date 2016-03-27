@@ -91,42 +91,44 @@ trait Structure[S] {
 class Situation[S: ClassTag : Structure] {
   val structure = implicitly[Structure[S]]
 
-  object AggregateStringsStrategy extends PathResultStrategy[S, String] {
+  object AggregateStrings extends PathResultStrategy[S, String] {
     def resultToAggregate(result: Iterable[S]) = Success(result.foldLeft(StringBuilder.newBuilder)((acc, s) => acc.append(structure.sToString(s))).toString())
   }
 
-  object AggregateOptionStringStrategy extends PathResultStrategy[S, Option[String]] {
+  object AggregateOptionString extends PathResultStrategy[S, Option[String]] {
     def resultToAggregate(result: Iterable[S]): Try[Option[String]] =
-      if (result.isEmpty) Success(None) else AggregateStringsStrategy.resultToAggregate(result).map(Some(_))
+      if (result.isEmpty) Success(None) else AggregateStrings.resultToAggregate(result).map(Some(_))
   }
 
-  object OneAndOnlyOneStringStrategy extends PathResultStrategy[S, String] {
+  object OneAndOnlyOneString extends PathResultStrategy[S, String] {
     def resultToAggregate(result: Iterable[S]): Try[String] = {
       result.toList match {
-        case h :: Nil => AggregateStringsStrategy.resultToAggregate(result)
+        case h :: Nil => AggregateStrings.resultToAggregate(result)
         case Nil => throw new IllegalStateException("Expected one value, got none")
         case l => throw new IllegalStateException(s"Expected one value, got ${l.size} which are ${Strings.oneLine(l.map(structure.sToString).mkString(","))}")
       }
     }
   }
 
-  class FoldStrategy[Acc, A](mapFn: S => A, initialValue: => Acc, foldFn: (Acc, A) => Acc) extends PathResultStrategy[S, Acc] {
-    def resultToAggregate(result: Iterable[S]): Try[Acc] = Try {
-      result.map(mapFn).foldLeft(initialValue)(foldFn)
-    }
-  }
 
   def root(s: S, debug: Boolean = false) = PathRoot(s, debug)
 
   def customPathResult[A, X](fn: A => X, strategy: PathResultStrategy[S, A]) = PathResult(fn, strategy)
 
-  def string = PathResult((s: String) => s, AggregateStringsStrategy)
+  def string = PathResult((s: String) => s, AggregateStrings)
 
-  def optString = PathResult((option: Option[String]) => option, AggregateOptionStringStrategy)
+  def optString = PathResult((option: Option[String]) => option, AggregateOptionString)
 
-  def int = PathResult((s: String) => s.toInt, AggregateStringsStrategy)
+  def int = PathResult((s: String) => s.toInt, AggregateStrings)
 
   object Fold {
+
+    class FoldStrategy[Acc, A](mapFn: S => A, initialValue: => Acc, foldFn: (Acc, A) => Acc) extends PathResultStrategy[S, Acc] {
+      def resultToAggregate(result: Iterable[S]): Try[Acc] = Try {
+        result.map(mapFn).foldLeft(initialValue)(foldFn)
+      }
+    }
+
     def fold[Acc, A](mapFn: S => A)(initialValue: => Acc)(foldFn: (Acc, A) => Acc) =
       PathResult((acc: Acc) => acc, new FoldStrategy[Acc, A](mapFn, initialValue, foldFn))
 

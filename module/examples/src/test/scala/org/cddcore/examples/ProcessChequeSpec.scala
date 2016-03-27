@@ -2,7 +2,6 @@ package org.cddcore.examples
 
 import org.cddcore.cddunit.{CddContinuousIntegrationTest, CddRunner}
 import org.cddcore.engine.Engine
-import org.cddcore.example.processCheque_DM_Xml.ProcessChequeXml
 import org.junit.runner.RunWith
 
 

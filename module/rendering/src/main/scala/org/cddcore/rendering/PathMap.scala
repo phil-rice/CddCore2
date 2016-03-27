@@ -10,7 +10,7 @@ object PathMap extends TestObjectsForRendering {
 
   def checkSufficientlyUniqueTitles(ecs: Traversable[EC]) = {
     import MapOfLists._
-    val names = ecs.foldLeft(Map[String, List[String]]())((acc, ec) => acc addToList (Strings.cleanString(ec.title) -> ec.title))
+    val names = ecs.foldLeft(Map[String, List[EC]]())((acc, ec) => acc addToList (Strings.cleanString(ec.title) -> ec))
     val duplicates = names.filter { case (clean, list) => list.size > 1 }
     if (duplicates.size > 0) throw new DuplicateTitleException(duplicates)
   }
