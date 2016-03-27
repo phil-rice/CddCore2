@@ -3,16 +3,18 @@ package org.cddcore.rendering
 import java.util.Date
 
 import org.cddcore.engine.Engine
-import org.cddcore.enginecomponents.{Scenario, UseCase}
+import org.cddcore.enginecomponents.{Document, Reference, Scenario, UseCase}
 import org.cddcore.utilities.DisplayProcessor
 
 trait TestObjectsForRendering {
   val displayProcessorModifiedForSituations = DisplayProcessor.defaultDisplayProcessor.withSummarize { case (dp, x) => s"Summary($x)" }
   protected val emptyEngine = new Engine[Int, String]("someEngineTitle") {}
-  protected val engineWithUseCase = new Engine[Int, String]("someEngineTitle2") {
+  val d1 = Document.internet("someHRef1")
+  val d2 = Document.internet("name2", "someHRef2")
+  protected val engineWithUseCase = new Engine[Int, String]("someEngineTitle2", references = List(Reference(d2, "engineRef"))) {
     useCase("someUseCase") {
       1 produces "one" when (_ == 1)
-      2 produces "two" when (_ == 2)
+      2 produces "two" when (_ == 2) ref d1
     }
     useCase("someOtherCase") {
       3 produces "three" when (_ == 3)
@@ -26,7 +28,8 @@ trait TestObjectsForRendering {
 
   protected val rc: RenderContext = RenderContext(new Date(), "urlBase", PathMap(emptyEngine, engineWithUseCase), new FileUrlManipulations())(displayProcessorModifiedForSituations)
 }
-trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering with Icons {
+
+trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering with Icons with ReferenceMapMakers {
   protected val linkForScenario1 = Map(titleKey -> scenario1.title, linkUrlKey -> rc.url(scenario1), iconUrlKey -> scenarioIcon, definedAtKey -> scenario1.definedInSourceCodeAt)
   protected val linkForScenario2 = Map(titleKey -> scenario2.title, linkUrlKey -> rc.url(scenario2), iconUrlKey -> scenarioIcon, definedAtKey -> scenario2.definedInSourceCodeAt)
   protected val linkForScenario3 = Map(titleKey -> scenario3.title, linkUrlKey -> rc.url(scenario3), iconUrlKey -> scenarioIcon, definedAtKey -> scenario3.definedInSourceCodeAt)
@@ -43,7 +46,8 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     titleKey -> scenario1.title,
     linkKey -> linkForScenario1,
     commentKey -> "",
-    situationKey -> "Summary(1)")
+    situationKey -> "Summary(1)",
+    referencesKey -> scenario1.references.map(referenceToMap(rc)))
 
 
   protected val dataForScenario2 = Map(
@@ -52,7 +56,8 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     titleKey -> scenario2.title,
     linkKey -> linkForScenario2,
     commentKey -> "",
-    situationKey -> "Summary(2)")
+    situationKey -> "Summary(2)",
+    referencesKey -> scenario2.references.map(referenceToMap(rc)))
 
 
   protected val dataForScenario3 = Map(
@@ -61,8 +66,8 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     titleKey -> scenario3.title,
     linkKey -> linkForScenario3,
     commentKey -> "",
-    situationKey -> "Summary(3)")
-
+    situationKey -> "Summary(3)",
+    referencesKey -> scenario3.references.map(referenceToMap(rc)))
 
   protected val dataForScenario4 = Map(
     idKey -> rc.idPath(scenario4),
@@ -70,8 +75,8 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     titleKey -> scenario4.title,
     linkKey -> linkForScenario4,
     commentKey -> "",
-    situationKey -> "Summary(4)")
-
+    situationKey -> "Summary(4)",
+    referencesKey -> scenario4.references.map(referenceToMap(rc)))
 
   protected val dataForUseCase1 = Map(
     idKey -> rc.idPath(useCase1),
@@ -79,7 +84,8 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     titleKey -> "someUseCase",
     linkKey -> linkForUseCase1,
     commentKey -> "",
-    scenariosIconsKey -> List(linkForScenario1, linkForScenario2))
+    scenariosIconsKey -> List(linkForScenario1, linkForScenario2),
+    referencesKey -> useCase1.references.map(referenceToMap(rc)))
 
   protected val dataForUseCase2 = Map(
     idKey -> rc.idPath(useCase2),
@@ -87,14 +93,17 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     titleKey -> "someOtherCase",
     linkKey -> linkForUseCase2,
     commentKey -> "",
-    scenariosIconsKey -> List(linkForScenario3))
+    scenariosIconsKey -> List(linkForScenario3),
+    referencesKey -> useCase2.references.map(referenceToMap(rc)))
+
 
   protected val dataForEngine = Map(
     idKey -> rc.idPath(engineWithUseCase),
     typeKey -> engineTypeName,
     titleKey -> engineWithUseCase.title,
     linkKey -> linkForEngine,
-    scenariosIconsKey -> List(linkForScenario4))
+    scenariosIconsKey -> List(linkForScenario4),
+    referencesKey -> engineWithUseCase.references.map(referenceToMap(rc)))
 
   protected val pathForScenario1 = scenario1 :: useCase1 :: engineWithUseCase :: Nil
   protected val focusOnScenario1 =

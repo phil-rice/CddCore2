@@ -4,7 +4,7 @@ import java.io._
 import java.util.Date
 
 import org.cddcore.engine._
-import org.cddcore.enginecomponents.{EngineComponent, Scenario, UseCase}
+import org.cddcore.enginecomponents._
 import org.cddcore.utilities.DisplayProcessor
 
 case class RenderConfiguration(date: Date = new Date, urlBase: String = "./target/cdd", urlManipulations: UrlManipulations = new FileUrlManipulations)
@@ -78,12 +78,9 @@ class FileUrlManipulations extends UrlManipulations {
     } finally (writer.close)
   }
 
-  private val initialFiles = List("images/engine.png", "images/scenario.png", "images/usecase.png", "stylesheets/css.css")
+  private val initialFiles = List("images/engine.png", "images/scenario.png", "images/usecase.png", "images/document.png", "stylesheets/css.css")
 
-  def populateInitialFiles(urlBase: String) = {
-    initialFiles.foreach(f => copyFromClassPathToFile(f, new File(urlBase + "/" + f)))
-
-  }
+  def populateInitialFiles(urlBase: String) = initialFiles.foreach(f => copyFromClassPathToFile(f, new File(urlBase + "/" + f)))
 }
 
 
@@ -119,6 +116,7 @@ trait KeysForRendering {
   val linkKey = "link"
   val idKey = "id"
   val titleKey = "title"
+  val referencesKey = "references"
   val linkUrlKey = "linkUrl"
   val iconUrlKey = "iconUrl"
 
@@ -141,6 +139,13 @@ trait KeysForRendering {
     case _ if path.contains(ec) => Map(selectedPostFixKey -> "OnPath")
     case _ => Map(selectedPostFixKey -> "")
   }
+
+}
+
+trait ReferenceMapMakers {
+  def documentToMap(d: Document) = Map("name" -> d.name, "ref" -> d.ref)
+
+  def referenceToMap(rc: RenderContext)(r: Reference) = Map("document" -> documentToMap(r.document), "internalRef" -> r.internalRef, "imgSrc" -> (rc.urlBase + "images/document.png"))
 
 }
 
@@ -174,6 +179,13 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
     (rc, scenario3) produces linkForScenario3
   }
 
+  //  val references = new Engine[EngineComponent[_, _], Seq[Map[String, Any]]]("produces the references map for an engine component") {
+  //    scenario2 produces List(Map("name" -> "name2", "ref" -> "someHRef1")) because { case s: Scenario[_, _] => s.references.map(referenceToMap) }
+  //    scenario1 produces List()
+  //    useCase1 produces List(referenceToMap(Reference(d2))) because { case uc: UseCase[_, _] => uc.references.map(referenceToMap) }
+  //    engineWithUseCase produces List(referenceToMap(Reference(d2, "engineRef"))) because { case e: Engine[_, _] => e.references.map(referenceToMap) }
+  //
+  //  }
 
   implicit val displayProcessorRemovingLinks = DisplayProcessor.defaultDisplayProcessor.withSummarize { case (dp, ("link", s)) => "link -> ?" }
 
@@ -238,9 +250,9 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
     titleKey -> ec.title)
 
   object renderData extends Engine2[RenderContext, EngineComponent[_, _], Map[String, _]] {
-    (rc, engineWithUseCase) produces dataForEngine by { case (rc, ec) => renderRawData(rc, ec) }
+    (rc, engineWithUseCase) produces dataForEngine because { case (rc, e: Engine[_, _]) => renderRawData(rc, e) ++ Map(referencesKey -> e.references.map( referenceToMap(rc))) }
 
-    (rc, useCase1) produces dataForUseCase1 because { case (rc, uc: UseCase[_, _]) => renderRawData(rc, uc) ++ Map(commentKey -> uc.comment.getOrElse("")) }
+    (rc, useCase1) produces dataForUseCase1 because { case (rc, uc: UseCase[_, _]) => renderRawData(rc, uc) ++ Map(commentKey -> uc.comment.getOrElse(""), referencesKey -> uc.references.map(referenceToMap(rc))) }
     (rc, useCase2) produces dataForUseCase2
 
     (rc, scenario1) produces dataForScenario1 because { case (rc, s: Scenario[_, _]) =>
@@ -250,7 +262,8 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
         linkKey -> makeLink(rc, s),
         titleKey -> s.title,
         commentKey -> s.comment.getOrElse(""),
-        situationKey -> rc.displayProcessor(s.situation))
+        situationKey -> rc.displayProcessor(s.situation),
+        referencesKey -> s.references.map(referenceToMap(rc)))
     }
 
     (rc, scenario2) produces dataForScenario2

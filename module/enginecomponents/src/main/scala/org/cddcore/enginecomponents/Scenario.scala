@@ -8,7 +8,6 @@ import scala.reflect.macros._
 class SomethingMarker[R]
 
 
-
 object Scenario {
 
   implicit def pToScenarioBuilder[P, R](p: P) = FromSituationScenarioBuilder[P, R](p)
@@ -19,7 +18,7 @@ object Scenario {
 
 }
 
-case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: DefinedInSourceCodeAt, title: String, comment: Option[String]) extends EngineComponent[P, R]  with ToSummary with HasComment {
+case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: DefinedInSourceCodeAt, title: String, comment: Option[String], references: List[Reference]) extends EngineComponent[P, R] with ToSummary with HasComment {
   def allScenarios = Seq(this)
 
   def apply(engine: P => R, p: P) = reason(engine, p)
@@ -56,7 +55,7 @@ case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion:
 case class FromSituationScenarioBuilder[P, R](situation: P) {
 
   private def producesPrim(definedAt: DefinedInSourceCodeAt, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R])(implicit scl: ChildLifeCycle[EngineComponent[P, R]]) = {
-    val s = Scenario[P, R](situation, reason, assertion, definedAt, situation.toString, None)
+    val s = Scenario[P, R](situation, reason, assertion, definedAt, situation.toString, None, List())
     scl.created(s)
     s
   }
@@ -143,5 +142,10 @@ case class ScenarioBuilder[P, R](scenario: Scenario[P, R])(implicit val scl: Chi
   def title(title: String) = ScenarioBuilder.changeScenario[P, R](this, _.copy(title = title))
 
   def withComment(comment: String) = ScenarioBuilder.changeScenario[P, R](this, _.copy(comment = Some(comment)))
+
+  def ref(document: Document) = ScenarioBuilder.changeScenario[P, R](this, s => s.copy(references = Reference(document, None) :: s.references))
+
+
+  def ref(documentAndInternalRef: (Document, String)) = ScenarioBuilder.changeScenario[P, R](this, s => s.copy(references = Reference(documentAndInternalRef._1, Some(documentAndInternalRef._2)) :: s.references))
 }
 

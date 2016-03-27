@@ -8,9 +8,14 @@
     <link href="../stylesheets/css.css" rel="stylesheet"/>
 </head>
 <body>
-<a  href="{{urlBase}}"><img class="mainIcon" src="/images/cdd.png" /></a>
-   <h1>Engines</h1>
-   <ul>
-      {{#engines}}<li><a href="{{href}}">{{title}}</a></li>{{/engines}}
-   </ul>
+<a href="{{urlBase}}"><img class="mainIcon" src="/images/cdd.png"/></a>
+<h1>Engines</h1>
+<ul>
+    {{#engines}}
+        <li><a href="{{href}}">{{title}}</a></li>{{/engines}}
+</ul>
+<h2>Documents</h2>
+<ul>
+{{#documents}}<li><a href="{{ref}}">{{name}}</a></li>{{/documents}}
+</ul>
 </body>

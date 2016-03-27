@@ -1,12 +1,16 @@
 package org.cddcore.examples
 
 import org.cddcore.engine.Engine
+import org.cddcore.enginecomponents.{Document, InternetDocument}
 import org.cddcore.rendering.Renderer
+
 
 object Tennis {
 //  def main(args: Array[String]) {
 //    Renderer.makeReportFilesFor(tennis)
 //  }
+
+  val wikiPage = Document.internet("https://en.wikipedia.org/wiki/Tennis")
 
   val (serverWon, receiverWon) = ("server won", "receiver won")
   val lookup = Map(0 -> "love", 1 -> "fifteen", 2 -> "thirty", 3 -> "forty")
@@ -14,7 +18,7 @@ object Tennis {
     title("Tennis Kata")
     useCase("Winning", "A game is won by the first player to have won at least four points in total and at least two points more than the opponent.") {
       useCase("Server Winning") {
-        (4, 0) produces serverWon when { case (l, r) => (l - r) >= 2 && l >= 4 }
+        (4, 0) produces serverWon when { case (l, r) => (l - r) >= 2 && l >= 4 } ref wikiPage
         (4, 1) produces serverWon withComment "This was 4,1"
         (4, 2) produces serverWon
         (5, 3) produces serverWon

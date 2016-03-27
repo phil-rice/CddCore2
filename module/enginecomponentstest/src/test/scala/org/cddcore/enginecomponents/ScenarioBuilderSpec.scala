@@ -22,6 +22,12 @@ class ScenarioBuilderSpec extends CddSpec {
     s.expectedOption shouldBe Some("result")
 
   }
+  it should "allow multiple references" in {
+    val document1 = Document.internet("someDoc1")
+    val document2 = Document.internet("someDoc2")
+    val s1 = 1 produces "one" ref document1 ref(document2, "int2")
+    s1.references shouldBe List(Reference(document2, Some("int2")), Reference(document1, None))
+  }
 
   it should "allow comments to be added" in {
     (1 produces "result" withComment "someComment").comment shouldBe Some("someComment")
@@ -62,7 +68,7 @@ class ScenarioBuilderSpec extends CddSpec {
   it should "throw BecauseNotTrueException when the because is not true for the situation" in {
     intercept[ReasonInvalidException[_, _]] {
       1 produces "result" because { case i if i == 2 => "result" }
-    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:64) cannot be added because the reason given isn't actually true"
+    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:70) cannot be added because the reason given isn't actually true"
   }
 
   it should "have allScenarios just including itself" in {
@@ -95,7 +101,7 @@ class ScenarioBuilderSpec extends CddSpec {
   it should "throw BecauseNotTrueException when the when is not true for the situation" in {
     intercept[ReasonInvalidException[_, _]] {
       1 produces "result" when (_ == 2)
-    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:97) cannot be added because the reason given isn't actually true"
+    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:103) cannot be added because the reason given isn't actually true"
   }
 
   it should "allow the 'by' word to have code generate the result" in {

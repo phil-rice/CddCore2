@@ -49,15 +49,23 @@ object Engine {
 //
 //}
 
-abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val definedInSourceCodeAt: DefinedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt())
+abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val references: List[Reference] = List(), val definedInSourceCodeAt: DefinedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt())
                                    (implicit val hierarchy: Hierarchy[UseCase[P, R], EngineComponent[P, R]], dp: DisplayProcessor)
   extends EngineComponent[P, R] with MutableHierarchyBuilderWithChildLifeCycle[UseCase[P, R], EngineComponent[P, R]] {
+
+  def allUseCases = allUseCasesPrim(asUseCase)
+
+  private def allUseCasesPrim(uc: UseCase[P, R]): List[UseCase[P, R]] = uc.components.flatMap { case uc: UseCase[P, R] => uc :: allUseCasesPrim(uc); case _ => Nil }
+
+  def allReferences: Seq[Reference] = references ++ allUseCases.flatMap(_.references) ++ allScenarios.flatMap(_.references)
+
+  def allDocuments = allReferences.map(_.document).distinct
 
   def errors = hierarchyBuilder.holder.errors
 
   def postSealMessage = "Cannot modify the engine after it has been constructed"
 
-  def makeRootHolder = UseCase[P, R](initialTitle, comment = None, definedInSourceCodeAt = definedInSourceCodeAt, errors = ListMap())
+  def makeRootHolder = UseCase[P, R](initialTitle, comment = None, definedInSourceCodeAt = definedInSourceCodeAt, errors = ListMap(), references = List())
 
   def title: String = hierarchyBuilder.holder.title
 
@@ -72,12 +80,12 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
 
   implicit def pToScenarioBuilder(p: P) = Scenario.pToScenarioBuilder[P, R](p)
 
-  protected def useCase(title: String)(blockThatScenariosAreDefinedIn: => Unit) = useCasePrim(title, None)(blockThatScenariosAreDefinedIn)
+  protected def useCase(title: String)(blockThatScenariosAreDefinedIn: => Unit): Unit = useCase(title, None, List())(blockThatScenariosAreDefinedIn)
 
-  protected def useCase(title: String, comment: String)(blockThatScenariosAreDefinedIn: => Unit) = useCasePrim(title, Some(comment))(blockThatScenariosAreDefinedIn)
+  protected def useCase(title: String, comment: String, references: List[Reference] = List())(blockThatScenariosAreDefinedIn: => Unit): Unit = useCase(title, Some(comment), references)(blockThatScenariosAreDefinedIn)
 
-  private def useCasePrim(title: String, comment: Option[String])(blockThatScenariosAreDefinedIn: => Unit) =
-    addParentChildrenDefinedInBlock(UseCase[P, R](title, comment = comment, definedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt(7), errors = ListMap()))(blockThatScenariosAreDefinedIn)
+  private def useCase(title: String, comment: Option[String], references: List[Reference])(blockThatScenariosAreDefinedIn: => Unit): Unit =
+    addParentChildrenDefinedInBlock(UseCase[P, R](title, comment = comment, definedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt(7), errors = ListMap(), references = references))(blockThatScenariosAreDefinedIn)
 
   private def calculateMocksAndNoMocks: (Map[P, R], List[(Scenario[P, R], P)]) = {
     val mocks: Map[P, R] = allScenarios.foldLeft(Map[P, R]()) { (acc, s) => s.expectedOption.fold(acc)(expected => acc + (s.situation -> expected)) }
@@ -138,14 +146,14 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val defin
 
 }
 
-class Engine[P, R](initialTitle: String = "Untitled", definedInSourceCodeAt: DefinedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt())(implicit dp: DisplayProcessor) extends AbstractEngine[P, R](initialTitle, definedInSourceCodeAt) with Function[P, R] {
+class Engine[P, R](initialTitle: String = "Untitled", references: List[Reference] = List(), definedInSourceCodeAt: DefinedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt())(implicit dp: DisplayProcessor) extends AbstractEngine[P, R](initialTitle, references, definedInSourceCodeAt) with Function[P, R] {
 }
 
-class Engine2[P1, P2, R](initialTitle: String = "Untitled", definedInSourceCodeAt: DefinedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt())(implicit val dp: DisplayProcessor) extends AbstractEngine[(P1, P2), R](initialTitle, definedInSourceCodeAt) with Function2[P1, P2, R] {
+class Engine2[P1, P2, R](initialTitle: String = "Untitled", references: List[Reference] = List(), definedInSourceCodeAt: DefinedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt())(implicit val dp: DisplayProcessor) extends AbstractEngine[(P1, P2), R](initialTitle, references, definedInSourceCodeAt) with Function2[P1, P2, R] {
   def apply(p1: P1, p2: P2): R = apply((p1, p2))
 }
 
-class Engine3[P1, P2, P3, R](initialTitle: String = "Untitled", definedInSourceCodeAt: DefinedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt())(implicit val dp: DisplayProcessor) extends AbstractEngine[(P1, P2, P3), R](initialTitle, definedInSourceCodeAt) with Function3[P1, P2, P3, R] {
+class Engine3[P1, P2, P3, R](initialTitle: String = "Untitled", references: List[Reference] = List(), definedInSourceCodeAt: DefinedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt())(implicit val dp: DisplayProcessor) extends AbstractEngine[(P1, P2, P3), R](initialTitle, references, definedInSourceCodeAt) with Function3[P1, P2, P3, R] {
   def apply(p1: P1, p2: P2, p3: P3): R = apply((p1, p2, p3))
 }
 

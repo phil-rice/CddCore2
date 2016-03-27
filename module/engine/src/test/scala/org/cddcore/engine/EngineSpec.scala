@@ -1,6 +1,6 @@
 package org.cddcore.engine
 
-import org.cddcore.enginecomponents.UseCase
+import org.cddcore.enginecomponents.{Document, InternetDocument, Reference, UseCase}
 
 import scala.collection.immutable.ListMap
 
@@ -28,9 +28,9 @@ class EngineSpec extends CddEngineSpec {
       useCase("usecase3")()
     }
     val List(uc3, uc2, uc1) = e.asUseCase.components
-    uc1 shouldBe UseCase[Person, String]("some usecase1", List(), None, uc1.definedInSourceCodeAt, ListMap())
-    uc2 shouldBe UseCase[Person, String]("some usecase2", List(), Some("comment"), uc2.definedInSourceCodeAt, ListMap())
-    uc3 shouldBe UseCase[Person, String]("usecase3", List(), None, uc3.definedInSourceCodeAt, ListMap())
+    uc1 shouldBe UseCase[Person, String]("some usecase1", List(), None, uc1.definedInSourceCodeAt, ListMap(), List())
+    uc2 shouldBe UseCase[Person, String]("some usecase2", List(), Some("comment"), uc2.definedInSourceCodeAt, ListMap(), List())
+    uc3 shouldBe UseCase[Person, String]("usecase3", List(), None, uc3.definedInSourceCodeAt, ListMap(), List())
 
     uc1.definedInSourceCodeAt.toString shouldBe "(EngineSpec.scala:26)"
     uc2.definedInSourceCodeAt.toString shouldBe "(EngineSpec.scala:27)"
@@ -86,4 +86,51 @@ class EngineSpec extends CddEngineSpec {
     poor200.situation shouldBe Person(200)
   }
 
+  "Adding references to a usecase" should "be remembered by the use case" in {
+    val d1 = Document.internet("some ref 1")
+    val d2 = Document.internet("some ref 2")
+    val e = new Engine[Int, String] {
+      useCase("useCase1", "Comment1", references = List(Reference(d1))) {
+        1 produces "one"
+      }
+      useCase("useCase2", "Comment2", references = List(Reference(d2))) {
+        2 produces "two"
+      }
+    }
+    val List(uc2: UseCase[Int, String], uc1: UseCase[Int, String]) = e.asUseCase.components
+    uc1.references shouldBe List(Reference(d1))
+    uc2.references shouldBe List(Reference(d2))
+  }
+
+  "References for an engine" should "be remembered by the engine" in {
+    val d1 = Document.internet("some ref 1")
+    val d2 = Document.internet("some ref 2")
+    val e = new Engine[Int, String](references = List(Reference(d1), Reference(d2))) {
+      useCase("useCase1", "Comment1") {
+        1 produces "one"
+      }
+      useCase("useCase2", "Comment2") {
+        2 produces "two"
+      }
+    }
+    e.references shouldBe List(Reference(d1), Reference(d2))
+  }
+
+  they should "be aggregated in the documents field of engine" in {
+    val d1 = Document.internet("some ref 1")
+    val d2 = Document.internet("some ref 2")
+    val d3 = Document.internet("some ref 3")
+    val d4 = Document.internet("some ref 4")
+    val e = new Engine[Int, String](references = List(Reference(d1), Reference(d2, "2"))) {
+      useCase("useCase1", "Comment1", references = List(Reference(d3, "3"))) {
+        1 produces "one" ref d4
+      }
+      useCase("useCase2", "Comment2") {
+        2 produces "two" ref(d4, "4")
+      }
+    }
+    e.references shouldBe List(Reference(d1), Reference(d2, "2"))
+    e.allReferences.toSet shouldBe Set(Reference(d1), Reference(d2, "2"), Reference(d3, "3"), Reference(d4), Reference(d4, "4"))
+    e.allDocuments.toSet shouldBe Set(d1, d2, d3, d4)
+  }
 }

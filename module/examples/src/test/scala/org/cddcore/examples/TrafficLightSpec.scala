@@ -4,7 +4,7 @@ import org.cddcore.utilities.CddSpec
 
 class TrafficLightSpec extends CddSpec {
 
-  val decide = new TrafficLightEngine().decide
+  val decide = TrafficLightEngine.decide
   "Traffic lights" should "behave" in {
     decide(TrafficLight(red = true)) shouldBe "Stop"
     decide(TrafficLight(green = true)) shouldBe "Go"

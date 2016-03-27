@@ -6,7 +6,7 @@ import scala.collection.immutable.ListMap
 
 
 class UseCaseBuilderSpec extends CddSpec {
-  def uc(s: String, ec: EngineComponent[Int, String]*) = UseCase[Int, String](s, ec.toList, None, DefinedInSourceCodeAt.definedInSourceCodeAt(1), ListMap())
+  def uc(s: String, ec: EngineComponent[Int, String]*) = UseCase[Int, String](s, ec.toList, None, DefinedInSourceCodeAt.definedInSourceCodeAt(1), ListMap(), List())
 
   val useCase1 = uc("useCase1")
   val useCase2 = uc("useCase2")

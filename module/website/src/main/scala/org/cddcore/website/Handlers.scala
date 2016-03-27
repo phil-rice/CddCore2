@@ -32,7 +32,8 @@ class RootPathHandler extends PathHandler {
 
   def html(context: HandlerContext, params: List[(String, String)]): String = {
     import context._
-    val json = Map("engines" -> engines.map(engine => Map("title" -> engine.title, "href" -> renderContext.pathMap(engine))))
+    val json = Map("engines" -> engines.map(engine => Map("title" -> engine.title, "href" -> renderContext.pathMap(engine))),
+      "documents" -> engines.flatMap(_.allDocuments).distinct.sortBy(_.ref).map(d => Map("name" -> d.name, "ref" -> d.ref)))
     val html = Mustache("templates/documents.mustache")(json)
     //    val report = Report.documentAndEngineReport(None, reportDate, engines)
     //    val html = Report.html(report, HtmlRenderer.engineAndDocumentsSingleItemRenderer, renderContext)
