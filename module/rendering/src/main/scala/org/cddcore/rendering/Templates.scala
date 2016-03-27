@@ -25,6 +25,16 @@ trait UrlManipulations {
   def populateInitialFiles(urlBase: String)
 }
 
+class WebsiteUrlManipulators extends UrlManipulations {
+
+  def makeUrl(urlBase: String, idPathResult: String) = urlBase + idPathResult
+
+  def makeFile(url: String, text: String) = ???
+
+  def populateInitialFiles(urlBase: String) = ???
+
+}
+
 class FileUrlManipulations extends UrlManipulations {
 
   private def transfer(in: InputStream, out: OutputStream) {
@@ -60,7 +70,7 @@ class FileUrlManipulations extends UrlManipulations {
 
   def makeFile(url: String, text: String): Unit = {
     val file = new File(url)
-//    println("Make file: " + file.getAbsoluteFile)
+    //    println("Make file: " + file.getAbsoluteFile)
     file.getParentFile.mkdirs()
     val writer = new FileWriter(file)
     try {
