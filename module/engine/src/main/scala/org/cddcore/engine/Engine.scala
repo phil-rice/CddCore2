@@ -14,40 +14,67 @@ trait PartialFunctionWithDescription[P, R] extends PartialFunction[P, R] {
 }
 
 
-object Engine {
-  implicit def toPartial[P, R](r: R): PartialFunction[P, R] = new PartialFunction[P, R] {
-    override def isDefinedAt(x: P): Boolean = true
+trait EngineEvaluator {
+  def apply[P, R](engine: AbstractEngine[P, R], p: P): R
+}
 
-    override def apply(v1: P): R = r
+object SimpleEngineEvaluator extends EngineEvaluator {
+  def apply[P, R](engine: AbstractEngine[P, R], p: P): R = engine.evaluate(p)
+}
+
+class TraceEngineEvaluator extends EngineEvaluator {
+  var childTraces = List[Trace]()
+
+  def apply[P, R](engine: AbstractEngine[P, R], p: P): R = {
+    val startTime = System.nanoTime()
+
+    val path = engine.decisionTree.pathFor(engine.evaluate, p)
+    val cn: ConclusionNode[P, R] = path.last match {
+      case cn: ConclusionNode[P, R] => cn
+      case x => throw new IllegalStateException(s"Somehow have a path through a decision tree that didn't end in a conclusion node: $x")
+    }
+    val oldChildTraces = childTraces
+    childTraces = Nil
+    val result = cn.apply(engine.evaluate, p)
+    childTraces = oldChildTraces :+ TraceEngine(startTime, System.nanoTime() - startTime, engine, cn, p, result, childTraces)
+    result
   }
 }
 
-//class EngineBuilder[P, R](initialTitle: String, definedInSourceCodeAt: String) extends ChildLifeCycle[Scenario[P, R]] {
-//  private var builder = HierarchyBuilder[UseCase[P, R], EngineComponent[P, R]](UseCase[P, R](initialTitle, definedInSourceCodeAt = definedInSourceCodeAt))
-//
-//  def mod(fn: HierarchyBuilder[UseCase[P, R], EngineComponent[P, R]] => HierarchyBuilder[UseCase[P, R], EngineComponent[P, R]]) =
-//    builder = fn(builder)
-//
-//  def title = builder.holder.title
-//
-//  def created(child: Scenario[P, R]) = mod(builder => builder.addChild(child))
-//
-//  def modified(oldChild: Scenario[P, R], newChild: Scenario[P, R]) = mod(builder => builder.modCurrentChild(_ => newChild))
-//
-//  def seal {}
-//
-//  def allScenarios = builder.holder.allScenarios
-//
-//  def asUseCase = builder.holder
-//
-//  def last = builder.currentChild match {
-//    case Some(s: Scenario[P, R]) => s.expectedOption.getOrElse(throw new NoLastException("No result specified"))
-//    case None => throw new NoLastException
-//  }
-//
-//  lazy val mocks = allScenarios.foldLeft(Map[P, R]()) { (acc, s) => s.expectedOption.fold(acc)(expected => acc + (s.situation -> expected)) }
-//
-//}
+object Engine {
+  implicit def toPartial[P, R](r: R): PartialFunction[P, R] = {
+    case _ => r
+  }
+
+  val threadLocalEvaluator = new ThreadLocal[EngineEvaluator] {
+    override def initialValue = SimpleEngineEvaluator
+  }
+
+  def apply[P, R](engine: AbstractEngine[P, R], p: P): R = threadLocalEvaluator.get().apply(engine, p)
+
+  protected def callWith[P, R, E <: EngineEvaluator](engineEvaluator: E, engine: AbstractEngine[P, R], p: P) = {
+    val oldValue = threadLocalEvaluator.get
+        threadLocalEvaluator.set(engineEvaluator)
+    try {
+      (engineEvaluator(engine, p), engineEvaluator)
+    } finally {
+      threadLocalEvaluator.set(oldValue)
+    }
+  }
+
+  //Sometimes the list may have multiple items in it: most often when called the first time. This is often because the building of decision trees causes other engines to be called if they are referenced by this engine.
+  // The last item in the list is the trace item corresponding to the call
+    def trace[P, R](engine: AbstractEngine[P, R], p: P): (R, List[Trace]) = {
+    val result = threadLocalEvaluator.get match {
+      case SimpleEngineEvaluator => {
+        val (result, traceEngineEvaluator) = callWith(new TraceEngineEvaluator, engine, p)
+        (result, traceEngineEvaluator.childTraces)
+      }
+      case e: TraceEngineEvaluator => throw new IllegalStateException("Cannot currently call trace when already tracing")
+    }
+    result
+  }
+}
 
 abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val references: List[Reference] = List(), val definedInSourceCodeAt: DefinedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt())
                                    (implicit val hierarchy: Hierarchy[UseCase[P, R], EngineComponent[P, R]], dp: DisplayProcessor)
@@ -110,7 +137,6 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val refer
 
   def mocks(p: P): R = rawMocks.getOrElse(p, throw new MockValueNotFoundException(p))
 
-
   lazy val decisionTree = {
     val ss: List[Scenario[P, R]] = allScenarios.toList
     val mocks = rawMocks
@@ -122,7 +148,7 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val refer
 
   def something = Scenario.something[R]
 
-  def apply(p: P): R = if (hierarchyBuilder.holder.errors.isEmpty) decisionTree(apply, p) else throw hierarchyBuilder.holder.errors.head._2
+  def evaluate(p: P): R = if (hierarchyBuilder.holder.errors.isEmpty) decisionTree(evaluate, p) else throw hierarchyBuilder.holder.errors.head._2
 
   def allScenarios: TraversableOnce[Scenario[P, R]] = asUseCase.allScenarios
 
@@ -147,14 +173,15 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val refer
 }
 
 class Engine[P, R](initialTitle: String = "Untitled", references: List[Reference] = List(), definedInSourceCodeAt: DefinedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt())(implicit dp: DisplayProcessor) extends AbstractEngine[P, R](initialTitle, references, definedInSourceCodeAt) with Function[P, R] {
+  def apply(p: P): R = Engine(this, p)
 }
 
 class Engine2[P1, P2, R](initialTitle: String = "Untitled", references: List[Reference] = List(), definedInSourceCodeAt: DefinedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt())(implicit val dp: DisplayProcessor) extends AbstractEngine[(P1, P2), R](initialTitle, references, definedInSourceCodeAt) with Function2[P1, P2, R] {
-  def apply(p1: P1, p2: P2): R = apply((p1, p2))
+  def apply(p1: P1, p2: P2): R = Engine(this, (p1, p2))
 }
 
 class Engine3[P1, P2, P3, R](initialTitle: String = "Untitled", references: List[Reference] = List(), definedInSourceCodeAt: DefinedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt())(implicit val dp: DisplayProcessor) extends AbstractEngine[(P1, P2, P3), R](initialTitle, references, definedInSourceCodeAt) with Function3[P1, P2, P3, R] {
-  def apply(p1: P1, p2: P2, p3: P3): R = apply((p1, p2, p3))
+  def apply(p1: P1, p2: P2, p3: P3): R = Engine(this, (p1, p2, p3))
 }
 
 class FoldLeftEngine[Acc, V](implicit dp: DisplayProcessor) extends Engine2[Acc, V, Acc]

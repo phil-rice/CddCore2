@@ -293,7 +293,7 @@ object DecisionTreeRendering extends KeysForRendering {
   object DecisionTreeRenderData {
     def apply[P, R](engine: Engine[P, R], currentComponent: EngineComponent[P, R])(implicit dp: DisplayProcessor): DecisionTreeRenderData[P, R] = {
       val (path, scenario) = currentComponent match {
-        case s: Scenario[P, R] => (engine.decisionTree.pathFor(engine, s).reverse, Some(s))
+        case s: Scenario[P, R] => (engine.decisionTree.pathFor(engine, s.situation).reverse, Some(s))
         case _ => (List(), None)
       }
       val result = DecisionTreeRenderData(engine, scenario, path)

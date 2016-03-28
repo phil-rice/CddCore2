@@ -178,7 +178,12 @@ trait DecisionTree[P, R] extends EngineComponent[P, R] {
 
   def lensFor(mockEngine: P => R, s: Scenario[P, R]): Lens[DecisionTree[P, R], DecisionTree[P, R]]
 
-  def pathFor(mockEngine: P => R, s: Scenario[P, R]): List[DecisionTree[P, R]]
+  def pathFor(mockEngine: P => R, situation: P): List[DecisionTree[P, R]]
+
+  def conclusionNodeFor(mockEngine: P => R, situation: P) = pathFor(mockEngine, situation).last match {
+    case cn: ConclusionNode[P,R] => cn
+    case dt => throw new IllegalStateException(s"Somehow had a $dt")
+  }
 
   def mainScenario: Scenario[P, R]
 
@@ -203,7 +208,7 @@ object EmptyDecisionTree extends DecisionTree[Nothing, Nothing] {
 
   def apply(engine: (Nothing) => Nothing, p: Nothing): Nothing = throw new IllegalStateException("An empty decision tree has no scenarios")
 
-  def pathFor(mockEngine: (Nothing) => Nothing, s: Scenario[Nothing, Nothing]): List[DecisionTree[Nothing, Nothing]] = throw new IllegalStateException("An empty decision tree has no scenarios")
+  def pathFor(mockEngine: (Nothing) => Nothing,  situation: Nothing): List[DecisionTree[Nothing, Nothing]] = throw new IllegalStateException("An empty decision tree has no scenarios")
 
   def mainScenario: Scenario[Nothing, Nothing] = throw new IllegalStateException("An empty decision tree has no scenarios")
 
@@ -220,7 +225,7 @@ case class ConclusionNode[P, R](mainScenario: Scenario[P, R], scenarios: List[Sc
 
   def lensFor(mockEngine: P => R, s: Scenario[P, R]) = identityLens
 
-  def pathFor(mockEngine: P => R, s: Scenario[P, R]) = List(this)
+  def pathFor(mockEngine: P => R, situation: P) = List(this)
 
   def apply(engine: P => R, p: P) = mainScenario(engine, p)
 
@@ -246,9 +251,9 @@ case class DecisionNode[P, R](mainScenario: Scenario[P, R], falseNode: DecisionT
     case false => dtToDN.andThen(dtFalse[P, R]).andThen(falseNode.lensFor(mockEngine, s))
   }
 
-  def pathFor(mockEngine: (P) => R, s: Scenario[P, R]) = isDefinedAt(mockEngine, s.situation) match {
-    case true => this :: trueNode.pathFor(mockEngine, s)
-    case false => this :: falseNode.pathFor(mockEngine, s)
+  def pathFor(mockEngine: (P) => R, situation: P) = isDefinedAt(mockEngine, situation) match {
+    case true => this :: trueNode.pathFor(mockEngine, situation)
+    case false => this :: falseNode.pathFor(mockEngine, situation)
   }
 
   def allScenarios: TraversableOnce[Scenario[P, R]] = trueNode.allScenarios.toIterator ++ falseNode.allScenarios
