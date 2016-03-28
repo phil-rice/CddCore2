@@ -2,7 +2,7 @@ package org.cddcore.rendering
 
 import java.util.Date
 
-import org.cddcore.engine.Engine
+import org.cddcore.engine.{Engine, TraceEngine}
 import org.cddcore.enginecomponents.{Document, Reference, Scenario, UseCase}
 import org.cddcore.utilities.DisplayProcessor
 
@@ -21,12 +21,28 @@ trait TestObjectsForRendering {
     }
     4 produces "four"
   }
-  val List(useCase1: UseCase[Int, String], useCase2: UseCase[Int, String], scenario4: Scenario[Int, String]) = engineWithUseCase.asUseCase.components.reverse
-  val List(scenario1: Scenario[_, _], scenario2: Scenario[_, _]) = useCase1.components.reverse
-  val List(scenario3: Scenario[_, _]) = useCase2.components.reverse
+  protected val engineNested = new Engine[Int, String]("engineNested") {
+    1 produces "onetwo" by (engineWithUseCase(1) + engineWithUseCase(2))
+  }
+  protected val List(useCase1: UseCase[Int, String], useCase2: UseCase[Int, String], scenario4: Scenario[Int, String]) = engineWithUseCase.asUseCase.components.reverse
+  protected val List(scenario1: Scenario[_, _], scenario2: Scenario[_, _]) = useCase1.components.reverse
+  protected val List(scenario3: Scenario[_, _]) = useCase2.components.reverse
 
 
-  protected val rc: RenderContext = RenderContext(new Date(), "urlBase", PathMap(emptyEngine, engineWithUseCase), new FileUrlManipulations())(displayProcessorModifiedForSituations)
+  protected val rc: RenderContext = RenderContext(new Date(), "urlBase", PathMap(emptyEngine, engineWithUseCase, engineNested), new FileUrlManipulations())(displayProcessorModifiedForSituations)
+
+
+  protected val cn1 = engineWithUseCase.decisionTree.conclusionNodeFor(engineWithUseCase, 1)
+  protected val cn2 = engineWithUseCase.decisionTree.conclusionNodeFor(engineWithUseCase, 2)
+  protected val cnParent = engineNested.decisionTree.conclusionNodeFor(engineWithUseCase, 1)
+  protected val trace1 = TraceEngine(100, 20l, engineWithUseCase, cn1, 1, "one", List())
+  protected val trace2 = TraceEngine(300, 400, engineWithUseCase, cn2, 2, "two", List())
+  protected val parentTrace = TraceEngine(500, 600, engineNested, cnParent, 1, "onetwo", List(trace1, trace2))
+
+  protected val pathThroughDTForTrace1 = engineWithUseCase.decisionTree.pathFor(engineWithUseCase, trace1.params)
+  protected val pathThroughDTForTrace2 = engineWithUseCase.decisionTree.pathFor(engineWithUseCase, trace2.params)
+  protected val pathThroughDTForParentTrace = engineNested.decisionTree.pathFor(engineNested, parentTrace.params)
+
 }
 
 trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering with Icons with ReferenceMapMakers {
@@ -175,5 +191,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     dataForEngine ++ Map(
       scenariosKey -> List(),
       useCasesKey -> List(dataForUseCase1))
+
+
 
 }

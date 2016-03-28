@@ -1,12 +1,33 @@
+__Bugs__
+Cdd image in the trace/junit.
+The naming convention of files / website for traces / engines etc
+
+__Known things that can't be done that should be done__
+Allow/assert the engine to throw an exception
+
 __Possibly wrong behaviour__
 If there are two scenarios that come to the same conclusion and have different bys, at the moment one of the bys is ignored... Not entirely sure how to deal with this...
+Display of Decision Tree: nodes are green even if they should really be red. i.e. 'not true but went through this node'. And Amber nodes were good (would be true if got here)
 
 
 __Needs to work better__
-The utilities Reflection class uses Java reflection. Thus it doesn't actually pick up things in traits in it's FieldMaps. It is desirable for that to be done
+The utilities Reflection class uses Java reflection. Thus it doesn't actually pick up things in traits in its FieldMaps. It is desirable for that to be done
 The JUnit tests aren't picked up by SBT, although they are by IntelliJ. This will probably require a 'TestFramework' to be written
 Currently the XML situation requires the xml to be a val for them to be picked up by reflection
+Display of scenarios that are exception. Their page needs to include error details, and they should be linked to at the top screen for fast access
+The display of situations in the html rendering
+The recursion / mocks story
+
 
 __Untested areas of code__
 The decision tree 'path' code (which is used for the rendering) isn't tested
+The trace rendering code
 The stacktrace manipulations by CddRunner
+
+__Cool ideas__
+Get a link to the webpage/file from the exception itself. So you can cut/paste or even click on it, and go straight to more information
+In the display processor have a detailed view, that can be used on the 'display of scenario'. For example XML would show all the XML, and JSON could be pretty printed
+Consider a diff tool in the display. XML diffs/JSON diffs, String diffs. All very useful in the error pages
+
+__Known Issue__
+The process cheque engine doesn't work. Leaving it broken as a tool to force me to improve the error reporting.

@@ -1,6 +1,8 @@
 package org.cddcore.rendering
 
-import org.cddcore.engine.Engine
+import java.nio.file.Files
+
+import org.cddcore.engine.{Engine, Trace}
 import org.cddcore.enginecomponents.{EngineComponent, Scenario, UseCase}
 import org.cddcore.utilities.DisplayProcessor
 
@@ -50,8 +52,8 @@ object Renderer extends ExpectedForTemplates {
     makeReportFilesFor(engine)(newRenderConfiguaration)
   }
 
-  def makeHtmlFor[P,R](path: List[EngineComponent[P,R]])(implicit renderContext: RenderContext) = {
-    val engine = path.last.asInstanceOf[Engine[P,R]]
+  def makeHtmlFor[P, R](path: List[EngineComponent[P, R]])(implicit renderContext: RenderContext) = {
+    val engine = path.last.asInstanceOf[Engine[P, R]]
     val engineMap = Templates.renderPath(renderContext, path)
     val decisionTreeMap = DecisionTreeRendering.renderEngine(engine, path.head)
     val withJson = engineMap ++ Map(
@@ -77,9 +79,27 @@ object Renderer extends ExpectedForTemplates {
     }
   }
 
+  def makeHtmlFor(trace: Trace)(implicit renderContext: RenderContext): String = {
+    val json = TraceRendering.renderTrace(renderContext, parentTrace)
+    println("UrlBase is " + renderContext.urlBase)
+    Mustache("templates/TraceReport.mustache")(Map(
+      traceKey -> json,
+      "urlBase" -> renderContext.urlBase,
+      "json" -> JsonForRendering.pretty(json)))
+
+  }
+
   def main(args: Array[String]) {
     makeReportFilesFor(engineWithUseCase)
+    makeReportFilesFor(engineNested)
+    implicit val rc = renderContext(engineNested, engineWithUseCase)
+    val json = TraceRendering.renderTrace(rc, parentTrace)
+    val html = makeHtmlFor(parentTrace)(rc)
+
+    rc.urlManipulations.populateInitialFiles(rc.urlBase)
+    rc.urlManipulations.makeFile(rc.urlBase + "/trace/test.html", html)
   }
+
 
 }
 

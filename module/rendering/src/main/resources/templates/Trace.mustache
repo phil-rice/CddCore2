@@ -1,0 +1,14 @@
+<div class="traceAndDecisionTreeHolder">
+    <div class="traceHolder">
+        <table>
+            <tr><td>Engine</td><td>{{#Engine}}<a href="{{linkUrl}}">{{title}}</a>{{/Engine}}</td></tr>
+            <tr><td>Duration</td><td>{{duration}}</td></tr>
+            <tr><td>Parameters</td><td>{{situation}}</td></tr>
+            <tr><td>Result</td><td>{{actual}}</td></tr>
+        </table>
+    </div><!-- traceHolder -->
+    <div class="decisionTreeHolder">
+        {{#decisionTree}}{{>DecisionTree}}{{/decisionTree}}
+    </div><!--decisionTreeHolder -->
+</div><!--traceAndDecisionTreeHolder -->
+{{#trace}}{{>Trace}}{{/trace}}
