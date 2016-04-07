@@ -1,6 +1,6 @@
 import sbt.Keys._
 
-name := "cddcore2"
+name := "cddcore"
 
 
 val versionNos = new {
@@ -14,7 +14,8 @@ val versionNos = new {
 }
 
 lazy val baseSettings = Seq(
-  version := "0.1.0",
+  organization := "org.cddcore",
+  version := "3.0.0",
   scalaVersion := versionNos.scala,
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   javaOptions ++= Seq("-Xmx4G", "-XX:+UseConcMarkSweepGC"),
@@ -22,8 +23,51 @@ lazy val baseSettings = Seq(
   resolvers ++= Seq(
     Resolver.sonatypeRepo("releases"),
     "Twitter Maven" at "https://maven.twttr.com"
-  )
+  ),
+
+  //  publishTo <<= version { (v: String) =>
+  //    val nexus = "https://oss.sonatype.org/"
+  //    if (v.trim.endsWith("SNAPSHOT"))
+  //      Some("snapshots" at nexus + "content/repositories/snapshots")
+  //    else
+  //      Some("releases" at nexus + "service/local/staging/deploy/maven2")
+  //  },
+  pomIncludeRepository := { _ => false },
+  publishMavenStyle := true,
+  publishArtifact in Test := false,
+//  credentials += Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", "phil.rice", "jirapsr123"),
+  publishTo:= {
+    val nexus = "https://oss.sonatype.org/"
+    if (isSnapshot.value)
+      Some("snapshots" at nexus + "content/repositories/snapshots")
+    else
+      Some("releases" at nexus + "service/local/staging/deploy/maven2")
+  },
+  pomIncludeRepository := { _ => false },
+  pomExtra in ThisBuild := (
+      <url>http://www.constraintdrivendevelopment.com</url>
+      <licenses>
+        <license>
+          <name>BSD-style</name>
+          <url>http://www.opensource.org/licenses/bsd-license.php</url>
+          <distribution>repo</distribution>
+        </license>
+      </licenses>
+      <scm>
+        <url>https://github.com/phil-rice/autoTdd</url>
+        <connection>git@github.com:phil-rice/cddcore2.git</connection>
+      </scm>
+      <developers>
+        <developer>
+          <id>phil.rice</id>
+          <name>Phil Rice</name>
+          <url>http://www.constraintdrivendevelopment.org</url>
+        </developer>
+      </developers>),
+  publishArtifact in Test := false
 )
+
+
 
 lazy val commonSettings = baseSettings ++ Seq(
   libraryDependencies += "org.scalatest" %% "scalatest" % versionNos.scalaTest % "test"
@@ -50,6 +94,10 @@ lazy val structureSettings = commonSettings ++ Seq(
   libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % versionNos.scalaXml,
   libraryDependencies += "junit" % "junit" % versionNos.junit % "test"
 )
+lazy val root = (project in file(".")).
+  settings(commonSettings: _*).
+  aggregate(test)
+
 lazy val utilities = (project in file("module/utilities")).
   settings(utilitiesSettings: _*)
 
