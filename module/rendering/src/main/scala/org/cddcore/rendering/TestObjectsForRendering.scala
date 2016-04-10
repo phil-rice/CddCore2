@@ -8,7 +8,10 @@ import org.cddcore.enginecomponents.{Document, Reference, Scenario, UseCase}
 import org.cddcore.utilities.DisplayProcessor
 
 trait TestObjectsForRendering {
-  val displayProcessorModifiedForSituations = DisplayProcessor.defaultDisplayProcessor.withSummarize { case (dp, x) => s"Summary($x)" }
+  val displayProcessorModifiedForSituations = DisplayProcessor.defaultDisplayProcessor.
+    withSummarize { case (dp, x) => s"Summary($x)" }.
+    withHtml { case (dp, x) => s"Html($x)" }.
+    withDetailer { case (dp, x) => s"Detailer($x)" }
   protected val emptyEngine = new Engine[Int, String]("someEngineTitle") {}
   val d1 = Document.internet("someHRef1")
   val d2 = Document.internet("name2", "someHRef2")
@@ -63,7 +66,8 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     titleKey -> scenario1.title,
     linkKey -> linkForScenario1,
     commentKey -> "",
-    situationKey -> "Summary(1)",
+    situationKey -> "Html(1)",
+    expectedKey -> "Html(one)",
     referencesKey -> scenario1.references.map(referenceToMap(rc)))
 
 
@@ -73,7 +77,8 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     titleKey -> scenario2.title,
     linkKey -> linkForScenario2,
     commentKey -> "",
-    situationKey -> "Summary(2)",
+    situationKey -> "Html(2)",
+    expectedKey -> "Html(two)",
     referencesKey -> scenario2.references.map(referenceToMap(rc)))
 
 
@@ -83,7 +88,8 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     titleKey -> scenario3.title,
     linkKey -> linkForScenario3,
     commentKey -> "",
-    situationKey -> "Summary(3)",
+    situationKey -> "Html(3)",
+    expectedKey -> "Html(three)",
     referencesKey -> scenario3.references.map(referenceToMap(rc)))
 
   protected val dataForScenario4 = Map(
@@ -92,7 +98,8 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     titleKey -> scenario4.title,
     linkKey -> linkForScenario4,
     commentKey -> "",
-    situationKey -> "Summary(4)",
+    situationKey -> "Html(4)",
+    expectedKey -> "Html(four)",
     referencesKey -> scenario4.references.map(referenceToMap(rc)))
 
   protected val dataForUseCase1 = Map(
@@ -192,7 +199,6 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
     dataForEngine ++ Map(
       scenariosKey -> List(),
       useCasesKey -> List(dataForUseCase1))
-
 
 
 }

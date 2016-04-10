@@ -35,14 +35,14 @@ class DisplayProcessorSpec extends CddSpec {
 
   "The default display processor" should "return the toString of the passed in thing" in {
     val dp = DisplayProcessor.defaultDisplayProcessor
-    dp(st1) shouldBe "SomeThing(one,1)"
+    dp.summary(st1) shouldBe "SomeThing(one,1)"
     dp.html(st1) shouldBe "SomeThing(one,1)"
     dp.detailed(st1) shouldBe "SomeThing(one,1)"
   }
   "The default display processor" should "use a function is specified" in {
     val f = new DisplayProcessorFramework
     import f._
-    dp(st1) shouldBe "Sum(SomeThing(one,1))mary"
+    dp.summary(st1) shouldBe "Sum(SomeThing(one,1))mary"
     dp.html(st1) shouldBe "Ht(SomeThing(one,1))ml"
     dp.detailed(st1) shouldBe "Det(SomeThing(one,1))ailed"
 
@@ -52,7 +52,7 @@ class DisplayProcessorSpec extends CddSpec {
   it should "use the toString if the partial functions don't match" in {
     val f = new DisplayProcessorFramework
     import f._
-    dp(1) shouldBe "1"
+    dp.summary(1) shouldBe "1"
     dp.html(2) shouldBe "2"
     dp.detailed(3) shouldBe "3"
     remembered shouldBe Set()
@@ -61,7 +61,7 @@ class DisplayProcessorSpec extends CddSpec {
   it should "use traits if they exist preferentially" in {
     val f = new DisplayProcessorFramework
     import f._
-    dp(st1t) shouldBe "toSummary(SomeThing(one,1))"
+    dp.summary(st1t) shouldBe "toSummary(SomeThing(one,1))"
     dp.html(st1t) shouldBe "toHtml(SomeThing(one,1))"
     dp.detailed(st1t) shouldBe "toDetailed(SomeThing(one,1))"
 
@@ -72,7 +72,7 @@ class DisplayProcessorSpec extends CddSpec {
     val f = new DisplayProcessorFramework
     import f._
     val t1 = (st1, st2)
-    dp(t1) shouldBe "(Sum(SomeThing(one,1))mary,Sum(SomeThing(two,2))mary)"
+    dp.summary(t1) shouldBe "(Sum(SomeThing(one,1))mary,Sum(SomeThing(two,2))mary)"
     dp.html(t1) shouldBe "(Ht(SomeThing(one,1))ml,Ht(SomeThing(two,2))ml)"
     dp.detailed(t1) shouldBe "(Det(SomeThing(one,1))ailed,Det(SomeThing(two,2))ailed)"
 
@@ -83,7 +83,7 @@ class DisplayProcessorSpec extends CddSpec {
     val f = new DisplayProcessorFramework
     import f._
     val t1 = (st1, st2, st1t)
-    dp(t1) shouldBe "(Sum(SomeThing(one,1))mary,Sum(SomeThing(two,2))mary,toSummary(SomeThing(one,1)))"
+    dp.summary(t1) shouldBe "(Sum(SomeThing(one,1))mary,Sum(SomeThing(two,2))mary,toSummary(SomeThing(one,1)))"
     dp.html(t1) shouldBe "(Ht(SomeThing(one,1))ml,Ht(SomeThing(two,2))ml,toHtml(SomeThing(one,1)))"
     dp.detailed(t1) shouldBe "(Det(SomeThing(one,1))ailed,Det(SomeThing(two,2))ailed,toDetailed(SomeThing(one,1)))"
 
@@ -95,7 +95,7 @@ class DisplayProcessorSpec extends CddSpec {
     val f = new DisplayProcessorFramework
     import f._
     val list = List(st1, st2, st1t)
-    dp(list) shouldBe "List(Sum(SomeThing(one,1))mary,Sum(SomeThing(two,2))mary,toSummary(SomeThing(one,1)))"
+    dp.summary(list) shouldBe "List(Sum(SomeThing(one,1))mary,Sum(SomeThing(two,2))mary,toSummary(SomeThing(one,1)))"
     dp.html(list) shouldBe "List(Ht(SomeThing(one,1))ml,Ht(SomeThing(two,2))ml,toHtml(SomeThing(one,1)))"
     dp.detailed(list) shouldBe "List(Det(SomeThing(one,1))ailed,Det(SomeThing(two,2))ailed,toDetailed(SomeThing(one,1)))"
 
@@ -105,7 +105,7 @@ class DisplayProcessorSpec extends CddSpec {
     val f = new DisplayProcessorFramework
     import f._
     val list = Map(st1 -> st2)
-    dp(list) shouldBe "Map(Sum(SomeThing(one,1))mary -> Sum(SomeThing(two,2))mary)"
+    dp.summary(list) shouldBe "Map(Sum(SomeThing(one,1))mary -> Sum(SomeThing(two,2))mary)"
     dp.html(list) shouldBe "Map(Ht(SomeThing(one,1))ml -> Ht(SomeThing(two,2))ml)"
     dp.detailed(list) shouldBe "Map(Det(SomeThing(one,1))ailed -> Det(SomeThing(two,2))ailed)"
 
@@ -115,8 +115,23 @@ class DisplayProcessorSpec extends CddSpec {
   it should "prefer an explicit summarizer to the default map behaviour" in {
     val dp = DisplayProcessor.defaultDisplayProcessor.withSummarize { case (dp, x: Map[_, _]) => "ProcessingMap" }
     val list = Map(st1 -> st2)
-    dp(list) shouldBe "ProcessingMap"
+    dp.summary(list) shouldBe "ProcessingMap"
 
+  }
+
+
+  it should "display 'displayables appropriately" in {
+    case class Demo(s: String) extends Displayable {
+      def detailed(implicit dp: DisplayProcessor): String = s"(($s))"
+
+      override def summary(implicit dp: DisplayProcessor): String = s"[[$s]]"
+
+      override def html(implicit dp: DisplayProcessor): String = s"{{$s}}"
+    }
+    val dp = DisplayProcessor.defaultDisplayProcessor
+    dp.html(Demo("hello")) shouldBe "{{hello}}"
+    dp.summary(Demo("hello")) shouldBe "[[hello]]"
+    dp.detailed(Demo("hello")) shouldBe "((hello))"
   }
 
 }

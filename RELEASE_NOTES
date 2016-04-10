@@ -1,0 +1,2 @@
+3.0.1 Added LICENSE file, and a copyright notice to all scala files
+3.0.2 The expected for scenarios is now visible in the html produced by the Junit runs

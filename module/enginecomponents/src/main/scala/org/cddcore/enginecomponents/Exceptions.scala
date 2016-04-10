@@ -12,9 +12,9 @@ class ReasonInvalidException[P,R](s: Scenario[P,R])
 
 class CannotAddScenarioException[P,R](s: Scenario[P,R], existing: Scenario[P,R], actual: R)(implicit dp: DisplayProcessor) extends ScenarioException(
   s, s"Scenario defined at ${s.definedInSourceCodeAt} conflicts with ${existing.definedInSourceCodeAt}\n" +
-    s"Scenario being added is ${dp(s)}\n" +
-    s"Scenario already existing is ${dp(existing)}\n" +
-    s"If it was added, would come to result ${dp(actual)}") {
+    s"Scenario being added is ${dp.summary(s)}\n" +
+    s"Scenario already existing is ${dp.summary(existing)}\n" +
+    s"If it was added, would come to result ${dp.summary(actual)}") {
 }
 
 

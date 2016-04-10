@@ -266,7 +266,8 @@ object Templates extends TestObjectsForRendering with Icons with KeysForRenderin
         linkKey -> makeLink(rc, s),
         titleKey -> s.title,
         commentKey -> s.comment.getOrElse(""),
-        situationKey -> rc.displayProcessor(s.situation),
+        situationKey -> rc.displayProcessor.html(s.situation),
+        expectedKey -> s.expectedOption.map(expected => rc.displayProcessor.html(expected)).getOrElse("<Not Known>"),
         referencesKey -> s.references.map(referenceToMap(rc)))
     }
 
