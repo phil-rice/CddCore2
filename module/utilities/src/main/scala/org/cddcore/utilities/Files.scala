@@ -45,7 +45,7 @@ object SetHeaders {
         case x => newHeader :: x
       }
       println(file)
-      Files.printToFile(file)(pw => newValue.foreach(line => pw.write(line + "\n")))
+      Files.printToFile(file)(pw => newValue.foreach(line => pw.write(line + "\r\n")))
     }
   }
 

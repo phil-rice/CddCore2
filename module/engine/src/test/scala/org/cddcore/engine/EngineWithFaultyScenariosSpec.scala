@@ -9,19 +9,19 @@ class EngineWithFaultyScenariosSpec extends CddEngineSpec {
 
   "An Engine" should "Remember the fault scenarios - bad when" in {
     val (e, s, errors) = toErrors[Int, String](implicit clc => 1 produces "one" when (_ == 2))
-    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:10)"
+    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:11)"
     errors shouldBe Map(s -> "ReasonInvalidException")
   }
 
   it should "Remember the fault scenarios - bad because" in {
     val (e, s, errors) = toErrors[Int, String](implicit clc => 1 produces "one" because { case _ => "duff" })
-    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:16)"
+    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:17)"
     errors shouldBe Map(s -> "AssertionInvalidException")
   }
 
   it should "Handle multiple errors by only remembering the first " in {
     val (e, s, errors) = toErrors[Int, String](implicit clc => 1 produces "one" when (_ == 2) because { case _ => "duff" })
-    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:22)"
+    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:23)"
     errors shouldBe Map(s -> "ReasonInvalidException")
   }
 

@@ -13,7 +13,7 @@ class ScenarioBuilderSpec extends CddSpec {
 
   "A <situation> produces <result>" should "make a SituationAndResultScenario" in {
     val s = 1 produces "result"
-    val expectedDefinedInSourceCodeAt = "(ScenarioBuilderSpec.scala:14)"
+    val expectedDefinedInSourceCodeAt = "(ScenarioBuilderSpec.scala:15)"
     s.situation shouldBe 1
     s.assertion shouldBe EqualsAssertion("result")
     s.reason shouldBe SimpleReason("result", s.definedInSourceCodeAt)
@@ -69,7 +69,7 @@ class ScenarioBuilderSpec extends CddSpec {
   it should "throw BecauseNotTrueException when the because is not true for the situation" in {
     intercept[ReasonInvalidException[_, _]] {
       1 produces "result" because { case i if i == 2 => "result" }
-    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:70) cannot be added because the reason given isn't actually true"
+    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:71) cannot be added because the reason given isn't actually true"
   }
 
   it should "have allScenarios just including itself" in {
@@ -102,7 +102,7 @@ class ScenarioBuilderSpec extends CddSpec {
   it should "throw BecauseNotTrueException when the when is not true for the situation" in {
     intercept[ReasonInvalidException[_, _]] {
       1 produces "result" when (_ == 2)
-    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:103) cannot be added because the reason given isn't actually true"
+    }.getMessage shouldBe "Scenario defined at (ScenarioBuilderSpec.scala:104) cannot be added because the reason given isn't actually true"
   }
 
   it should "allow the 'by' word to have code generate the result" in {

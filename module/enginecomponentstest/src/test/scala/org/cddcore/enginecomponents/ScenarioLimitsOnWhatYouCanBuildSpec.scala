@@ -10,7 +10,7 @@ class ScenarioLimitsOnWhatYouCanBuildSpec extends CddSpec {
   implicit def nullLifeCycle[C] = new NullLifeCycle[C]
 
   val oneProducesOne = 1 produces "1"
-  val oneProducesOneMessage = "Scenario defined at (ScenarioLimitsOnWhatYouCanBuildSpec.scala:11)"
+  val oneProducesOneMessage = "Scenario defined at (ScenarioLimitsOnWhatYouCanBuildSpec.scala:12)"
 
   val oneProducesOneWhere = oneProducesOne where (_ == 1)
   val oneProducesOneBy = oneProducesOne by (_.toString)

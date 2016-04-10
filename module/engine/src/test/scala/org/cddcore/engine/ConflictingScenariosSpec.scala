@@ -14,9 +14,9 @@ class ConflictingScenariosSpec extends CddNonRecursiveSpec[String, String] {
     val scenario2 = "situation2" produces "result2"
     lifeCycle.errors shouldBe List()
     DecisionTree(mockEngine, Seq(scenario1, scenario2))
-    lifeCycle.errors shouldBe List("CannotAddScenarioException/Scenario defined at (ConflictingScenariosSpec.scala:13) conflicts with (ConflictingScenariosSpec.scala:12)\n" +
-      "Scenario being added is (ConflictingScenariosSpec.scala:13) situation2 produces result2)\n" +
-      "Scenario already existing is (ConflictingScenariosSpec.scala:12) situation1 produces result1)\n" +
+    lifeCycle.errors shouldBe List("CannotAddScenarioException/Scenario defined at (ConflictingScenariosSpec.scala:14) conflicts with (ConflictingScenariosSpec.scala:13)\n" +
+      "Scenario being added is (ConflictingScenariosSpec.scala:14) situation2 produces result2)\n" +
+      "Scenario already existing is (ConflictingScenariosSpec.scala:13) situation1 produces result1)\n" +
       "If it was added, would come to result result1")
   }
 
