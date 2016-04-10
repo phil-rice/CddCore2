@@ -57,6 +57,7 @@ trait AbstractCddRunner extends Runner {
 
 
   def run(notifier: RunNotifier): Unit = {
+
     def runTest(d: Description)(block: => Boolean): Boolean = {
       //      println(s"runTest: $d")
       notifier.fireTestStarted(d)
@@ -141,13 +142,26 @@ object CddRunner {
 
 class CddRunner(val clazz: Class[_]) extends AbstractCddRunner {
 
-  lazy val engineData = Try(new EngineData(Reflection.instantiate(clazz).asInstanceOf[HasEngines]))
+  lazy val engineData = Try {
+    val instance = Reflection.instantiate(clazz).asInstanceOf[HasEngines]
+    CddContinuousIntegrationTest.addTest(instance)
+    new EngineData(instance)
+  }
 }
 
 trait HasEngines {
   def engines: List[Engine[_, _]]
 }
 
+
+object CddContinuousIntegrationTest {
+  private var testList = List[HasEngines]()
+
+  def tests: List[HasEngines] = testList
+
+  def addTest(test: HasEngines) = testList = testList :+ test
+
+}
 
 trait CddContinuousIntegrationTest extends HasEngines
 

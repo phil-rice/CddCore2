@@ -7,18 +7,52 @@ import org.junit.runner.{JUnitCore, RunWith}
 
 @RunWith(classOf[CddRunner])
 class ExampleJUnit extends CddContinuousIntegrationTest {
-  val engines = List(ExampleJUnit.engine)
+  val engines = List(ExampleJUnit.engine1)
+}
+
+@RunWith(classOf[CddRunner])
+class ExampleJUnit2 extends CddContinuousIntegrationTest {
+  val engines = List(ExampleJUnit.engine2)
+}
+
+@RunWith(classOf[CddRunner])
+class ExampleJUnit3 extends CddContinuousIntegrationTest {
+  val engines = List(ExampleJUnit.engine3)
 }
 
 
 object ExampleJUnit {
 
-  val engine = new Engine[Int, String]("An engine") {
+  val engine1 = new Engine[Int, String]("An engine") {
     useCase("a use case") {
       1 produces "one"
       2 produces "two" when (_ == 1)
     }
     useCase("another use case") {
+      3 produces "three" when (_ == 3)
+      4 produces "four"
+      5 produces "five"
+    }
+  }
+
+  val engine2 = new Engine[Int, String]("Engine 2") {
+    useCase("use case 3") {
+      1 produces "one"
+      2 produces "two" when (_ == 1)
+    }
+    useCase("use case 4") {
+      3 produces "three" when (_ == 3)
+      4 produces "four"
+      5 produces "five"
+    }
+  }
+
+  val engine3 = new Engine[Int, String]("Engine 3") {
+    useCase("use case 4") {
+      1 produces "one"
+      2 produces "two" when (_ == 1)
+    }
+    useCase("use case 5") {
       3 produces "three" when (_ == 3)
       4 produces "four"
       5 produces "five"

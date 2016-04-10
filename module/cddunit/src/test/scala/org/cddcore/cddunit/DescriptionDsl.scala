@@ -98,7 +98,7 @@ class DescriptionDsl[P, R](clazz: Class[_], val engine: Engine[P, R])(implicit v
 }
 
 trait DescriptionDslTestFramework {
-  val engine = ExampleJUnit.engine
+  val engine = ExampleJUnit.engine1
 
   implicit val renderContext = {
     import org.cddcore.rendering.Renderer._
