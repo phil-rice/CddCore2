@@ -8,149 +8,10 @@ import org.cddcore.engine._
 import org.cddcore.enginecomponents._
 import org.cddcore.utilities.DisplayProcessor
 
-case class RenderConfiguration(date: Date = new Date, urlBase: String = "./target/cdd", urlManipulations: UrlManipulations = new FileUrlManipulations)
-
-object RenderConfiguration {
-
-  implicit val defaultRenderConfiguration = RenderConfiguration()
-
-}
-
-
-trait UrlManipulations {
-
-  def makeUrl(urlBase: String, idPathResult: String): String
-
-  def makeFile(url: String, text: String)
-
-  def populateInitialFiles(urlBase: String)
-}
-
-class WebsiteUrlManipulators extends UrlManipulations {
-
-  def makeUrl(urlBase: String, idPathResult: String) = urlBase + idPathResult
-
-  def makeFile(url: String, text: String) = ???
-
-  def populateInitialFiles(urlBase: String) = ???
-
-}
-
-class FileUrlManipulations extends UrlManipulations {
-
-  private def transfer(in: InputStream, out: OutputStream) {
-    val BufferSize = 8192
-    val buffer = new Array[Byte](BufferSize)
-    def read() {
-      val byteCount = in.read(buffer)
-      if (byteCount >= 0) {
-        out.write(buffer, 0, byteCount)
-        read()
-      }
-    }
-    read()
-  }
-
-  def copyFromClassPathToFile(resourceId: String, file: File): Unit = {
-    def useClosable[S <: Closeable, X](makeS: => S)(useS: S => X) = {
-      val s = makeS
-      try {
-        useS(s)
-      } finally {
-        s.close()
-      }
-    }
-    file.getParentFile.mkdirs()
-    file.createNewFile()
-    useClosable(getClass.getClassLoader.getResourceAsStream(resourceId))(
-      inputStream => useClosable(new FileOutputStream(file))(outputStream =>
-        transfer(inputStream, outputStream)))
-  }
-
-  def makeUrl(urlBase: String, idPathResult: String) = new File(urlBase + "/" + idPathResult + ".html").getCanonicalFile.toString
-
-  def makeFile(url: String, text: String): Unit = {
-    val file = new File(url)
-    //    println("Make file: " + file.getAbsoluteFile)
-    file.getParentFile.mkdirs()
-    val writer = new FileWriter(file)
-    try {
-      writer.write(text)
-    } finally (writer.close)
-  }
-
-  private val initialFiles = List("images/engine.png", "images/scenario.png", "images/usecase.png", "images/document.png", "images/cdd.png", "stylesheets/css.css")
-
-  def populateInitialFiles(urlBase: String) = initialFiles.foreach(f => copyFromClassPathToFile(f, new File(urlBase + "/" + f)))
-}
-
-
-case class RenderContext(reportDate: Date, urlBase: String, pathMap: PathMap, urlManipulations: UrlManipulations)(implicit val displayProcessor: DisplayProcessor) {
-  override def toString = getClass.getSimpleName()
-
-  val inversePathMap = pathMap.inversePathMap
-
-  def idPath(ec: EngineComponent[_, _]) = pathMap(ec)
-
-  def url(ec: EngineComponent[_, _]) = urlManipulations.makeUrl(urlBase, idPath(ec))
-
-  def makeFile(ec: EngineComponent[_, _], textForEngine: String) = urlManipulations.makeFile(url(ec), textForEngine)
-}
-
-
-trait KeysForRendering {
-  //  val mainEngineKey = "mainEngine"
-  val decisionTreeKey = "decisionTree"
-  val traceKey = "trace"
-
-  val durationKey = "duration"
-  val engineTypeName = "Engine"
-  val useCaseTypeName = "UseCase"
-  val scenarioTypeName = "Scenario"
-  val situationKey = "situation"
-  val expectedKey = "expected"
-  val actualKey = "actual"
-
-  val scenariosKey = "scenarios"
-  val scenariosIconsKey = "scenarioIcons"
-  val useCasesKey = "useCases"
-
-  val typeKey = "type"
-  val commentKey = "comment"
-  val linkKey = "link"
-  val idKey = "id"
-  val titleKey = "title"
-  val referencesKey = "references"
-  val linkUrlKey = "linkUrl"
-  val iconUrlKey = "iconUrl"
-
-  val definedAtKey = "definedAt"
-  val selectedPostFixKey = "selected"
-  val trueFalseKey = "trueFalseKey"
-
-  val conclusionNodeKey = "conclusionNode"
-  val decisionNodeKey = "decisionNode"
-  val conditionKey = "condition"
-  val conclusionKey = "conclusion"
-  val reasonKey = "reason"
-  val trueNodeKey = "trueNode"
-  val falseNodeKey = "falseNode"
-
-
-  def mapHoldingSelected(path: Seq[EngineComponent[_, _]], ec: EngineComponent[_, _]): Map[String, _] = ec match {
-    case _ if path.isEmpty => Map(selectedPostFixKey -> "")
-    case _ if path.head eq ec => Map(selectedPostFixKey -> "Selected")
-    case _ if path.contains(ec) => Map(selectedPostFixKey -> "OnPath")
-    case _ => Map(selectedPostFixKey -> "")
-  }
-
-}
-
 trait ReferenceMapMakers {
   def documentToMap(d: Document) = Map("name" -> d.name, "ref" -> d.ref)
 
   def referenceToMap(rc: RenderContext)(r: Reference) = Map("document" -> documentToMap(r.document), "internalRef" -> r.internalRef, "imgSrc" -> (rc.urlBase + "images/document.png"))
-
 }
 
 trait Icons {
@@ -160,7 +21,6 @@ trait Icons {
   //http://i782.photobucket.com/albums/yy108/phil-rice/useCase_zps23a7250c.png"
   val scenarioIcon = "../images/scenario.png" //http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
 }
-
 
 object Templates extends TestObjectsForRendering with Icons with KeysForRendering with ExpectedForTemplates {
 
@@ -318,66 +178,5 @@ object TraceRendering extends ExpectedForTemplates {
           decisionTreeKey -> dtrd(et),
           traceKey -> et.children.map(engine(rc, _)))
     }
-
   }
-
-}
-
-object DecisionTreeRenderData {
-  def fromEngineComponent[P, R](engine: Engine[P, R], ec: EngineComponent[P, R])(implicit dp: DisplayProcessor): DecisionTreeRenderData[P, R] = ec match {
-    case s: Scenario[P, R] => fromSituation(engine, Some(s.situation))
-    case _ => fromSituation(engine, None)
-
-  }
-
-  def fromSituation[P, R](engine: AbstractEngine[P, R], situation: Option[P])(implicit dp: DisplayProcessor): DecisionTreeRenderData[P, R] = {
-    val (path, s) = situation match {
-      case Some(s) => (engine.decisionTree.pathFor(engine.evaluate, s).reverse, Some(s))
-      case _ => (List(), None)
-    }
-    val result = DecisionTreeRenderData(engine.evaluate, s, path)
-    result
-  }
-}
-
-case class DecisionTreeRenderData[P, R](engine: P => R, selectedSituation: Option[P], pathThroughDecisionTree: List[DecisionTree[P, R]])(implicit val dp: DisplayProcessor) extends KeysForRendering {
-  def findTrueFalse(dt: DecisionTree[P, R]): Map[String, Any] = Map(trueFalseKey -> (selectedSituation match {
-    case Some(s) => dt.mainScenario.isDefinedAt(engine, s).toString
-    case _ => ""
-  }))
-
-  def selectedMap(dt: DecisionTree[P, R]): Map[String, Any] = mapHoldingSelected(pathThroughDecisionTree, dt)
-
-  def selectedAndTrueFalseMap(dt: DecisionTree[P, R]): Map[String, Any] = findTrueFalse(dt) ++ selectedMap(dt)
-}
-
-object DecisionTreeRendering extends KeysForRendering {
-
-  def findSelected[P, R](rd: DecisionTreeRenderData[P, R], dt: DecisionTree[P, R]) = rd.findTrueFalse(dt) ++ rd.selectedMap(dt)
-
-  def renderEngine[P, R](engine: Engine[P, R], ec: EngineComponent[P, R])(implicit displayProcessor: DisplayProcessor): Map[String, Any] = {
-    val rd = DecisionTreeRenderData.fromEngineComponent(engine, ec)
-    render(rd, engine.decisionTree)
-  }
-
-  def render[P, R](rd: DecisionTreeRenderData[P, R], dt: DecisionTree[P, R])(implicit displayProcessor: DisplayProcessor): Map[String, Any] = dt match {
-    case cn: ConclusionNode[_, _] => Map(conclusionNodeKey -> renderConclusionNode(rd, cn), decisionNodeKey -> List())
-    case dn: DecisionNode[_, _] => Map(conclusionNodeKey -> List(), decisionNodeKey -> renderDecisionNode(rd, dn))
-  }
-
-  def renderConclusionNode[P, R](rd: DecisionTreeRenderData[P, R], cn: ConclusionNode[P, R])(implicit displayProcessor: DisplayProcessor): Map[String, Any] = {
-    rd.selectedAndTrueFalseMap(cn) ++ Map(
-      conclusionKey -> cn.mainScenario.assertion.toSummary(rd.dp),
-      reasonKey -> cn.mainScenario.reason.prettyDescription
-    )
-  }
-
-  def renderDecisionNode[P, R](rd: DecisionTreeRenderData[P, R], dn: DecisionNode[P, R])(implicit displayProcessor: DisplayProcessor): Map[String, Any] = {
-    rd.selectedAndTrueFalseMap(dn) ++ Map(
-      reasonKey -> dn.mainScenario.reason.prettyDescription,
-      trueNodeKey -> render(rd, dn.trueNode),
-      falseNodeKey -> render(rd, dn.falseNode))
-  }
-
-
 }
