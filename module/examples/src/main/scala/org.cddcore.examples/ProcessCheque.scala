@@ -105,7 +105,6 @@ case class ChequeSituation(world: World, cheque: Elem) extends Xml {
 
   lazy val chequeFrom = {
     val result = CustomerId(chequeFromId(), chequeFromBank())
-    println("ChequeFrom: " + result)
     result
   }
 

@@ -17,6 +17,6 @@ class MultipleCddUnitSpec extends CddSpec {
   }
 
   they should "produce a map that is the render of all the maps, grouped by the tests" in {
-    
+
   }
 }

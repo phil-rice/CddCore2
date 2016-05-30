@@ -99,7 +99,7 @@ trait AbstractCddRunner extends Runner {
                   case uc: UseCase[P, R] => runTest(d)(uc.components.reverse.foldLeft(true)((acc, c) => run(engine, c) && acc))
                   case e: Engine[P, R] => {
                     val result = runTest(d)(e.asUseCase.components.reverse.foldLeft(true)((acc, c) => run(engine, c) && acc))
-                    CddRunner.makeReports(clazz.getName, engine)
+                    CddContinuousIntegrationTest.makeReports(clazz.getName, engine)
                     result
                   }
                 }
@@ -118,14 +118,6 @@ trait AbstractCddRunner extends Runner {
 }
 
 object CddRunner {
-
-  def makeReports[P, R](urlOffset: String, engine: Engine[P, R]) = try {
-    //    println(s"MakingAReport for $urlOffset and engine ${engine.title}")
-    Renderer.makeReportFilesFor(urlOffset, engine)
-  } catch {
-    case e: Exception => println(e); e.printStackTrace()
-  }
-
 
   def modifyException[E <: Exception](e: E, definedInSourceCodeAt: DefinedInSourceCodeAt): E = {
     e.getStackTrace
@@ -160,6 +152,13 @@ object CddContinuousIntegrationTest {
   def tests: List[HasEngines] = testList
 
   def addTest(test: HasEngines) = testList = testList :+ test
+
+  def makeReports[P, R](urlOffset: String, engine: Engine[P, R]) = try {
+    //    println(s"MakingAReport for $urlOffset and engine ${engine.title}")
+    Renderer.makeReportFilesFor(urlOffset, engine)
+  } catch {
+    case e: Exception => println(e); e.printStackTrace()
+  }
 
 }
 

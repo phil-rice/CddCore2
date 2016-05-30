@@ -44,7 +44,6 @@ object SetHeaders {
         case head :: tail if head.startsWith(headerPrefix) => newHeader :: tail
         case x => newHeader :: x
       }
-      println(file)
       Files.printToFile(file)(pw => newValue.foreach(line => pw.write(line + "\r\n")))
     }
   }

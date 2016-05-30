@@ -82,7 +82,6 @@ object Renderer extends ExpectedForTemplates {
 
   def makeHtmlFor(trace: Trace)(implicit renderContext: RenderContext): String = {
     val json = TraceRendering.renderTrace(renderContext, parentTrace)
-    println("UrlBase is " + renderContext.urlBase)
     Mustache("templates/TraceReport.mustache")(Map(
       traceKey -> json,
       "urlBase" -> renderContext.urlBase,
