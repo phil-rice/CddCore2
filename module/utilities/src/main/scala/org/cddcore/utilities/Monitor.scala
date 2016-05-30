@@ -15,7 +15,6 @@ object Monitor {
   }
 
   def remember = new RememberMonitor()
-
 }
 
 trait Monitor {

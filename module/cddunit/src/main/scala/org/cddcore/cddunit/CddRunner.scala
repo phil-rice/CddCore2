@@ -3,7 +3,7 @@ package org.cddcore.cddunit
 
 import org.cddcore.engine.Engine
 import org.cddcore.enginecomponents.{DefinedInSourceCodeAt, EngineComponent, Scenario, UseCase}
-import org.cddcore.rendering.{RenderContext, Renderer}
+import org.cddcore.rendering.{RenderConfiguration, RenderContext, Renderer}
 import org.cddcore.utilities.{DisplayProcessor, Reflection, Strings}
 import org.junit.runner._
 import org.junit.runner.notification.{Failure, RunNotifier}
@@ -99,7 +99,7 @@ trait AbstractCddRunner extends Runner {
                   case uc: UseCase[P, R] => runTest(d)(uc.components.reverse.foldLeft(true)((acc, c) => run(engine, c) && acc))
                   case e: Engine[P, R] => {
                     val result = runTest(d)(e.asUseCase.components.reverse.foldLeft(true)((acc, c) => run(engine, c) && acc))
-                    CddContinuousIntegrationTest.makeReports(clazz.getName, engine)
+                    //                    CddContinuousIntegrationTest.makeReports(clazz.getName, "..", engine)
                     result
                   }
                 }
@@ -134,7 +134,7 @@ object CddRunner {
 
 class CddRunner(val clazz: Class[_]) extends AbstractCddRunner {
 
-  lazy val engineData = Try {
+  lazy val engineData: Try[EngineData] = Try {
     val instance = Reflection.instantiate(clazz).asInstanceOf[HasEngines]
     CddContinuousIntegrationTest.addTest(instance)
     new EngineData(instance)
@@ -153,9 +153,12 @@ object CddContinuousIntegrationTest {
 
   def addTest(test: HasEngines) = testList = testList :+ test
 
-  def makeReports[P, R](urlOffset: String, engine: Engine[P, R]) = try {
+  def makeReports[P, R](urlOffset: String, referenceBase: String, engine: Engine[P, R])(implicit renderConfiguration: RenderConfiguration) = try {
     //    println(s"MakingAReport for $urlOffset and engine ${engine.title}")
-    Renderer.makeReportFilesFor(urlOffset, engine)
+
+    renderConfiguration.urlManipulations.populateInitialFiles(renderConfiguration.referenceFilesUrlBase)
+    Renderer.makeReportFilesFor(urlOffset, referenceBase, engine)
+
   } catch {
     case e: Exception => println(e); e.printStackTrace()
   }

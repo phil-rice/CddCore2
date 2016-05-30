@@ -3,7 +3,15 @@ package org.cddcore.utilities
 
 
 object Strings {
+  def trimChar(trim: Char)(s: String) = s.dropWhile(_ == trim).reverse.dropWhile(_ == trim).reverse
+
+
   def cleanString(s: String, acceptedChars: String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_- ") = s.filter(acceptedChars.contains(_)).mkString
+
+  def uri(parts: String*): String = parts.map(trimChar('/')).mkString("/")
+
+  def cleanAsUri(parts: String*) = parts.map(cleanString(_)).mkString("/")
+
 
   def cleanStringForJunitName(s: String) = cleanString(s.replace(',', ' '), "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_- ;.():")
 
@@ -52,7 +60,7 @@ object Strings {
 
   def bruteForceCompare(s1: String, s2: String) = {
     val start = s"lengths(${s1.size}, ${s2.size}\n"
-    s1.zipAll(s2, null, null).zipWithIndex.foldLeft (start) {
+    s1.zipAll(s2, null, null).zipWithIndex.foldLeft(start) {
       case (acc: String, ((ch1: Char, ch2: Char), i: Int)) =>
         if (ch1 != ch2) acc + s"Index $i ${ch1.toInt} ${ch2.toInt}\n" else acc
     }

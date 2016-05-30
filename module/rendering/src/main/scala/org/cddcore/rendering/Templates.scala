@@ -6,7 +6,7 @@ import java.util.Date
 
 import org.cddcore.engine._
 import org.cddcore.enginecomponents._
-import org.cddcore.utilities.DisplayProcessor
+import org.cddcore.utilities.{DisplayProcessor, Strings}
 
 trait ReferenceMapMakers {
   def documentToMap(d: Document) = Map("name" -> d.name, "ref" -> d.ref)
@@ -14,28 +14,31 @@ trait ReferenceMapMakers {
   def referenceToMap(rc: RenderContext)(r: Reference) = Map("document" -> documentToMap(r.document), "internalRef" -> r.internalRef, "imgSrc" -> (rc.urlBase + "images/document.png"))
 }
 
-trait Icons {
-  val engineWithTestsIcon = "../images/engine.png"
+object Icons {
+  val engineWithTestsIcon = "images/engine.png"
   //http://i782.photobucket.com/albums/yy108/phil-rice/engine_zps9a86cef4.png"
-  val useCasesIcon = "../images/usecase.png"
+  val useCasesIcon = "images/usecase.png"
   //http://i782.photobucket.com/albums/yy108/phil-rice/useCase_zps23a7250c.png"
-  val scenarioIcon = "../images/scenario.png" //http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
+  val scenarioIcon = "images/scenario.png" //http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
 }
 
-object Templates extends TestObjectsForRendering with Icons with KeysForRendering with ExpectedForTemplates {
+object Templates extends TestObjectsForRendering with KeysForRendering with ExpectedForTemplates {
 
-  val findIconUrl = new Engine[EngineComponent[_, _], String] {
-    emptyEngine produces engineWithTestsIcon because { case e: Engine[_, _] => engineWithTestsIcon }
-    engineWithUseCase produces engineWithTestsIcon
-    useCase1 produces useCasesIcon because { case _: UseCase[_, _] => useCasesIcon }
-    scenario1 produces scenarioIcon because { case _: Scenario[_, _] => scenarioIcon }
-    scenario2 produces scenarioIcon
-    scenario3 produces scenarioIcon
+  import Icons._
+  import Strings.uri
+
+  val findIconUrl = new Engine2[RenderContext, EngineComponent[_, _], String] {
+    (rc, emptyEngine) produces expectedEngineIcon because { case (rc, e: Engine[_, _]) => uri(rc.referenceFilesUrlBase, engineWithTestsIcon) }
+    (rc, engineWithUseCase) produces expectedEngineIcon
+    (rc, useCase1) produces expectedUsecaseIcon because { case (rc, _: UseCase[_, _]) => uri(rc.referenceFilesUrlBase, useCasesIcon) }
+    (rc, scenario1) produces expectedScenarioIcon because { case (rc, _: Scenario[_, _]) => uri(rc.referenceFilesUrlBase, scenarioIcon) }
+    (rc, scenario2) produces expectedScenarioIcon
+    (rc, scenario3) produces expectedScenarioIcon
   }
 
   val makeLink = new Engine2[RenderContext, EngineComponent[_, _], Map[String, _]]("Produces the maps for a link to a component") {
     (rc, engineWithUseCase) produces linkForEngine by {
-      case (rc, ec) => Map(titleKey -> ec.title, linkUrlKey -> rc.url(ec), iconUrlKey -> findIconUrl(ec), definedAtKey -> ec.definedInSourceCodeAt)
+      case (rc, ec) => Map(titleKey -> ec.title, linkUrlKey -> rc.url(ec), iconUrlKey -> findIconUrl(rc, ec), definedAtKey -> ec.definedInSourceCodeAt)
     }
     (rc, useCase1) produces linkForUseCase1
     (rc, useCase2) produces linkForUseCase2
@@ -179,4 +182,5 @@ object TraceRendering extends ExpectedForTemplates {
           traceKey -> et.children.map(engine(rc, _)))
     }
   }
+
 }

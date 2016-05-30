@@ -43,4 +43,18 @@ class StringsSpec extends CddSpec {
     Strings.cleanString("abc$£*&^\"\'.ABC 123_-") shouldBe "abcABC 123_-"
   }
 
+  "The Strings.trimChar" should "remove any instances of the trimChar from the start or end of the string" in {
+    Strings.trimChar('/')("abc") shouldBe "abc"
+    Strings.trimChar('/')("///abc///") shouldBe "abc"
+    Strings.trimChar('/')("///../..///") shouldBe "../.."
+    Strings.trimChar('/')("../..") shouldBe "../.."
+  }
+
+  "The Strings.uri" should "concatenate parts " in {
+    Strings.uri("a", "b", "c") shouldBe "a/b/c"
+    Strings.uri("/a/", "/b/", "/c/") shouldBe "a/b/c"
+    Strings.uri("/a/b/", "/c/") shouldBe "a/b/c"
+    Strings.uri("../..", "./c/") shouldBe "../.././c"
+  }
+
 }

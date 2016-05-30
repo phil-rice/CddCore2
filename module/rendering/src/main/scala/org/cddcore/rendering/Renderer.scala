@@ -2,7 +2,7 @@ package org.cddcore.rendering
 
 import org.cddcore.engine.{Engine, Trace}
 import org.cddcore.enginecomponents.EngineComponent
-import org.cddcore.utilities.DisplayProcessor
+import org.cddcore.utilities.{DisplayProcessor, Strings}
 
 object Renderer extends ExpectedForTemplates {
   type EC = EngineComponent[_, _]
@@ -14,7 +14,7 @@ object Renderer extends ExpectedForTemplates {
   def pathMap(engines: Engine[_, _]*) = PathMap(engines)
 
   def renderContext(engines: Engine[_, _]*)(implicit renderConfiguration: RenderConfiguration, displayProcessor: DisplayProcessor) =
-    RenderContext(renderConfiguration.date, renderConfiguration.urlBase, pathMap(engines: _*), renderConfiguration.urlManipulations)
+    RenderContext(renderConfiguration.date, renderConfiguration.urlBase, renderConfiguration.referenceFilesUrlBase, pathMap(engines: _*), renderConfiguration.urlManipulations)
 
   def withDescendents(ec: EC): List[EC] = ec :: Templates.findChildren(ec).flatMap(withDescendents)
 
@@ -36,9 +36,13 @@ object Renderer extends ExpectedForTemplates {
     }
   }
 
-  def makeReportFilesFor[P, R](urlOffset: String, engine: Engine[P, R])(implicit renderConfiguration: RenderConfiguration): Unit = {
-    val newRenderConfiguaration = renderConfiguration.copy(urlBase = renderConfiguration.urlBase + "/" + urlOffset)
-    makeReportFilesFor(engine)(newRenderConfiguaration)
+  def makeReportFilesFor[P, R](urlOffset: String, referenceBase: String, engine: Engine[P, R])(implicit renderConfiguration: RenderConfiguration): RenderContext = {
+    import Strings._
+    val newRenderConfiguration = renderConfiguration.copy(
+      urlBase = uri(renderConfiguration.urlBase, urlOffset),
+      referenceFilesUrlBase = referenceBase)
+    println(s"New Render Configuration $newRenderConfiguration. referenceBase was [$referenceBase]")
+    makeReportFilesFor(engine)(newRenderConfiguration)
   }
 
   def makeHtmlFor[P, R](path: List[EngineComponent[P, R]])(implicit renderContext: RenderContext) = {
@@ -47,15 +51,16 @@ object Renderer extends ExpectedForTemplates {
     val decisionTreeMap = DecisionTreeRendering.renderEngine(engine, path.head)
     val withJson = engineMap ++ Map(
       "urlBase" -> renderContext.urlBase,
+      "refBase" -> renderContext.referenceFilesUrlBase,
       decisionTreeKey -> decisionTreeMap,
       "json" -> (JsonForRendering.pretty(decisionTreeMap) + "\n\n\n\n\n" + JsonForRendering.pretty(engineMap)))
     Mustache.apply("templates/Report.mustache").apply(withJson)
 
   }
 
-  def makeReportFilesFor[P, R](engine: Engine[P, R])(implicit renderConfiguration: RenderConfiguration): Unit = {
+  def makeReportFilesFor[P, R](engine: Engine[P, R])(implicit renderConfiguration: RenderConfiguration): RenderContext = {
     implicit val rc = renderContext(engine)
-    rc.urlManipulations.populateInitialFiles(rc.urlBase)
+//    rc.urlManipulations.populateInitialFiles(rc.referenceFilesUrlBase)
     for (path <- engine.withChildrenPaths) {
       val html = makeHtmlFor(path)
       //      val engineMap = Templates.renderPath(rc, path)
@@ -66,6 +71,7 @@ object Renderer extends ExpectedForTemplates {
       //      val html = Mustache.apply("templates/Report.mustache").apply(withJson)
       rc.makeFile(path.head, html)
     }
+    rc
   }
 
   def makeHtmlFor(trace: Trace)(implicit renderContext: RenderContext): String = {
@@ -84,7 +90,7 @@ object Renderer extends ExpectedForTemplates {
     val json = TraceRendering.renderTrace(rc, parentTrace)
     val html = makeHtmlFor(parentTrace)(rc)
 
-    rc.urlManipulations.populateInitialFiles(rc.urlBase)
+    rc.urlManipulations.populateInitialFiles(rc.referenceFilesUrlBase)
     rc.urlManipulations.makeFile(rc.urlBase + "/trace/test.html", html)
   }
 }

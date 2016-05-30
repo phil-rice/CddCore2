@@ -9,7 +9,7 @@ trait UrlManipulations {
 
   def makeFile(url: String, text: String)
 
-  def populateInitialFiles(urlBase: String)
+  def populateInitialFiles(referenceFilesUrlBase: String)
 }
 
 class WebsiteUrlManipulators extends UrlManipulations {
@@ -18,7 +18,7 @@ class WebsiteUrlManipulators extends UrlManipulations {
 
   def makeFile(url: String, text: String) = ???
 
-  def populateInitialFiles(urlBase: String) = ???
+  def populateInitialFiles(referenceFilesUrlBase: String) = ???
 
 }
 
@@ -38,6 +38,7 @@ class FileUrlManipulations extends UrlManipulations {
   }
 
   def copyFromClassPathToFile(resourceId: String, file: File): Unit = {
+    println(s"copyFromClassPathToFile($resourceId, $file)")
     def useClosable[S <: Closeable, X](makeS: => S)(useS: S => X) = {
       val s = makeS
       try {
@@ -67,5 +68,7 @@ class FileUrlManipulations extends UrlManipulations {
 
   private val initialFiles = List("images/engine.png", "images/scenario.png", "images/usecase.png", "images/document.png", "images/cdd.png", "stylesheets/css.css")
 
-  def populateInitialFiles(urlBase: String) = initialFiles.foreach(f => copyFromClassPathToFile(f, new File(urlBase + "/" + f)))
+  def populateInitialFiles(referenceFilesUrlBase: String) = {
+    initialFiles.foreach(f => copyFromClassPathToFile(f, new File(referenceFilesUrlBase + "/" + f)))
+  }
 }

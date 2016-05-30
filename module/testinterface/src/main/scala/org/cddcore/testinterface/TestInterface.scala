@@ -4,13 +4,14 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.fasterxml.jackson.databind.ser.std.StdJdkSerializers.AtomicIntegerSerializer
 import org.cddcore.cddunit.{CddContinuousIntegrationTest, CddRunner}
-import org.cddcore.utilities.{Indent, Iterables}
+import org.cddcore.rendering.{JsonForRendering, Mustache, RenderConfiguration, Renderer}
+import org.cddcore.utilities.{Indent, Iterables, Strings}
 import org.junit.runner
 import org.junit.runner.Description
 import org.junit.runner.notification.{Failure, RunListener, RunNotifier}
 import org.scalatools.testing.{EventHandler, _}
-import scala.util._
 
+import scala.util._
 import scala.util.Success
 
 class CddFingerprint extends SubclassFingerprint {
@@ -118,12 +119,22 @@ class CddRunnerForTestInterface(testClassLoader: ClassLoader, runnerTracker: Run
 
     runNotifier.addListener(new CddRunListener(eventHandler, runnerTracker, cddLogger))
     runner.run(runNotifier)
-    for {ed <- runner.engineData
-         engine <- ed.engines
-    } {
-      CddContinuousIntegrationTest.makeReports(testClassName, engine)
-    }
+    val engines = runner.engineData.map(_.engines).getOrElse(List())
+    implicit val renderConfiguration = RenderConfiguration.defaultRenderConfiguration
+    renderConfiguration.urlManipulations.populateInitialFiles(renderConfiguration.referenceFilesUrlBase)
 
+    val rc = engines.map(engine =>
+      Renderer.makeReportFilesFor(testClassName, "../../reference", engine)
+    ).last
+
+
+    val classMap = Map[String, Any](
+      "title" -> testClassName,
+      "urlBase" -> ".",
+      "engines" -> engines.map(e => Map("title" -> e.title)))
+
+    val html = Mustache.apply("templates/TestClass.mustache")(classMap + ("json" -> JsonForRendering.pretty(classMap)))
+    rc.urlManipulations.makeFile(Strings.uri(rc.urlBase,  "index.html"), html)
   }
 
 }
