@@ -21,12 +21,10 @@ class CddFingerprint extends SubclassFingerprint {
 }
 
 class RunnerTracker {
-  def finished = {
+  def finish(block: => Unit) = CddFramework.synchronized {
     val count = runnersFinished.incrementAndGet()
-    if (count == runnersCreated.get)
-      CddFramework.synchronized(count == runnersCreated.get)
-    else
-      false
+    println("testRunFinished: " + this)
+    if (count == runnersCreated.get) block
   }
 
   def created = runnersCreated.incrementAndGet()
@@ -34,15 +32,33 @@ class RunnerTracker {
   private val runnersCreated = new AtomicInteger(0)
   private val runnersFinished = new AtomicInteger(0)
 
+
   override def toString: String = s"RunnerTracker(${runnersCreated.get},${runnersFinished.get}, $hashCode)"
 }
 
 object CddFramework {
+  val runnerTracker = new RunnerTracker
+  var classList = List[String]()
+
+  def addEngine(className: String) = classList = classList :+ className
+
+  def makeIndexFile() = {
+    val renderConfiguration = RenderConfiguration.defaultRenderConfiguration
+    val classMap = Map[String, Any](
+      "title" -> "Tests",
+      "refBase" -> renderConfiguration.referenceFilesUrlBase,
+      "urlBase" -> ".",
+      "classList" -> classList,
+      "testClass" -> classList.map(c => Map("title" -> c, "url" -> ( c + "/index.html"))))
+
+    val html = Mustache.apply("templates/TestIndex.mustache")(classMap + ("json" -> JsonForRendering.pretty(classMap)))
+    renderConfiguration.urlManipulations.makeFile(Strings.uri(renderConfiguration.urlBase, "index.html"), html)
+  }
 }
 
 class CddFramework extends org.scalatools.testing.Framework {
 
-  val runnerTracker = new RunnerTracker
+  import CddFramework._
 
   override def name(): String = "CddUnit"
 
@@ -103,11 +119,13 @@ class CddRunListener(eventHandler: EventHandler, runnerTracker: RunnerTracker, l
   override def testRunFinished(result: runner.Result): Unit = {
     super.testRunFinished(result)
     logger.indent.unindent
-    if (runnerTracker.finished) {
+
+    runnerTracker.finish {
+      println("Finished FINISHED")
+      CddFramework.makeIndexFile()
       logger.succeed(s"and all finished ")
     }
   }
-
 }
 
 case class CddEvent(testName: String, description: String, result: Result, error: Throwable = null) extends Event
@@ -117,25 +135,28 @@ class CddRunnerForTestInterface(testClassLoader: ClassLoader, runnerTracker: Run
     val runner = new CddRunner(testClassLoader.loadClass(testClassName))
     val runNotifier = new RunNotifier
 
+    CddFramework.addEngine(testClassName)
+
     runNotifier.addListener(new CddRunListener(eventHandler, runnerTracker, cddLogger))
     runner.run(runNotifier)
     val engines = runner.engineData.map(_.engines).getOrElse(List())
     implicit val renderConfiguration = RenderConfiguration.defaultRenderConfiguration
     renderConfiguration.urlManipulations.populateInitialFiles(renderConfiguration.referenceFilesUrlBase)
 
-    val rc = engines.map(engine =>
-      Renderer.makeReportFilesFor(testClassName, "../../reference", engine)
-    ).last
+    val engineMap = engines.foldLeft(List[Map[String, String]]()) { (acc, engine) =>
+      val rc = Renderer.makeReportFilesFor(testClassName, "../../reference", engine)
+      acc :+ Map("title" -> engine.title, "url" -> rc.url(engine))
+    }.sortBy(_.apply("title"))
 
 
     val classMap = Map[String, Any](
       "title" -> testClassName,
+      "refBase" -> renderConfiguration.referenceFilesUrlBase,
       "urlBase" -> ".",
-      "engines" -> engines.map(e => Map("title" -> e.title)))
+      "engines" -> engineMap)
 
     val html = Mustache.apply("templates/TestClass.mustache")(classMap + ("json" -> JsonForRendering.pretty(classMap)))
-    rc.urlManipulations.makeFile(Strings.uri(rc.urlBase,  "index.html"), html)
+    renderConfiguration.urlManipulations.makeFile(Strings.uri(renderConfiguration.urlBase, testClassName, "index.html"), html)
   }
-
 }
 
