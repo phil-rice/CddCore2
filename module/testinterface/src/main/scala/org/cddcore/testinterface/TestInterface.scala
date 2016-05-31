@@ -24,7 +24,6 @@ class CddFingerprint extends SubclassFingerprint {
 class RunnerTracker {
   def finishAndExecuteIfLast(block: => Unit) = CddFramework.synchronized {
     val count = runnersFinished.incrementAndGet()
-    println("testRunFinished: " + this)
     if (count == runnersCreated.get) block
   }
 
@@ -110,7 +109,6 @@ class CddRunListener(eventHandler: EventHandler, runnerTracker: RunnerTracker, l
     logger.indent.unindent
 
     runnerTracker.finishAndExecuteIfLast {
-      println("Finished FINISHED")
       whenFinished
     }
   }
@@ -129,7 +127,7 @@ class CddRunnerForTestInterface(testClassLoader: ClassLoader, runnerTracker: Run
     runNotifier.addListener(new CddRunListener(eventHandler, runnerTracker, cddLogger)(testStructure.makeFiles))
     runner.run(runNotifier)
 
-    testStructure.makeFiles
+//    testStructure.makeFiles
   }
 }
 

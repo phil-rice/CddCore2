@@ -44,7 +44,6 @@ object Renderer extends ExpectedForTemplates {
       iconLinkUrl = iconLinkUrl,
       urlBase = uri(renderConfiguration.urlBase, urlOffset),
       referenceFilesUrlBase = referenceBase)
-    println(s"New Render Configuration $newRenderConfiguration. referenceBase was [$referenceBase]")
     makeReportFilesFor(engine)(newRenderConfiguration)
   }
 

@@ -12,7 +12,11 @@ class TestStructure {
 
   private var classNameToEngines = Map[String, List[Engine[_, _]]]()
 
-  def add(className: String, engines: List[Engine[_, _]]) = engines.foreach(engine => classNameToEngines = classNameToEngines.addToList(className, engine))
+  def add(className: String, engines: List[Engine[_, _]]) = this.synchronized {
+    engines.foreach { engine =>
+      classNameToEngines = classNameToEngines.addToList(className, engine)
+    }
+  }
 
   def makeFiles(implicit renderConfiguration: RenderConfiguration) = {
     makeReferenceFiles
@@ -40,32 +44,34 @@ class TestStructure {
     }.sortBy(_.className)
 
   private def makeIndexFile(classAndTestDetails: List[ClassAndTestDetails])(implicit renderConfiguration: RenderConfiguration) = {
+    val engineMaps = classAndTestDetails.map {
+      case ClassAndTestDetails(c, engineAndUrls) => Map("title" -> c, "url" -> (c + "/index.html"), "engines" -> engineAndUrls.map(engineAsMap))
+    }
+    if (engineMaps.size != classAndTestDetails.size) {
+      System.exit(1)
+    }
     val classMap = Map[String, Any](
       "title" -> "Tests",
       "refBase" -> "./reference",
       "iconLink" -> "index.html",
       "urlBase" -> ".",
-      "testClass" -> classAndTestDetails.map { case ClassAndTestDetails(c, engineAndUrls) =>
-        Map("title" -> c, "url" -> (c + "/index.html"), "engines" -> engineAndUrls.map(engineAsMap))
-      })
+      "testClass" -> engineMaps)
 
     val html = Mustache.apply("templates/TestIndex.mustache")(classMap + ("json" -> JsonForRendering.pretty(classMap)))
     renderConfiguration.urlManipulations.makeFile(Strings.uri(renderConfiguration.urlBase, "index.html"), html)
   }
 
   private def makeTestClassFiles(classAndTestDetails: List[ClassAndTestDetails])(implicit renderConfiguration: RenderConfiguration) =
-    classNameToEngines.foreach { case (testClassName, engines) =>
-      for (ClassAndTestDetails(className, engineAndUrls) <- classAndTestDetails) {
-        val classMap = Map[String, Any](
-          "title" -> testClassName,
-          "refBase" -> "../reference",
-          "iconLinkUrl" -> "../index.html",
-          "urlBase" -> ".",
-          "engines" -> engineAndUrls.map(engineAsMap))
+    for (ClassAndTestDetails(className, engineAndUrls) <- classAndTestDetails) {
+      val classMap = Map[String, Any](
+        "title" -> className,
+        "refBase" -> "../reference",
+        "iconLinkUrl" -> "../index.html",
+        "urlBase" -> ".",
+        "engines" -> engineAndUrls.map(engineAsMap))
 
-        val html = Mustache.apply("templates/TestClass.mustache")(classMap + ("json" -> JsonForRendering.pretty(classMap)))
-        renderConfiguration.urlManipulations.makeFile(Strings.uri(renderConfiguration.urlBase, testClassName, "index.html"), html)
-      }
+      val html = Mustache.apply("templates/TestClass.mustache")(classMap + ("json" -> JsonForRendering.pretty(classMap)))
+      renderConfiguration.urlManipulations.makeFile(Strings.uri(renderConfiguration.urlBase, className, "index.html"), html)
     }
 
 }

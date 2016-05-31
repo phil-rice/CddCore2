@@ -38,7 +38,6 @@ class FileUrlManipulations extends UrlManipulations {
   }
 
   def copyFromClassPathToFile(resourceId: String, file: File): Unit = {
-    println(s"copyFromClassPathToFile($resourceId, $file)")
     def useClosable[S <: Closeable, X](makeS: => S)(useS: S => X) = {
       val s = makeS
       try {
