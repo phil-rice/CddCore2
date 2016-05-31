@@ -36,7 +36,7 @@ lazy val baseSettings = Seq(
   pomIncludeRepository := { _ => false },
   publishMavenStyle := true,
   publishArtifact in Test := false,
-  //  credentials += Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", "phil.rice", "jirapsr123"),
+
   publishTo := {
     val nexus = "https://oss.sonatype.org/"
     if (isSnapshot.value)
