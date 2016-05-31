@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.fasterxml.jackson.databind.ser.std.StdJdkSerializers.AtomicIntegerSerializer
 import org.cddcore.cddunit.{CddContinuousIntegrationTest, CddRunner}
 import org.cddcore.engine.Engine
-import org.cddcore.rendering.{JsonForRendering, Mustache, RenderConfiguration, Renderer}
+import org.cddcore.rendering._
 import org.cddcore.utilities.{Indent, Iterables, Strings}
 import org.junit.runner
 import org.junit.runner.Description
