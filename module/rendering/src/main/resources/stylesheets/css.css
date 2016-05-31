@@ -75,3 +75,7 @@ td {
    width: 50%;
    float: left;
  }
+
+ .failed{
+   background-color: red;
+   }

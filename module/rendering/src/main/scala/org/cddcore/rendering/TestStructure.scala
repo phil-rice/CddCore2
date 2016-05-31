@@ -1,6 +1,7 @@
 package org.cddcore.rendering
 
 import org.cddcore.engine.Engine
+import org.cddcore.enginecomponents.Scenario
 import org.cddcore.utilities.Strings
 
 
@@ -30,18 +31,26 @@ class TestStructure {
   }
 
   private def engineAsMap(tuple: (Engine[_, _], String)) = tuple match {
-    case (engine, url) => Map("title" -> engine.title, "url" -> url
-    )
+    case (engine, url) => Map(
+      "title" -> engine.title,
+      "url" -> url,
+      "engineFailed" -> (engine.errors.size > 0),
+      "errorCount" -> engine.errors.size,
+      "errors" -> engine.errors.map {
+        case (ec: Scenario[_, _], error) => Map(
+          "definedAt" -> ec.definedInSourceCodeAt.toString,
+          "description" -> ec.toString)
+      })
   }
 
   private def makeEngineFilesReturningListOfTitleAndUrl =
-    classNameToEngines.foldLeft(List[ClassAndTestDetails]()) { case (acc, (testClassName, engines)) =>
-      val engineDetails = engines.foldLeft(List[(Engine[_, _], String)]()) { (acc, engine) =>
+    classNameToEngines.map { case (testClassName, engines) =>
+      val engineDetails = engines.map { engine =>
         val rc = Renderer.makeReportFilesFor("../../index.html", testClassName, "../../reference", engine)
-        acc :+(engine, rc.url(engine))
+        (engine, rc.url(engine))
       }
-      ClassAndTestDetails(testClassName, engineDetails) :: acc
-    }.sortBy(_.className)
+      ClassAndTestDetails(testClassName, engineDetails)
+    }.toList.sortBy(_.className)
 
   private def makeIndexFile(classAndTestDetails: List[ClassAndTestDetails])(implicit renderConfiguration: RenderConfiguration) = {
     val engineMaps = classAndTestDetails.map {
