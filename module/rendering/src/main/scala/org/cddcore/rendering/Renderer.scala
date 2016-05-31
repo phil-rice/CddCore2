@@ -14,7 +14,9 @@ object Renderer extends ExpectedForTemplates {
   def pathMap(engines: Engine[_, _]*) = PathMap(engines)
 
   def renderContext(engines: Engine[_, _]*)(implicit renderConfiguration: RenderConfiguration, displayProcessor: DisplayProcessor) =
-    RenderContext(renderConfiguration.date, renderConfiguration.urlBase, renderConfiguration.referenceFilesUrlBase, pathMap(engines: _*), renderConfiguration.urlManipulations)
+    RenderContext(renderConfiguration.date,
+      renderConfiguration.urlBase, renderConfiguration.referenceFilesUrlBase, renderConfiguration.iconLinkUrl,
+      pathMap(engines: _*), renderConfiguration.urlManipulations)
 
   def withDescendents(ec: EC): List[EC] = ec :: Templates.findChildren(ec).flatMap(withDescendents)
 
@@ -36,9 +38,10 @@ object Renderer extends ExpectedForTemplates {
     }
   }
 
-  def makeReportFilesFor[P, R](urlOffset: String, referenceBase: String, engine: Engine[P, R])(implicit renderConfiguration: RenderConfiguration): RenderContext = {
+  def makeReportFilesFor[P, R](iconLinkUrl: String, urlOffset: String, referenceBase: String, engine: Engine[P, R])(implicit renderConfiguration: RenderConfiguration): RenderContext = {
     import Strings._
     val newRenderConfiguration = renderConfiguration.copy(
+      iconLinkUrl = iconLinkUrl,
       urlBase = uri(renderConfiguration.urlBase, urlOffset),
       referenceFilesUrlBase = referenceBase)
     println(s"New Render Configuration $newRenderConfiguration. referenceBase was [$referenceBase]")
@@ -51,6 +54,7 @@ object Renderer extends ExpectedForTemplates {
     val decisionTreeMap = DecisionTreeRendering.renderEngine(engine, path.head)
     val withJson = engineMap ++ Map(
       "urlBase" -> renderContext.urlBase,
+      "iconLinkUrl" -> renderContext.iconLinkUrl,
       "refBase" -> renderContext.referenceFilesUrlBase,
       decisionTreeKey -> decisionTreeMap,
       "json" -> (JsonForRendering.pretty(decisionTreeMap) + "\n\n\n\n\n" + JsonForRendering.pretty(engineMap)))
@@ -60,7 +64,7 @@ object Renderer extends ExpectedForTemplates {
 
   def makeReportFilesFor[P, R](engine: Engine[P, R])(implicit renderConfiguration: RenderConfiguration): RenderContext = {
     implicit val rc = renderContext(engine)
-//    rc.urlManipulations.populateInitialFiles(rc.referenceFilesUrlBase)
+    //    rc.urlManipulations.populateInitialFiles(rc.referenceFilesUrlBase)
     for (path <- engine.withChildrenPaths) {
       val html = makeHtmlFor(path)
       //      val engineMap = Templates.renderPath(rc, path)

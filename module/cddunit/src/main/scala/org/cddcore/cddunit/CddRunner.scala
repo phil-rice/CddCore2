@@ -152,16 +152,16 @@ object CddContinuousIntegrationTest {
   def tests: List[HasEngines] = testList
 
   def addTest(test: HasEngines) = testList = testList :+ test
-
-  def makeReports[P, R](urlOffset: String, referenceBase: String, engine: Engine[P, R])(implicit renderConfiguration: RenderConfiguration) = try {
-    //    println(s"MakingAReport for $urlOffset and engine ${engine.title}")
-
-    renderConfiguration.urlManipulations.populateInitialFiles(renderConfiguration.referenceFilesUrlBase)
-    Renderer.makeReportFilesFor(urlOffset, referenceBase, engine)
-
-  } catch {
-    case e: Exception => println(e); e.printStackTrace()
-  }
+//
+//  def makeReports[P, R](urlOffset: String, referenceBase: String, engine: Engine[P, R])(implicit renderConfiguration: RenderConfiguration) = try {
+//    //    println(s"MakingAReport for $urlOffset and engine ${engine.title}")
+//
+//    renderConfiguration.urlManipulations.populateInitialFiles(renderConfiguration.referenceFilesUrlBase)
+//    Renderer.makeReportFilesFor(urlOffset, referenceBase, engine)
+//
+//  } catch {
+//    case e: Exception => println(e); e.printStackTrace()
+//  }
 
 }
 

@@ -37,7 +37,7 @@ trait TestObjectsForRendering {
   protected val List(scenario3: Scenario[_, _]) = useCase2.components.reverse
 
 
-  protected val rc: RenderContext = RenderContext(new Date(), "urlBase", "refBase", PathMap(emptyEngine, engineWithUseCase, engineNested), new FileUrlManipulations())(displayProcessorModifiedForSituations)
+  protected val rc: RenderContext = RenderContext(new Date(), "urlBase", "refBase","iconLinkUrl", PathMap(emptyEngine, engineWithUseCase, engineNested), new FileUrlManipulations())(displayProcessorModifiedForSituations)
 
 
   protected val cn1 = engineWithUseCase.decisionTree.conclusionNodeFor(engineWithUseCase, 1)
