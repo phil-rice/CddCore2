@@ -39,7 +39,7 @@ class RunnerTracker {
 
 object CddFramework {
   val runnerTracker = new RunnerTracker
-  val testStructure = new TestStructure
+  val testStructure = new TestStructure(new TestViews(new TestIndexView, new TestClassView))
 
 
 }
