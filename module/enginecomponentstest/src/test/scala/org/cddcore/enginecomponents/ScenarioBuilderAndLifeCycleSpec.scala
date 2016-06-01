@@ -50,6 +50,6 @@ class ScenarioBuilderAndLifeCycleSpec extends CddSpec {
     val s2 = s1 when (_ == 2)
     lc.created shouldBe List(s1)
     lc.modified shouldBe List()
-    lc.errors shouldBe List("ReasonInvalidException/Scenario defined at (ScenarioBuilderAndLifeCycleSpec.scala:49) cannot be added because the reason given isn't actually true")
+    lc.errors shouldBe List("ReasonInvalidException/Scenario defined at (ScenarioBuilderAndLifeCycleSpec.scala:49) cannot be added because the reason given isn't valid")
   }
 }

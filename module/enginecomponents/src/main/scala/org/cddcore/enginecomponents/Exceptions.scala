@@ -8,7 +8,7 @@ class ScenarioException[P,R](val scenario: Scenario[P,R], msg: String) extends E
 }
 
 class ReasonInvalidException[P,R](s: Scenario[P,R])
-  extends ScenarioException(s, s"Scenario defined at ${s.definedInSourceCodeAt} cannot be added because the reason given isn't actually true")
+  extends ScenarioException(s, s"Scenario defined at ${s.definedInSourceCodeAt} cannot be added because the reason given isn't valid")
 
 class CannotAddScenarioException[P,R](s: Scenario[P,R], existing: Scenario[P,R], actual: R)(implicit dp: DisplayProcessor) extends ScenarioException(
   s, s"Scenario defined at ${s.definedInSourceCodeAt} conflicts with ${existing.definedInSourceCodeAt}\n" +

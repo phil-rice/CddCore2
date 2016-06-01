@@ -28,8 +28,6 @@ object Renderer extends ExpectedForTemplates {
 
   def templateName(ec: EC) = s"${Templates.findTypeName(ec)}.mustache"
 
-  //  def javaMap(ec: EC)(implicit rc: RenderContext) = Templates.forMustache(scalaMap(ec))
-
   def toHtml(ec: Engine[_, _])(implicit rc: RenderContext = renderContext(ec)) = {
     Mustache.apply(templateName(ec)).apply(ec)
   }

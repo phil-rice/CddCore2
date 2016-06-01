@@ -52,6 +52,9 @@ td {
 .scenarioSelected{
    border: 2px solid green;
 }
+.scenarioSelectedError{
+   border: 2px solid red;
+}
 
 .ifOnPath{
    border: 1px solid green;

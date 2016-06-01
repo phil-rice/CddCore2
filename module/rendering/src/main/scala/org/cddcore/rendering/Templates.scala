@@ -19,7 +19,8 @@ object Icons {
   //http://i782.photobucket.com/albums/yy108/phil-rice/engine_zps9a86cef4.png"
   val useCasesIcon = "images/usecase.png"
   //http://i782.photobucket.com/albums/yy108/phil-rice/useCase_zps23a7250c.png"
-  val scenarioIcon = "images/scenario.png" //http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
+  val scenarioIcon = "images/scenario.png"
+  //http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
   val errorScenarioIcon = "images/errorScenario.png" //http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
 }
 
@@ -117,25 +118,28 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
     typeKey -> findTypeName(ec),
     titleKey -> ec.title)
 
+  def renderScenario(rc: RenderContext, s: Scenario[_, _]) =
+    Map(
+      idKey -> rc.idPath(s),
+      typeKey -> findTypeName(s),
+      linkKey -> makeLink(rc, s),
+      titleKey -> s.title,
+      commentKey -> s.comment.getOrElse(""),
+      situationKey -> rc.displayProcessor.html(s.situation),
+      expectedKey -> s.expectedOption.map(expected => rc.displayProcessor.html(expected)).getOrElse("<Not Known>"),
+      referencesKey -> s.references.map(referenceToMap(rc)))
+
+  def exceptionMap(e: Exception) = Map("message" -> e.getMessage, "stack" -> e.getStackTrace.take(5).mkString("\n"))
+
   object renderData extends Engine2[RenderContext, EngineComponent[_, _], Map[String, _]] {
     (rc, engineWithUseCase) produces dataForEngine because { case (rc, e: Engine[_, _]) => renderRawData(rc, e) ++ Map(referencesKey -> e.references.map(referenceToMap(rc))) }
 
     (rc, useCase1) produces dataForUseCase1 because { case (rc, uc: UseCase[_, _]) => renderRawData(rc, uc) ++ Map(commentKey -> uc.comment.getOrElse(""), referencesKey -> uc.references.map(referenceToMap(rc))) }
     (rc, useCase2) produces dataForUseCase2
 
-    (rc, scenario1) produces dataForScenario1 because { case (rc, s: Scenario[_, _]) =>
-      Map(
-        idKey -> rc.idPath(s),
-        typeKey -> findTypeName(s),
-        linkKey -> makeLink(rc, s),
-        titleKey -> s.title,
-        commentKey -> s.comment.getOrElse(""),
-        situationKey -> rc.displayProcessor.html(s.situation),
-        expectedKey -> s.expectedOption.map(expected => rc.displayProcessor.html(expected)).getOrElse("<Not Known>"),
-        referencesKey -> s.references.map(referenceToMap(rc)))
-    }
+    (rc, scenario1) produces dataForScenario1  + ("error" -> exceptionMap(rc.exceptions(scenario1))) because { case (rc, s: Scenario[_, _]) if rc.exceptions.contains(s) => renderScenario(rc, s) + ("error" -> exceptionMap(rc.exceptions(s))) }
 
-    (rc, scenario2) produces dataForScenario2
+    (rc, scenario2) produces dataForScenario2 because { case (rc, s: Scenario[_, _]) => renderScenario(rc, s) }
     (rc, scenario3) produces dataForScenario3
     (rc, scenario4) produces dataForScenario4
   }

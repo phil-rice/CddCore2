@@ -1,8 +1,9 @@
-            <div id='{{id}}' class='scenario{{selected}}'>
+            <div id='{{id}}' class='scenario{{selected}}{{#error}}Error{{/error}}'>
                 <div class='scenarioTitle'>{{>Link}}{{>references}}</div>
                 {{>Comment}}
                 <table class='scenarioTable'>
                     <tr><td>Situation</td><td>{{situation}}</td></tr>
                     <tr><td>Expected</td><td>{{expected}}</td></tr>
+                     {{#selected}}{{#error}}<tr><td colspan="2"><pre>{{message}}</pre></td></tr>{{/error}}{{/selected}}
                 </table>
             </div><!-- scenario -->
