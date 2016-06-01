@@ -19,6 +19,7 @@ object RenderConfiguration {
 case class RenderContext(reportDate: Date,
                          urlBase: String, referenceFilesUrlBase: String, iconLinkUrl: String,
                          pathMap: PathMap,
+                         exceptions: Map[EngineComponent[_,_], Exception],
                          urlManipulations: UrlManipulations)(implicit val displayProcessor: DisplayProcessor) {
   override def toString = getClass.getSimpleName()
 

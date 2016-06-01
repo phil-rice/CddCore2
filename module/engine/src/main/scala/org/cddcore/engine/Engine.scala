@@ -89,7 +89,7 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val refer
 
   def allDocuments = allReferences.map(_.document).distinct
 
-  def errors = hierarchyBuilder.holder.errors
+  def errors: ListMap[EngineComponent[P, R], Exception] = hierarchyBuilder.holder.errors
 
   def postSealMessage = "Cannot modify the engine after it has been constructed"
 

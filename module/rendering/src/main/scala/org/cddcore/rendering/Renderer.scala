@@ -4,6 +4,8 @@ import org.cddcore.engine.{Engine, Trace}
 import org.cddcore.enginecomponents.EngineComponent
 import org.cddcore.utilities.{DisplayProcessor, Strings}
 
+import scala.collection.immutable.ListMap
+
 object Renderer extends ExpectedForTemplates {
   type EC = EngineComponent[_, _]
 
@@ -13,10 +15,12 @@ object Renderer extends ExpectedForTemplates {
 
   def pathMap(engines: Engine[_, _]*) = PathMap(engines)
 
-  def renderContext(engines: Engine[_, _]*)(implicit renderConfiguration: RenderConfiguration, displayProcessor: DisplayProcessor) =
+  def renderContext(engines: Engine[_, _]*)(implicit renderConfiguration: RenderConfiguration, displayProcessor: DisplayProcessor) = {
+    val exceptions = engines.foldLeft(Map[EngineComponent[_, _], Exception]()) { (acc, engine) => acc ++ engine.errors.toMap }
     RenderContext(renderConfiguration.date,
       renderConfiguration.urlBase, renderConfiguration.referenceFilesUrlBase, renderConfiguration.iconLinkUrl,
-      pathMap(engines: _*), renderConfiguration.urlManipulations)
+      pathMap(engines: _*),exceptions, renderConfiguration.urlManipulations)
+  }
 
   def withDescendents(ec: EC): List[EC] = ec :: Templates.findChildren(ec).flatMap(withDescendents)
 

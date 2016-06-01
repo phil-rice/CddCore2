@@ -12,6 +12,7 @@ trait TestObjectsForRendering {
   val expectedEngineIcon = Strings.uri("refBase", engineWithTestsIcon)
   val expectedUsecaseIcon = Strings.uri("refBase", useCasesIcon)
   val expectedScenarioIcon = Strings.uri("refBase", scenarioIcon)
+  val expectedErrorScenarioIcon = Strings.uri("refBase", errorScenarioIcon)
   val displayProcessorModifiedForSituations = DisplayProcessor.defaultDisplayProcessor.
     withSummarize { case (dp, x) => s"Summary($x)" }.
     withHtml { case (dp, x) => s"Html($x)" }.
@@ -37,7 +38,10 @@ trait TestObjectsForRendering {
   protected val List(scenario3: Scenario[_, _]) = useCase2.components.reverse
 
 
-  protected val rc: RenderContext = RenderContext(new Date(), "urlBase", "refBase","iconLinkUrl", PathMap(emptyEngine, engineWithUseCase, engineNested), new FileUrlManipulations())(displayProcessorModifiedForSituations)
+  protected val rc: RenderContext = RenderContext(new Date(), "urlBase", "refBase","iconLinkUrl",
+    PathMap(emptyEngine, engineWithUseCase, engineNested),
+    Map(scenario1 -> new RuntimeException("Error Message For Scenario1")),
+    new FileUrlManipulations())(displayProcessorModifiedForSituations)
 
 
   protected val cn1 = engineWithUseCase.decisionTree.conclusionNodeFor(engineWithUseCase, 1)
@@ -55,13 +59,13 @@ trait TestObjectsForRendering {
 
 trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering with  ReferenceMapMakers {
 
-  protected val linkForScenario1 = Map(titleKey -> scenario1.title, linkUrlKey -> rc.url(scenario1), iconUrlKey -> expectedScenarioIcon, definedAtKey -> scenario1.definedInSourceCodeAt)
-  protected val linkForScenario2 = Map(titleKey -> scenario2.title, linkUrlKey -> rc.url(scenario2), iconUrlKey -> expectedScenarioIcon, definedAtKey -> scenario2.definedInSourceCodeAt)
-  protected val linkForScenario3 = Map(titleKey -> scenario3.title, linkUrlKey -> rc.url(scenario3), iconUrlKey -> expectedScenarioIcon, definedAtKey -> scenario3.definedInSourceCodeAt)
-  protected val linkForScenario4 = Map(titleKey -> scenario4.title, linkUrlKey -> rc.url(scenario4), iconUrlKey -> expectedScenarioIcon, definedAtKey -> scenario4.definedInSourceCodeAt)
-  protected val linkForUseCase1 = Map(titleKey -> useCase1.title, linkUrlKey -> rc.url(useCase1), iconUrlKey -> expectedUsecaseIcon, definedAtKey -> useCase1.definedInSourceCodeAt)
-  protected val linkForUseCase2 = Map(titleKey -> useCase2.title, linkUrlKey -> rc.url(useCase2), iconUrlKey -> expectedUsecaseIcon, definedAtKey -> useCase2.definedInSourceCodeAt)
-  protected val linkForEngine = Map(titleKey -> engineWithUseCase.title, linkUrlKey -> rc.url(engineWithUseCase), iconUrlKey -> expectedEngineIcon, definedAtKey -> engineWithUseCase.definedInSourceCodeAt)
+  protected val linkForScenario1 = Map(titleKey -> scenario1.title, linkUrlKey -> rc.url(scenario1), iconUrlKey -> expectedErrorScenarioIcon, definedAtKey -> scenario1.definedInSourceCodeAt.toString)
+  protected val linkForScenario2 = Map(titleKey -> scenario2.title, linkUrlKey -> rc.url(scenario2), iconUrlKey -> expectedScenarioIcon, definedAtKey -> scenario2.definedInSourceCodeAt.toString)
+  protected val linkForScenario3 = Map(titleKey -> scenario3.title, linkUrlKey -> rc.url(scenario3), iconUrlKey -> expectedScenarioIcon, definedAtKey -> scenario3.definedInSourceCodeAt.toString)
+  protected val linkForScenario4 = Map(titleKey -> scenario4.title, linkUrlKey -> rc.url(scenario4), iconUrlKey -> expectedScenarioIcon, definedAtKey -> scenario4.definedInSourceCodeAt.toString)
+  protected val linkForUseCase1 = Map(titleKey -> useCase1.title, linkUrlKey -> rc.url(useCase1), iconUrlKey -> expectedUsecaseIcon, definedAtKey -> useCase1.definedInSourceCodeAt.toString)
+  protected val linkForUseCase2 = Map(titleKey -> useCase2.title, linkUrlKey -> rc.url(useCase2), iconUrlKey -> expectedUsecaseIcon, definedAtKey -> useCase2.definedInSourceCodeAt.toString)
+  protected val linkForEngine = Map(titleKey -> engineWithUseCase.title, linkUrlKey -> rc.url(engineWithUseCase), iconUrlKey -> expectedEngineIcon, definedAtKey -> engineWithUseCase.definedInSourceCodeAt.toString)
 
   protected val emptyUsecasesAndScenarios = Map(scenariosKey -> List(), useCasesKey -> List())
 

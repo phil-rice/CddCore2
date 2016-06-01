@@ -19,11 +19,14 @@ class TestStructure {
     }
   }
 
-  def makeFiles(implicit renderConfiguration: RenderConfiguration) = {
+  def makeFiles(implicit renderConfiguration: RenderConfiguration) = try {
+
     makeReferenceFiles
     val classAndTestDetails = makeEngineFilesReturningListOfTitleAndUrl
     makeTestClassFiles(classAndTestDetails)
     makeIndexFile(classAndTestDetails)
+  } catch {
+    case e: Exception => e.printStackTrace(); throw e
   }
 
   private def makeReferenceFiles(implicit renderConfiguration: RenderConfiguration) = {

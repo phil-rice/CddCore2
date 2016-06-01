@@ -20,6 +20,7 @@ object Icons {
   val useCasesIcon = "images/usecase.png"
   //http://i782.photobucket.com/albums/yy108/phil-rice/useCase_zps23a7250c.png"
   val scenarioIcon = "images/scenario.png" //http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
+  val errorScenarioIcon = "images/errorScenario.png" //http://imagizer.imageshack.us/a/img537/7868/P3Ucx2.png"
 }
 
 object Templates extends TestObjectsForRendering with KeysForRendering with ExpectedForTemplates {
@@ -31,14 +32,14 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
     (rc, emptyEngine) produces expectedEngineIcon because { case (rc, e: Engine[_, _]) => uri(rc.referenceFilesUrlBase, engineWithTestsIcon) }
     (rc, engineWithUseCase) produces expectedEngineIcon
     (rc, useCase1) produces expectedUsecaseIcon because { case (rc, _: UseCase[_, _]) => uri(rc.referenceFilesUrlBase, useCasesIcon) }
-    (rc, scenario1) produces expectedScenarioIcon because { case (rc, _: Scenario[_, _]) => uri(rc.referenceFilesUrlBase, scenarioIcon) }
-    (rc, scenario2) produces expectedScenarioIcon
+    (rc, scenario1) produces expectedErrorScenarioIcon because { case (rc, s: Scenario[_, _]) if rc.exceptions.contains(s) => uri(rc.referenceFilesUrlBase, errorScenarioIcon) }
+    (rc, scenario2) produces expectedScenarioIcon because { case (rc, s: Scenario[_, _]) => uri(rc.referenceFilesUrlBase, scenarioIcon) }
     (rc, scenario3) produces expectedScenarioIcon
   }
 
   val makeLink = new Engine2[RenderContext, EngineComponent[_, _], Map[String, _]]("Produces the maps for a link to a component") {
     (rc, engineWithUseCase) produces linkForEngine by {
-      case (rc, ec) => Map(titleKey -> ec.title, linkUrlKey -> rc.url(ec), iconUrlKey -> findIconUrl(rc, ec), definedAtKey -> ec.definedInSourceCodeAt)
+      case (rc, ec) => Map(titleKey -> ec.title, linkUrlKey -> rc.url(ec), iconUrlKey -> findIconUrl(rc, ec), definedAtKey -> ec.definedInSourceCodeAt.toString)
     }
     (rc, useCase1) produces linkForUseCase1
     (rc, useCase2) produces linkForUseCase2
@@ -152,7 +153,7 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
 
   def renderPath(rc: RenderContext, path: List[EngineComponent[_, _]]) =
     Map("title" -> path.head.title,
-      "definedAt" -> path.head.definedInSourceCodeAt,
+      "definedAt" -> path.head.definedInSourceCodeAt.toString,
       "engine" -> Templates.renderFocus(rc, path.last, path))
 }
 

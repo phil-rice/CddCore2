@@ -65,7 +65,7 @@ class FileUrlManipulations extends UrlManipulations {
     } finally (writer.close)
   }
 
-  private val initialFiles = List("images/engine.png", "images/scenario.png", "images/usecase.png", "images/document.png", "images/cdd.png", "stylesheets/css.css")
+  private val initialFiles = List("images/engine.png", "images/scenario.png", "images/errorScenario.png", "images/usecase.png", "images/document.png", "images/cdd.png", "stylesheets/css.css")
 
   def populateInitialFiles(referenceFilesUrlBase: String) = {
     initialFiles.foreach(f => copyFromClassPathToFile(f, new File(referenceFilesUrlBase + "/" + f)))
