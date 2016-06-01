@@ -17,9 +17,12 @@ trait TestObjectsForRendering {
     withSummarize { case (dp, x) => s"Summary($x)" }.
     withHtml { case (dp, x) => s"Html($x)" }.
     withDetailer { case (dp, x) => s"Detailer($x)" }
+
   protected val emptyEngine = new Engine[Int, String]("someEngineTitle") {}
+
   val d1 = Document.internet("someHRef1")
   val d2 = Document.internet("name2", "someHRef2")
+
   protected val engineWithUseCase = new Engine[Int, String]("someEngineTitle2", references = List(Reference(d2, "engineRef"))) {
     useCase("someUseCase") {
       1 produces "one" when (_ == 1)
@@ -54,7 +57,6 @@ trait TestObjectsForRendering {
   protected val pathThroughDTForTrace1 = engineWithUseCase.decisionTree.pathFor(engineWithUseCase, trace1.params)
   protected val pathThroughDTForTrace2 = engineWithUseCase.decisionTree.pathFor(engineWithUseCase, trace2.params)
   protected val pathThroughDTForParentTrace = engineNested.decisionTree.pathFor(engineNested, parentTrace.params)
-
 }
 
 trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering with  ReferenceMapMakers {

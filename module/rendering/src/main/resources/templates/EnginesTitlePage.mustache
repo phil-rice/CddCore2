@@ -2,7 +2,7 @@
     {{#engines}}
         <li><a href="{{url}}"><span {{#engineFailed}}class="failed"{{/engineFailed}}>{{title}}</span></a>
             <ul>{{#errors}}
-                <li><span {{#engineFailed}}class="failed"{{/engineFailed}}>{{description}}</span></li>{{/errors}}</ul>
+                <li><span {{#engineFailed}}class="failed"{{/engineFailed}}><a href="{{url}}">{{description}}</a></span></li>{{/errors}}</ul>
         </li>
     {{/engines}}
 </ul>
