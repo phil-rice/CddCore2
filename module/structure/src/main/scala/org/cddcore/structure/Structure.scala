@@ -13,9 +13,9 @@ import scala.xml.{Elem, Node, NodeSeq}
 
 
 case class PathRoot[S](root: S, debug: Boolean)(implicit structure: Structure[S]) {
-  def \(path: String) = PathRootAndSteps(root, List(PathStep(true, path)), debug)
+  def \(path: String): PathRootAndSteps[S] = PathRootAndSteps(root, List(PathStep(true, path)), debug)
 
-  def \\(path: String) = PathRootAndSteps(root, List(PathStep(false, path)), debug)
+  def \\(path: String): PathRootAndSteps[S] = PathRootAndSteps(root, List(PathStep(false, path)), debug)
 }
 
 case class PathStep(linked: Boolean, element: String) {
@@ -31,11 +31,11 @@ trait PathResultStrategy[S, A] {
 case class PathResult[S, A, T](convertor: A => T, strategy: PathResultStrategy[S, A])
 
 case class PathRootAndSteps[S: Structure](root: S, steps: List[PathStep], debug: Boolean) {
-  def \(path: String) = PathRootAndSteps(root, steps :+ PathStep(true, path), debug)
+  def \(path: String): PathRootAndSteps[S] = PathRootAndSteps(root, steps :+ PathStep(true, path), debug)
 
-  def \\(path: String) = PathRootAndSteps(root, steps :+ PathStep(false, path), debug)
+  def \\(path: String): PathRootAndSteps[S] = PathRootAndSteps(root, steps :+ PathStep(false, path), debug)
 
-  def \[A, T](result: PathResult[S, A, T]) = Path(this, result, debug)
+  def \[A, T](result: PathResult[S, A, T]): Path[S, A, T] = Path(this, result, debug)
 }
 
 case class Path[S: Structure, A, T](pathRootAndSteps: PathRootAndSteps[S], result: PathResult[S, A, T], debug: Boolean) {

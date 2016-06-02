@@ -6,8 +6,10 @@ object DisplayProcessor {
 
   implicit val defaultDisplayProcessor = SimpleDisplayProcessor(List(), List(), List())
 
+  def apply() = defaultDisplayProcessor
+
   protected case class SimpleDisplayProcessor(htmlers: List[DpFunction], summarizers: List[DpFunction], detailers: List[DpFunction]) extends DisplayProcessor {
-    def applyFn(list: List[DpFunction], value: Any, fn: Any => String, displayableFn: Displayable => String): String =
+    def applyFn(list: List[DpFunction], value: Any, recurseFn: Any => String, displayableFn: Displayable => String, defaultFn: Any => String = _.toString): String =
       value match {
         case d: Displayable => displayableFn(d)
         case _ =>
@@ -17,17 +19,17 @@ object DisplayProcessor {
 
             case Some(f) => f(tuple)
             case _ => value match {
-              case (a, b) => s"(${fn(a)},${fn(b)})"
-              case (a, b, c) => s"(${fn(a)},${fn(b)},${fn(c)})"
+              case (a, b) => s"(${recurseFn(a)},${recurseFn(b)})"
+              case (a, b, c) => s"(${recurseFn(a)},${recurseFn(b)},${recurseFn(c)})"
               case m: Map[_, _] => m.map {
                 case kv@(k, v) =>
                   list.find(_.isDefinedAt(this, kv)) match {
                     case Some(f) => f(this, kv)
-                    case _ => s"${fn(k)} -> ${fn(v)}"
+                    case _ => s"${recurseFn(k)} -> ${recurseFn(v)}"
                   }
               }.mkString("Map(", ",", ")")
-              case l: List[_] => l.map(fn).mkString("List(", ",", ")")
-              case _ => value.toString
+              case l: List[_] => l.map(recurseFn).mkString("List(", ",", ")")
+              case _ => defaultFn(value)
             }
           }
       }
@@ -39,7 +41,7 @@ object DisplayProcessor {
 
     def summary(x: Any): String = x match {
       case h: ToSummary => h.toSummary(this)
-      case _ => applyFn(summarizers, x, summary(_), _.summary(this))
+      case _ => applyFn(summarizers, x, summary(_), _.summary(this), defaultFn = x => x.toString.take(100))
     }
 
     def detailed(x: Any): String = x match {

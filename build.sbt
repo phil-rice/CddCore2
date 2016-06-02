@@ -97,8 +97,12 @@ lazy val websiteSettings = commonSettings ++ Seq(
   libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % versionNos.jetty
 )
 
-lazy val structureSettings = junitSettings ++ Seq(
+lazy val structureSettings = commonSettings ++ Seq(
   libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % versionNos.scalaXml
+)
+
+lazy val jsonSettings = commonSettings ++ Seq(
+  libraryDependencies += "org.json4s" %% "json4s-jackson" % versionNos.json4s
 )
 
 lazy val root = (project in file(".")).
@@ -154,6 +158,13 @@ lazy val structure = (project in file("module/structure")).
   dependsOn(utilities % "test->test;compile->compile").
   aggregate(utilities)
 
+lazy val json = (project in file("module/json")).
+  settings(jsonSettings: _*).
+  dependsOn(utilities % "test->test;compile->compile").
+  aggregate(utilities).
+  dependsOn(structure ).
+  aggregate(structure)
+
 lazy val website = (project in file("module/website")).
   settings(websiteSettings: _*).
   dependsOn(utilities % "test->test;compile->compile", rendering).
@@ -166,10 +177,12 @@ lazy val test = (project in file("module/test")).
   dependsOn(examples % "test->test").
   aggregate(examples).
   dependsOn(engine).
+  dependsOn(json).
   aggregate(engine).
   dependsOn(rendering).
   dependsOn(cddunit).
   dependsOn(testInterface).
   aggregate(rendering).
   aggregate(cddunit).
+  aggregate(json).
   aggregate(testInterface)
