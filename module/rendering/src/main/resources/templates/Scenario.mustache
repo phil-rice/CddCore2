@@ -4,6 +4,8 @@
                 <table class='scenarioTable'>
                     <tr><td>Situation</td><td>{{situation}}</td></tr>
                     <tr><td>Expected</td><td>{{expected}}</td></tr>
-                     {{#selected}}{{#error}}<tr><td colspan="2"><pre>{{message}}</pre></td></tr>{{/error}}{{/selected}}
+                    {{#actual}}<tr><td>Actual</td><td>{{actual}}</td></tr>{{/actual}}
+                    {{#selected}}{{#error}}<tr><td colspan="2"><pre>{{message}}</pre></td></tr>{{/error}}{{/selected}}
+                    {{#reason}}<tr><td>Reason</td><td>{{reason}}</td></tr>{{/reason}}
                 </table>
             </div><!-- scenario -->
