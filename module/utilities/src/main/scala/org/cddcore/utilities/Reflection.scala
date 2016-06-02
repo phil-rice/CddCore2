@@ -10,7 +10,7 @@ import scala.util.{Failure, Success, Try}
 
 object Reflection {
 
-  implicit def toFieldMapPimper[V](fieldMap: Map[Field, Try[V]]) = new FieldMapPimper(fieldMap)
+  implicit def toFieldMapPimper[V](fieldMap: ListMap[Field, Try[V]]) = new FieldMapPimper(fieldMap)
 
   def apply(instance: Any) = new Reflection(instance)
 
@@ -45,10 +45,10 @@ object Reflection {
 
 }
 
-class FieldMapPimper[V](fieldMap: Map[Field, Try[V]]) {
+class FieldMapPimper[V](fieldMap: ListMap[Field, Try[V]]) {
   def sorted(allFields: List[Field]) = ListMap[Field, Try[V]](fieldMap.toList.sortBy { case (f, _) => allFields.indexOf(f) }: _*)
 
-  def displayStringMap(valueFn: V => String = (v: V) => Strings.oneLine(v)): Map[Field, Try[String]] = {
+  def displayStringMap(valueFn: V => String = (v: V) => Strings.oneLine(v)): ListMap[Field, Try[String]] = {
     fieldMap.map { case (f, tryV) =>
       val s = tryV.transform(x => Try(valueFn(x)), e => Success(s"<Error>${e.getClass.getSimpleName}/${e.getMessage}</error>"))
       (f, s)
@@ -57,7 +57,7 @@ class FieldMapPimper[V](fieldMap: Map[Field, Try[V]]) {
 
   def displayString(separator: String = "\r\n") = fieldMap.toList.map{case (f, v) => f.getName +" -> " +v.get}.mkString(separator) //yes this throws the exception if v has one. if you don't want that, don't have an exception here
 
-  def removeAnnotationFromFieldMap[A <: Annotation : ClassTag]: Map[Field, Try[V]] = {
+  def removeAnnotationFromFieldMap[A <: Annotation : ClassTag]: ListMap[Field, Try[V]] = {
     val aClass = implicitly[ClassTag[A]].runtimeClass.asInstanceOf[Class[A]]
     fieldMap.filter { case (f, tryV) => f.getAnnotation(aClass) == null }
   }
@@ -118,17 +118,17 @@ class Reflection(instance: Any) {
     field.set(instance, newValue)
   }
 
-  def fieldMap[T: ClassTag]: Map[Field, Try[T]] = {
+  def fieldMap[T: ClassTag]: ListMap[Field, Try[T]] = {
     val returnType = implicitly[ClassTag[T]].runtimeClass
-    Map[Field, Try[T]]() ++ allFields.
+    ListMap[Field, Try[T]]() ++ allFields.
       filter(f => returnType.isAssignableFrom(f.getType)).
       map((f) => (f -> getFieldValue[T](f)))
   }
 
 
-  def fieldMapForAnnotation[A <: Annotation : ClassTag]: Map[Field, Try[Any]] = {
+  def fieldMapForAnnotation[A <: Annotation : ClassTag]: ListMap[Field, Try[Any]] = {
     val annotationType: Class[A] = implicitly[ClassTag[A]].runtimeClass.asInstanceOf[Class[A]]
-    Map[Field, Try[Any]]() ++ allFields.
+    ListMap[Field, Try[Any]]() ++ allFields.
       filter(f => f.getAnnotation(annotationType) != null).
       map((f) => (f -> getFieldValue[Any](f)))
   }

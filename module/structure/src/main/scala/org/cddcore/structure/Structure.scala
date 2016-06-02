@@ -4,7 +4,7 @@ package org.cddcore.structure
 import java.lang.annotation.Annotation
 import java.lang.reflect.{Field, Method}
 
-import org.cddcore.utilities.{Display, DontDisplay, Reflection, Strings}
+import org.cddcore.utilities._
 
 import scala.collection.immutable.ListMap
 import scala.reflect.ClassTag
@@ -89,8 +89,11 @@ trait Structure[S] {
 }
 
 
-class Situation[S: ClassTag : Structure] {
+class Situation[S: ClassTag : Structure] extends Displayable {
   val structure = implicitly[Structure[S]]
+
+  def structureTitle = getClass.getSimpleName
+
 
   object AggregateStrings extends PathResultStrategy[S, String] {
     def resultToAggregate(result: Iterable[S]) = Success(result.foldLeft(StringBuilder.newBuilder)((acc, s) => acc.append(structure.sToString(s))).toString())
@@ -152,18 +155,31 @@ class Situation[S: ClassTag : Structure] {
 
   import Reflection._
 
-  private type FieldMap = Map[Field, Try[Any]]
+  private type FieldMap = ListMap[Field, Try[Any]]
+
+  lazy val fieldMapForSummary: FieldMap = reflection.fieldMapForAnnotation[Summary]
 
   lazy val fieldMapForDisplay: FieldMap = {
     val displayFieldMap: FieldMap = reflection.fieldMapForAnnotation[Display]
-    val pathFieldMap: FieldMap = reflection.fieldMap[Path[S, Any, Any]].map { case (field, tryPath) =>
-      val value = tryPath.flatMap(_.get).recover { case e => s"<error evaluating path>${e.getClass.getSimpleName}/${e.getMessage}" }
-      (field, value.map(Strings.oneLine))
+    val pathFieldMap: FieldMap = reflection.fieldMap[Path[S, Any, Any]].map {
+      case (field, tryPath) =>
+        val value = tryPath.flatMap(_.get).recover {
+          case e => s"<error evaluating path>${
+            e.getClass.getSimpleName
+          }/${
+            e.getMessage
+          }"
+        }
+        (field, value.map(Strings.oneLine))
     }
     val unfinishedFieldMap: FieldMap =
-      reflection.fieldMap[PathRootAndSteps[S]].map { case (field, v) => (field, Success("No Convertor")) } ++
-        reflection.fieldMap[PathRoot[S]].map { case (field, v) => (field, Success("No Convertor")) }
-    (Map[Field, Try[Any]]() ++ displayFieldMap ++ pathFieldMap ++ unfinishedFieldMap).removeAnnotationFromFieldMap[DontDisplay]
+      reflection.fieldMap[PathRootAndSteps[S]].map {
+        case (field, v) => (field, Success("No Convertor"))
+      } ++
+        reflection.fieldMap[PathRoot[S]].map {
+          case (field, v) => (field, Success("No Convertor"))
+        }
+    (ListMap[Field, Try[Any]]() ++ displayFieldMap ++ pathFieldMap ++ unfinishedFieldMap).removeAnnotationFromFieldMap[DontDisplay]
   }
 
 
@@ -184,6 +200,28 @@ class Situation[S: ClassTag : Structure] {
       getClass.getSimpleName
     }($paths\r\n$structures)"
   }
+
+  override def html(implicit dp: DisplayProcessor): String = ???
+
+  override def summary(implicit dp: DisplayProcessor): String = {
+    def defaultSummary: String =
+      fieldMapForDisplay.toList match {
+        case (field, Success(head)) :: _ => s"${field.getName} -> ${dp.summary(head)}"
+        case (field, Failure(head)) :: _ => dp.summary(head)
+        case _ => toString.take(100)
+      }
+    if (fieldMapForSummary.size == 0) defaultSummary
+    else fieldMapForSummary.displayStringMap {
+      case x: Path[_, _, _] => x.get match {
+        case Success(s) => dp.summary(s);
+        case Failure(e) => e.getClass.getSimpleName + "/" + e.getMessage
+      }
+      case x => Strings.oneLine(x)
+    }.map { case (f, Success(v)) => f.getName + " -> " + v }.mkString(", ")
+  }
+
+  override def detailed(implicit dp: DisplayProcessor): String = ???
+
 }
 
 class Xml extends Situation[Node]

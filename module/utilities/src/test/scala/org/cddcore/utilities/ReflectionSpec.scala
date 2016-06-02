@@ -132,13 +132,13 @@ class ReflectionSpec extends CddSpec {
   it should "return a map for fields to a success of string saying what has happened" in {
     import Reflection._
     val reflection: Reflection = Reflection(new ClassForTest)
-    val raw: Map[Field, Try[Int]] = reflection.fieldMap[Int]
+    val raw: ListMap[Field, Try[Int]] = reflection.fieldMap[Int]
     raw.displayStringMap((i: Int) => s"i_$i").map(getName) shouldBe Map("lvFive" -> Success("i_5"), "lvTwo" -> Success("i_2"))
   }
   it should "return a map for fields to a string indicating the failure, if the value could not be got" in {
     import Reflection._
     val reflection: Reflection = Reflection(new ClassForTestWithException)
-    val raw: Map[Field, Try[Int]] = reflection.fieldMap[Int]
+    val raw: ListMap[Field, Try[Int]] = reflection.fieldMap[Int]
     raw.displayStringMap((i: Int) => s"i_$i").map(getName) shouldBe Map(
       "lvSeven" -> Success("<Error>RuntimeException/some message</error>"),
         "lvFive" -> Success("i_5"),
