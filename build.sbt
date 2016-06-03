@@ -12,6 +12,8 @@ val versionNos = new {
   val scalaXml = "1.0.5"
   val jetty = "9.3.8.v20160314"
   val testInterface = "1.0"
+  val mockito = "1.10.19"
+  val specs2 = "2.3.12"
 }
 
 lazy val baseSettings = Seq(
@@ -46,7 +48,7 @@ lazy val baseSettings = Seq(
   },
   pomIncludeRepository := { _ => false },
   pomExtra in ThisBuild := (
-      <url>http://www.constraintdrivendevelopment.com</url>
+    <url>http://www.constraintdrivendevelopment.com</url>
       <licenses>
         <license>
           <name>BSD-style</name>
@@ -73,7 +75,10 @@ testFrameworks += new TestFramework("org.cddcore.testinterface.CddFramework")
 lazy val commonSettings = baseSettings ++ Seq(
   testFrameworks += new TestFramework("org.cddcore.testinterface.CddFramework"),
   libraryDependencies += "org.scalatest" %% "scalatest" % versionNos.scalaTest % "test",
-  libraryDependencies += "com.novocode" % "junit-interface" % versionNos.novacode % "test"
+  libraryDependencies += "org.specs2" %% "specs2" % versionNos.specs2 % "test",
+  libraryDependencies += "com.novocode" % "junit-interface" % versionNos.novacode % "test",
+  libraryDependencies += "org.mockito" % "mockito-all" % versionNos.mockito % "test"
+
 )
 
 lazy val utilitiesSettings = commonSettings ++ Seq(
@@ -162,7 +167,7 @@ lazy val json = (project in file("module/json")).
   settings(jsonSettings: _*).
   dependsOn(utilities % "test->test;compile->compile").
   aggregate(utilities).
-  dependsOn(structure ).
+  dependsOn(structure).
   aggregate(structure)
 
 lazy val website = (project in file("module/website")).

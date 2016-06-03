@@ -2,8 +2,9 @@
 package org.cddcore.utilities
 
 import org.scalatest.{FlatSpec, Matchers}
+import org.specs2.mock.Mockito
 
-trait CddSpec extends FlatSpec with Matchers  {
+trait CddSpec extends FlatSpec with Matchers with Mockito {
   def safeMake[X](x: => X) = try {
     x
   } catch {
