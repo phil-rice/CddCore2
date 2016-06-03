@@ -78,7 +78,7 @@ case class BuildData[P, R](errors: List[ScenarioException[P, R]], decisionTree: 
 
 object DecisionTree extends DecisionTreeValidator {
 
-  private def addScenarioToConclusionNode[P, R](mockEngine: P => R, cn: ConclusionNode[P, R], s: Scenario[P, R]) = {
+  private def addScenarioToConclusionNode[P, R](mockEngine: P => R, cn: ConclusionNode[P, R], s: Scenario[P, R])(implicit childLifeCycle: ChildLifeCycle[EngineComponent[P, R]]) = {
     (cn.mainScenario.reason.hasWhy, s.reason.hasWhy) match {
       case (_, false) =>
         cn.copy(scenarios = cn.scenarios :+ s)
@@ -88,7 +88,9 @@ object DecisionTree extends DecisionTreeValidator {
         else
           makeDecisionNode(mockEngine, s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios)
       }
-      case _ => throw new IllegalStateException("Both main scenario and S have a reason, so I should not be adding the scenario to the main conclusion. ")
+      case _ =>
+        childLifeCycle.childHasException(s, new IllegalStateException("Both main scenario and S have a reason, so I should not be adding the scenario to the main conclusion. "))
+        cn
     }
   }
 
@@ -182,7 +184,7 @@ trait DecisionTree[P, R] extends EngineComponent[P, R] {
   def pathFor(mockEngine: P => R, situation: P): List[DecisionTree[P, R]]
 
   def conclusionNodeFor(mockEngine: P => R, situation: P) = pathFor(mockEngine, situation).last match {
-    case cn: ConclusionNode[P,R] => cn
+    case cn: ConclusionNode[P, R] => cn
     case dt => throw new IllegalStateException(s"Somehow had a $dt")
   }
 
@@ -209,7 +211,7 @@ object EmptyDecisionTree extends DecisionTree[Nothing, Nothing] {
 
   def apply(engine: (Nothing) => Nothing, p: Nothing): Nothing = throw new IllegalStateException("An empty decision tree has no scenarios")
 
-  def pathFor(mockEngine: (Nothing) => Nothing,  situation: Nothing): List[DecisionTree[Nothing, Nothing]] = throw new IllegalStateException("An empty decision tree has no scenarios")
+  def pathFor(mockEngine: (Nothing) => Nothing, situation: Nothing): List[DecisionTree[Nothing, Nothing]] = throw new IllegalStateException("An empty decision tree has no scenarios")
 
   def mainScenario: Scenario[Nothing, Nothing] = throw new IllegalStateException("An empty decision tree has no scenarios")
 

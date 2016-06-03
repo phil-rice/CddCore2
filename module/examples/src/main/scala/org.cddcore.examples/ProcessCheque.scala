@@ -209,8 +209,8 @@ object ProcessChequeXml {
     }
   }
 
-//  def main(args: Array[String]) {
-//    println(processCheque(ChequeSituation(world, cheque("1", dodgyDaveId, richRogerAtHsbcId, 50))))
-//  }
+  def main(args: Array[String]) {
+    println(processCheque(ChequeSituation(world, cheque("1", dodgyDaveId, richRogerAtHsbcId, 50))))
+  }
 
 }

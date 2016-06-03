@@ -88,12 +88,8 @@ trait Structure[S] {
 
 }
 
-
-class Situation[S: ClassTag : Structure] extends Displayable {
-  val structure = implicitly[Structure[S]]
-
-  def structureTitle = getClass.getSimpleName
-
+trait PathResults[S] {
+  implicit def structure: Structure[S]
 
   object AggregateStrings extends PathResultStrategy[S, String] {
     def resultToAggregate(result: Iterable[S]) = Success(result.foldLeft(StringBuilder.newBuilder)((acc, s) => acc.append(structure.sToString(s))).toString())
@@ -151,15 +147,21 @@ class Situation[S: ClassTag : Structure] extends Displayable {
     def set[A](mapFn: S => A) = fold[Set[A], A](mapFn)(Set())((acc, a) => acc + a)
   }
 
+}
+
+class Situation[S: ClassTag](implicit val structure: Structure[S]) extends PathResults[S] with Displayable {
+
+  def structureTitle = getClass.getSimpleName
+
   lazy val reflection = Reflection(this)
 
   import Reflection._
 
   private type FieldMap = ListMap[Field, Try[Any]]
 
-  lazy val fieldMapForSummary: FieldMap = reflection.fieldMapForAnnotation[Summary]
+  private lazy val fieldMapForSummary: FieldMap = reflection.fieldMapForAnnotation[Summary]
 
-  lazy val fieldMapForDisplay: FieldMap = {
+  private lazy val fieldMapForDisplay: FieldMap = {
     val displayFieldMap: FieldMap = reflection.fieldMapForAnnotation[Display]
     val pathFieldMap: FieldMap = reflection.fieldMap[Path[S, Any, Any]].map {
       case (field, tryPath) =>
@@ -182,10 +184,33 @@ class Situation[S: ClassTag : Structure] extends Displayable {
     (ListMap[Field, Try[Any]]() ++ displayFieldMap ++ pathFieldMap ++ unfinishedFieldMap).removeAnnotationFromFieldMap[DontDisplay]
   }
 
+  private lazy val structureMap = reflection.fieldMap[S].removeAnnotationFromFieldMap[DontDisplay].sorted(reflection.allFields)
 
-  lazy val structureMap = reflection.fieldMap[S].removeAnnotationFromFieldMap[DontDisplay].sorted(reflection.allFields)
+  override def toString = detailed
 
-  override def toString = {
+  override def html(implicit dp: DisplayProcessor): String = detailed
+
+  private def defaultSummary(implicit dp: DisplayProcessor): String =
+    fieldMapForDisplay.toList match {
+      case (field, Success(head)) :: _ => s"${getClass.getSimpleName}(${field.getName} -> ${dp.summary(head)})"
+      case (field, Failure(head)) :: _ => dp.summary(head)
+      case _ => toString.take(100)
+    }
+
+  override def summary(implicit dp: DisplayProcessor): String = {
+    if (fieldMapForSummary.size == 0)
+      defaultSummary
+    else
+      fieldMapForSummary.displayStringMap {
+        case x: Path[_, _, _] => x.get match {
+          case Success(s) => dp.summary(s);
+          case Failure(e) => e.getClass.getSimpleName + "/" + e.getMessage
+        }
+        case x => Strings.oneLine(x)
+      }.map { case (f, Success(v)) => f.getName + " -> " + v }.mkString(getClass.getSimpleName + "(", ",", ")")
+  }
+
+  override def detailed(implicit dp: DisplayProcessor): String = {
     val paths = fieldMapForDisplay.size match {
       case 0 => ""
       case _ => "\r\n  " + fieldMapForDisplay.displayStringMap(Strings.oneLine).sorted(reflection.allFields).displayString("\r\n  ")
@@ -200,28 +225,6 @@ class Situation[S: ClassTag : Structure] extends Displayable {
       getClass.getSimpleName
     }($paths\r\n$structures)"
   }
-
-  override def html(implicit dp: DisplayProcessor): String = ???
-
-  override def summary(implicit dp: DisplayProcessor): String = {
-    def defaultSummary: String =
-      fieldMapForDisplay.toList match {
-        case (field, Success(head)) :: _ => s"${field.getName} -> ${dp.summary(head)}"
-        case (field, Failure(head)) :: _ => dp.summary(head)
-        case _ => toString.take(100)
-      }
-    if (fieldMapForSummary.size == 0) defaultSummary
-    else fieldMapForSummary.displayStringMap {
-      case x: Path[_, _, _] => x.get match {
-        case Success(s) => dp.summary(s);
-        case Failure(e) => e.getClass.getSimpleName + "/" + e.getMessage
-      }
-      case x => Strings.oneLine(x)
-    }.map { case (f, Success(v)) => f.getName + " -> " + v }.mkString(", ")
-  }
-
-  override def detailed(implicit dp: DisplayProcessor): String = ???
-
 }
 
 class Xml extends Situation[Node]
