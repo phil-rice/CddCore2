@@ -116,7 +116,9 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
     linkKey -> makeLink(rc, ec),
     idKey -> rc.idPath(ec),
     typeKey -> findTypeName(ec),
-    titleKey -> ec.title)
+    summaryKey -> rc.displayProcessor.summary(ec),
+    titleKey -> ec.title
+  )
 
   def renderScenario(rc: RenderContext, s: Scenario[_, _]) = {
     val raw = Map(
@@ -124,6 +126,7 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
       typeKey -> findTypeName(s),
       linkKey -> makeLink(rc, s),
       titleKey -> s.title,
+      summaryKey -> rc.displayProcessor.summary(s),
       commentKey -> s.comment.getOrElse(""),
       situationKey -> rc.displayProcessor.html(s.situation),
       expectedKey -> s.expectedOption.map(expected => rc.displayProcessor.html(expected)).getOrElse("<Not Known>"),
@@ -143,7 +146,8 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
     (rc, useCase1) produces dataForUseCase1 because { case (rc, uc: UseCase[_, _]) => renderRawData(rc, uc) ++ Map(commentKey -> uc.comment.getOrElse(""), referencesKey -> uc.references.map(referenceToMap(rc))) }
     (rc, useCase2) produces dataForUseCase2
 
-    (rc, scenario1) produces dataForScenario1 + ("error" -> exceptionMap(rc.exceptions(scenario1))) because { case (rc, s: Scenario[_, _]) if rc.exceptions.contains(s) => renderScenario(rc, s) + ("error" -> exceptionMap(rc.exceptions(s))) }
+    (rc, scenario1) produces dataForScenario1 + ("error" -> exceptionMap(rc.exceptions(scenario1))) because {
+      case (rc, s: Scenario[_, _]) if rc.exceptions.contains(s) => renderScenario(rc, s) + ("error" -> exceptionMap(rc.exceptions(s))) }
 
     (rc, scenario2) produces dataForScenario2 because { case (rc, s: Scenario[_, _]) => renderScenario(rc, s) }
     (rc, scenario3) produces dataForScenario3

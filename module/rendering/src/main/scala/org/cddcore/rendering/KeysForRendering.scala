@@ -24,6 +24,7 @@ trait KeysForRendering {
   val commentKey = "comment"
   val linkKey = "link"
   val idKey = "id"
+  val summaryKey = "summary"
   val titleKey = "title"
   val referencesKey = "references"
   val linkUrlKey = "linkUrl"
