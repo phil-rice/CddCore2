@@ -19,5 +19,5 @@ trait CddEngineSpec extends CddSpec {
 }
 
 trait CddNonRecursiveSpec[P, R] extends CddEngineSpec {
-  def mockEngine[P, R]: P => R = _ => throw new RuntimeException("Should not try anything recursive in this test")
+  def mockEngine: P => R = _ => throw new RuntimeException("Should not try anything recursive in this test")
 }

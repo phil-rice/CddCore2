@@ -82,11 +82,11 @@ class DecisionTreeAddingToConclusionNodeSpec extends CddNonRecursiveSpec[String,
     val s2 = "2" produces "result"
     val s4 = "4" produces "result"
     val s5 = "5" produces "result"
-    val raw = DecisionTree(mockEngine, Seq(s1, s2, s4, s5))
+    val raw = DecisionTree[String,String](mockEngine, Seq(s1, s2, s4, s5))
     raw shouldBe ConclusionNode(s1, List(s2, s4, s5))
     val s3 = "3" produces "result" when (_.toInt > 2)
 
-    DecisionTree.addOne(mockEngine, raw, s3) shouldBe
+    val builder = new DecisionTreeBuilder(mockEngine).addOne(raw, s3) shouldBe
       DecisionNode(s3, falseNode = ConclusionNode(s1, List(s2)), trueNode = ConclusionNode(s3, List(s4, s5)))
 
   }
