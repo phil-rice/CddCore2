@@ -82,17 +82,17 @@ class DecisionTreeAddingToConclusionNodeSpec extends CddNonRecursiveSpec[String,
     val s2 = "2" produces "result"
     val s4 = "4" produces "result"
     val s5 = "5" produces "result"
-    val raw = DecisionTree[String,String](mockEngine, Seq(s1, s2, s4, s5))
+    val raw = DecisionTree[String, String](mockEngine, Seq(s1, s2, s4, s5))
     raw shouldBe ConclusionNode(s1, List(s2, s4, s5))
     val s3 = "3" produces "result" when (_.toInt > 2)
 
     val builder = new DecisionTreeBuilder(mockEngine).addOne(raw, s3) shouldBe
       DecisionNode(s3, falseNode = ConclusionNode(s1, List(s2)), trueNode = ConclusionNode(s3, List(s4, s5)))
-
   }
 
   "A decistion three with different simple reasons, one of them with a by" should "use the by as the main scenario" in {
     if (FutureWorkFlags.noticingScenariosWithBy) fail
   }
+
 
 }

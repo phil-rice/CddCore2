@@ -3,25 +3,27 @@ package org.cddcore.engine
 
 import org.cddcore.enginecomponents.{CannotAddScenarioException, Scenario}
 
+import scala.collection.immutable.ListMap
+
 class EngineWithFaultyScenariosSpec extends CddEngineSpec {
 
   import Scenario._
 
   "An Engine" should "Remember the fault scenarios - bad when" in {
     val (e, s, errors) = toErrors[Int, String](implicit clc => 1 produces "one" when (_ == 2))
-    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:11)"
+    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:13)"
     errors shouldBe Map(s -> "ReasonInvalidException")
   }
 
   it should "Remember the fault scenarios - bad because" in {
     val (e, s, errors) = toErrors[Int, String](implicit clc => 1 produces "one" because { case _ => "duff" })
-    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:17)"
+    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:19)"
     errors shouldBe Map(s -> "AssertionInvalidException")
   }
 
   it should "Handle multiple errors by only remembering the first " in {
     val (e, s, errors) = toErrors[Int, String](implicit clc => 1 produces "one" when (_ == 2) because { case _ => "duff" })
-    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:23)"
+    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:25)"
     errors shouldBe Map(s -> "ReasonInvalidException")
   }
 
@@ -52,5 +54,36 @@ class EngineWithFaultyScenariosSpec extends CddEngineSpec {
     }
     e.decisionTree(e, 1) shouldBe "one"
     e.decisionTree(e, 2) shouldBe "one"
+  }
+
+  it should "add scenarios that cause exceptions in other scenario's conditions clauses to the exceptions lists" in {
+    val e = new RuntimeException("someMessage")
+    val engine = new Engine[Int, String] {
+      1 produces "result" because {
+        case s if s == 1 => "result"
+        case _ if (throw e) => "result"
+      }
+      2 produces "result"
+    }
+
+    val Seq(s1, s2) = engine.allScenarios
+    //    s1.situation shouldBe 1
+    //    s2.situation shouldBe 2
+    //    s1.reason.isDefinedAt(engine, 2) shouldBe false
+    //    s1.isDefinedAt(engine, 2) shouldBe false
+    intercept[RuntimeException](s1.isDefinedAt(engine, 2)) shouldBe e
+    engine.decisionTree shouldBe ConclusionNode(s1)
+    engine.errors.size shouldBe 1
+    val exception = engine.errors(s2).asInstanceOf[ScenarioCausesExceptionInOtherScenariosWhenClause[Int, String]]
+    withClue(exception) {
+      exception.getCause shouldBe e
+      exception.scenario shouldBe s2
+      exception.originalScenario shouldBe s1
+      exception.getMessage shouldBe
+        "The scenario defined at (EngineWithFaultyScenariosSpec.scala:66) caused an exception when evaluating the condition of the scenario defined at Scenario(1 produces result because {case (s @ _) if s.==(1) => \"result\"})/(EngineWithFaultyScenariosSpec.scala:62)\n" +
+          "This scenario is Scenario(2 produces result JustBecause)/(EngineWithFaultyScenariosSpec.scala:66)\n" +
+          "Original scenario is Scenario(1 produces result because {case (s @ _) if s.==(1) => \"result\"})/(EngineWithFaultyScenariosSpec.scala:62)\n"
+
+    }
   }
 }

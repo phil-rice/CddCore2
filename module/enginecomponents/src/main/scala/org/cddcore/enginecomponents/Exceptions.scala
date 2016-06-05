@@ -7,7 +7,7 @@ trait HasActual[R] {
   def actual: R
 }
 
-class ScenarioException[P, R](val scenario: Scenario[P, R], msg: String) extends Exception(msg) {
+class ScenarioException[P, R](val scenario: Scenario[P, R], msg: String, cause: Exception = null) extends Exception(msg, cause) {
 
 }
 

@@ -22,7 +22,11 @@ object DecisionTreeRenderData {
 
 case class DecisionTreeRenderData[P, R](engine: P => R, selectedSituation: Option[P], pathThroughDecisionTree: List[DecisionTree[P, R]])(implicit val dp: DisplayProcessor) extends KeysForRendering {
   def findTrueFalse(dt: DecisionTree[P, R]): Map[String, Any] = Map(trueFalseKey -> (selectedSituation match {
-    case Some(s) => dt.mainScenario.isDefinedAt(engine, s).toString
+    case Some(s) => try {
+      dt.mainScenario.isDefinedAt(engine, s).toString
+    } catch {
+      case e: Exception => ""
+    }
     case _ => ""
   }))
 
