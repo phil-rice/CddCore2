@@ -9,44 +9,42 @@ object DisplayProcessor {
   def apply() = defaultDisplayProcessor
 
   protected case class SimpleDisplayProcessor(htmlers: List[DpFunction], summarizers: List[DpFunction], detailers: List[DpFunction]) extends DisplayProcessor {
-    def applyFn(list: List[DpFunction], value: Any, recurseFn: Any => String, displayableFn: Displayable => String, defaultFn: Any => String = _.toString): String =
-      value match {
-        case d: Displayable => displayableFn(d)
-        case _ =>
-          val tuple = (this, value)
+    def applyFn(list: List[DpFunction], value: Any, recurseFn: Any => String, displayableFn: PartialFunction[Any, String], defaultFn: Any => String = _.toString): String =
+      if (displayableFn.isDefinedAt(value)) displayableFn(value)
+      else {
+        val tuple = (this, value)
 
-          list.find(_.isDefinedAt(tuple)) match {
-
-            case Some(f) => f(tuple)
-            case _ => value match {
-              case (a, b) => s"(${recurseFn(a)},${recurseFn(b)})"
-              case (a, b, c) => s"(${recurseFn(a)},${recurseFn(b)},${recurseFn(c)})"
-              case m: Map[_, _] => m.map {
-                case kv@(k, v) =>
-                  list.find(_.isDefinedAt(this, kv)) match {
-                    case Some(f) => f(this, kv)
-                    case _ => s"${recurseFn(k)} -> ${recurseFn(v)}"
-                  }
-              }.mkString("Map(", ",", ")")
-              case l: List[_] => l.map(recurseFn).mkString("List(", ",", ")")
-              case _ => defaultFn(value)
-            }
+        list.find(_.isDefinedAt(tuple)) match {
+          case Some(f) => f(tuple)
+          case _ => value match {
+            case (a, b) => s"(${recurseFn(a)},${recurseFn(b)})"
+            case (a, b, c) => s"(${recurseFn(a)},${recurseFn(b)},${recurseFn(c)})"
+            case m: Map[_, _] => m.map {
+              case kv@(k, v) =>
+                list.find(_.isDefinedAt(this, kv)) match {
+                  case Some(f) => f(this, kv)
+                  case _ => s"${recurseFn(k)} -> ${recurseFn(v)}"
+                }
+            }.mkString("Map(", ",", ")")
+            case l: List[_] => l.map(recurseFn).mkString("List(", ",", ")")
+            case _ => defaultFn(value)
           }
+        }
       }
 
     def html(x: Any): String = x match {
       case h: ToHtml => h.toHtml(this)
-      case _ => applyFn(htmlers, x, html(_), _.html(this))
+      case _ => applyFn(htmlers, x, html(_), { case h: ToHtml => h.toHtml(this) })
     }
 
     def summary(x: Any): String = x match {
       case h: ToSummary => h.toSummary(this)
-      case _ => applyFn(summarizers, x, summary(_), _.summary(this), defaultFn = x => x.toString.take(100))
+      case _ => applyFn(summarizers, x, summary(_), { case s: ToSummary => s.toSummary(this) }, defaultFn = x => x.toString.take(100))
     }
 
     def detailed(x: Any): String = x match {
       case h: ToDetailed => h.toDetailed(this)
-      case _ => applyFn(detailers, x, detailed(_), _.detailed(this))
+      case _ => applyFn(detailers, x, detailed(_), { case d: ToDetailed => d.toDetailed(this) })
     }
 
     def withHtml(htmler: DpFunction) = copy(htmlers = htmler :: htmlers)

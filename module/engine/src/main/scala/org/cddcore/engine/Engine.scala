@@ -55,7 +55,7 @@ object Engine {
 
   protected def callWith[P, R, E <: EngineEvaluator](engineEvaluator: E, engine: AbstractEngine[P, R], p: P) = {
     val oldValue = threadLocalEvaluator.get
-        threadLocalEvaluator.set(engineEvaluator)
+    threadLocalEvaluator.set(engineEvaluator)
     try {
       (engineEvaluator(engine, p), engineEvaluator)
     } finally {
@@ -65,7 +65,7 @@ object Engine {
 
   //Sometimes the list may have multiple items in it: most often when called the first time. This is often because the building of decision trees causes other engines to be called if they are referenced by this engine.
   // The last item in the list is the trace item corresponding to the call
-    def trace[P, R](engine: AbstractEngine[P, R], p: P): (R, List[Trace]) = {
+  def trace[P, R](engine: AbstractEngine[P, R], p: P): (R, List[Trace]) = {
     val result = threadLocalEvaluator.get match {
       case SimpleEngineEvaluator => {
         val (result, traceEngineEvaluator) = callWith(new TraceEngineEvaluator, engine, p)
@@ -79,7 +79,7 @@ object Engine {
 
 abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val references: List[Reference] = List(), val definedInSourceCodeAt: DefinedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt())
                                    (implicit val hierarchy: Hierarchy[UseCase[P, R], EngineComponent[P, R]], dp: DisplayProcessor)
-  extends EngineComponent[P, R] with MutableHierarchyBuilderWithChildLifeCycle[UseCase[P, R], EngineComponent[P, R]] {
+  extends EngineComponent[P, R] with MutableHierarchyBuilderWithChildLifeCycle[UseCase[P, R], EngineComponent[P, R]] with ToSummary {
 
   def allUseCases = allUseCasesPrim(asUseCase)
 
@@ -171,9 +171,11 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val refer
     case x => throw new IllegalStateException(s"Somehow called last, and the last child wasn't a scenario, instead it was ${x.getClass}\n$x")
   }
 
+  def toSummary(displayProcessor: DisplayProcessor): String = title
 }
 
 class Engine[P, R](initialTitle: String = "Untitled", references: List[Reference] = List(), definedInSourceCodeAt: DefinedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt())(implicit dp: DisplayProcessor) extends AbstractEngine[P, R](initialTitle, references, definedInSourceCodeAt) with Function[P, R] {
+
   def apply(p: P): R = Engine(this, p)
 }
 

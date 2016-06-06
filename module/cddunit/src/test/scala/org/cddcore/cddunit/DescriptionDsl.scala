@@ -90,7 +90,7 @@ class DescriptionDsl[P, R](clazz: Class[_], val engine: Engine[P, R])(implicit v
   protected def test(situation: P) = {
     val scenario = findScenarioWithSituation(situation)
     val id = renderContext.idPath(scenario)
-    val summary = Strings.cleanStringForJunitName(scenario.toSummary(renderContext.displayProcessor))
+    val summary = Strings.cleanStringForJunitName(renderContext.displayProcessor.summary(scenario))
     val data = DescriptionData(null, summary, id)
     childLifeCycle.created(data)
     ecToDescription = ecToDescription + (scenario -> data)
@@ -125,7 +125,7 @@ trait DescriptionDslTestFramework {
   val engineId = pathMap(engine)
   val ucs@List(uc1, uc2) = engine.asUseCase.components.reverse
   val ss@List(s1, s2, s3, s4, s5) = dsl.scenarios
-  val ds@List(d1, d2, d3, d4, d5) = ss.map(s => Strings.cleanStringForJunitName(s.toSummary(displayProcessor)))
+  val ds@List(d1, d2, d3, d4, d5) = ss.map(s => Strings.cleanStringForJunitName(displayProcessor.summary(s)))
   val ids@List(ucid1, ucid2, id1, id2, id3, id4, id5) = (ucs ::: ss).map(pathMap(_))
 
 }

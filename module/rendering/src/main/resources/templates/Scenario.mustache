@@ -2,10 +2,10 @@
                 <div class='scenarioTitle'>{{>Link}}{{>references}}</div>
                 {{>Comment}}
                 <table class='scenarioTable'>
-                    <tr><td>Situation</td><td>{{situation}}</td></tr>
+                    <tr><td>Situation</td><td><pre>{{situation}}</pre></td></tr>
                     <tr><td>Expected</td><td>{{expected}}</td></tr>
                     {{#actual}}<tr><td>Actual</td><td>{{actual}}</td></tr>{{/actual}}
-                    {{#selected}}{{#error}}<tr><td colspan="2"><pre>{{message}}</pre></td></tr>{{/error}}{{/selected}}
+                    {{#selected}}{{#error}}<tr><td colspan="2">{{class}}<br /><pre>{{message}}</pre></td></tr>{{/error}}{{/selected}}
                     {{#reason}}<tr><td>Reason</td><td>{{reason}}</td></tr>{{/reason}}
                 </table>
             </div><!-- scenario -->

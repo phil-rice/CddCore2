@@ -19,7 +19,7 @@ object Scenario {
 
 }
 
-case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: DefinedInSourceCodeAt, title: String, comment: Option[String], references: List[Reference]) extends EngineComponent[P, R] with ToSummary with HasComment {
+case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: DefinedInSourceCodeAt, title: String, comment: Option[String], references: List[Reference]) extends EngineComponent[P, R]  with HasComment with ToSummary{
   def allScenarios = Seq(this)
 
   def apply(engine: P => R, p: P) = reason(engine, p)
@@ -50,7 +50,7 @@ case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion:
 
   override def toString = s"Scenario($situation ${assertion.prettyDescription} ${reason.prettyDescription})/$definedInSourceCodeAt"
 
-  override def toSummary(dp: DisplayProcessor): String = comment.fold(s"$definedInSourceCodeAt ${dp.summary(situation)} ${dp.summary(assertion)})")(c => s"$definedInSourceCodeAt $c")
+  override def toSummary(dp: DisplayProcessor): String = comment.fold(s"${dp.summary(situation)} ${dp.summary(assertion)})")(c => s"$c")
 }
 
 case class FromSituationScenarioBuilder[P, R](situation: P) {

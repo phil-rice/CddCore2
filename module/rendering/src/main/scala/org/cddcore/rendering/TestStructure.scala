@@ -14,7 +14,7 @@ trait TestView {
       "errors" -> engine.errors.map {
         case (ec: Scenario[_, _], error) => Map(
           "definedAt" -> ec.definedInSourceCodeAt.toString,
-          "description" -> ec.toString,
+          "description" -> (rc.displayProcessor.summary(ec) + " / " + error.getClass.getSimpleName),
           "url" -> rc.url(ec))
       })
   }

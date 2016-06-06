@@ -133,12 +133,12 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
       referencesKey -> s.references.map(referenceToMap(rc)))
     rc.exceptions.get(s).fold(raw) {
       case ha: HasActual[_] => raw + ("actual" -> rc.displayProcessor.html(ha.actual))
-      case r: ReasonInvalidException[_,_] => raw + ("reason" -> r.scenario.reason.prettyDescription)
+      case r: ReasonInvalidException[_, _] => raw + ("reason" -> r.scenario.reason.prettyDescription)
       case _ => raw
     }
   }
 
-  def exceptionMap(e: Exception) = Map("message" -> e.getMessage, "stack" -> e.getStackTrace.take(5).mkString("\n"))
+  def exceptionMap(e: Exception) = Map("message" -> e.getMessage, "class" -> e.getClass.getSimpleName, "stack" -> e.getStackTrace.take(5).mkString("\n"))
 
   object renderData extends Engine2[RenderContext, EngineComponent[_, _], Map[String, _]] {
     (rc, engineWithUseCase) produces dataForEngine because { case (rc, e: Engine[_, _]) => renderRawData(rc, e) ++ Map(referencesKey -> e.references.map(referenceToMap(rc))) }
@@ -147,7 +147,8 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
     (rc, useCase2) produces dataForUseCase2
 
     (rc, scenario1) produces dataForScenario1 + ("error" -> exceptionMap(rc.exceptions(scenario1))) because {
-      case (rc, s: Scenario[_, _]) if rc.exceptions.contains(s) => renderScenario(rc, s) + ("error" -> exceptionMap(rc.exceptions(s))) }
+      case (rc, s: Scenario[_, _]) if rc.exceptions.contains(s) => renderScenario(rc, s) + ("error" -> exceptionMap(rc.exceptions(s)))
+    }
 
     (rc, scenario2) produces dataForScenario2 because { case (rc, s: Scenario[_, _]) => renderScenario(rc, s) }
     (rc, scenario3) produces dataForScenario3
@@ -166,7 +167,8 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
   }
 
   def renderPath(rc: RenderContext, path: List[EngineComponent[_, _]]) =
-    Map("title" -> path.head.title,
+    Map(titleKey -> path.head.title,
+      summaryKey -> rc.displayProcessor.summary(path.head),
       "definedAt" -> path.head.definedInSourceCodeAt.toString,
       "engine" -> Templates.renderFocus(rc, path.last, path))
 }

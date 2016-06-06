@@ -2,6 +2,7 @@
 package org.cddcore.engine
 
 import org.cddcore.enginecomponents.{Document, InternetDocument, Reference, UseCase}
+import org.cddcore.utilities.DisplayProcessor
 
 import scala.collection.immutable.ListMap
 
@@ -22,6 +23,10 @@ class EngineSpec extends CddEngineSpec {
     }.title shouldBe "someOtherTitle"
   }
 
+  it should "have a summary equal to its title" in {
+    new Engine("someTitle") {
+    }.toSummary(DisplayProcessor()) shouldBe "someTitle"
+  }
   "An engine " should "have use cases added " in {
     val e = new Engine[Person, String] {
       useCase("some usecase1")()
