@@ -6,6 +6,7 @@ import scala.xml.Elem
 import scala.xml.NodeSeq
 import org.cddcore.engine.Engine
 import org.cddcore.structure.{PathResult, Situation, Xml}
+import org.cddcore.utilities.{Display, DontDisplay}
 import org.junit.runner.RunWith
 
 case class MapWithDefault[K, V](map: Map[K, V], default: V) extends Function[K, V] {
@@ -98,29 +99,35 @@ case class ChequeSituation(world: World, cheque: Elem) extends Xml {
 
   def bankId = PathResult((id: String) => BankId(id), OneAndOnlyOneString)
 
+  @DontDisplay
   val chequeContents = root(cheque)
+  @DontDisplay
   val chequeFromContents = chequeContents \ "From"
   lazy val chequeFromBank = chequeFromContents \ "Bank" \ bankId
   lazy val chequeFromId = chequeFromContents \ "Id" \ string
 
-  lazy val chequeFrom = {
-    val result = CustomerId(chequeFromId(), chequeFromBank())
-    result
-  }
-
-  val chequeToContents = chequeContents \ "To"
-  lazy val chequeToBank = chequeToContents \ "Bank" \ bankId
-  lazy val chequeToId = chequeToContents \ "Id" \ string
-  lazy val chequeTo = CustomerId(chequeToId(), chequeToBank())
+  lazy val chequeFrom = CustomerId(chequeFromId(), chequeFromBank())
 
   lazy val chequeAmount = chequeContents \ "Amount" \ gbp
-
-  lazy val customer = root(world.customerIdToCustomer(chequeFrom))
   lazy val customerBalance = customer \ "Balance" \ gbp
   lazy val customerOverdraftLimit = customer \ "OverdraftLimit" \ gbp
 
+  @DontDisplay
+  val chequeToContents = chequeContents \ "To"
+  @DontDisplay
+  lazy val customer = root(world.customerIdToCustomer(chequeFrom))
+  lazy val chequeToBank = chequeToContents \ "Bank" \ bankId
+  lazy val chequeToId = chequeToContents \ "Id" \ string
+
+  lazy val chequeTo = CustomerId(chequeToId(), chequeToBank())
+
+
+
+  @Display
   lazy val customerWouldBeOverDrawn = chequeAmount() > customerBalance()
+  @Display
   lazy val customerHasNoOverdraftLimit = customerOverdraftLimit() == GBP(0, 0)
+  @Display
   lazy val customerWouldExceedOverdraftLimit = chequeAmount() >= customerBalance() + customerOverdraftLimit()
 }
 

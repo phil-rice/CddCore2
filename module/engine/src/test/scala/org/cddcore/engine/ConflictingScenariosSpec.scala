@@ -3,6 +3,8 @@ package org.cddcore.engine
 
 import org.cddcore.enginecomponents.{RememberingLifeCycle, Scenario}
 
+
+
 class ConflictingScenariosSpec extends CddNonRecursiveSpec[String, String] {
 
   import Scenario._

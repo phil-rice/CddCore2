@@ -138,7 +138,7 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val refer
 
   def mocks(p: P): R = rawMocks.getOrElse(p, throw new MockValueNotFoundException(p))
 
-  lazy val decisionTree = {
+  def buildDecisionTree = {
     val ss: List[Scenario[P, R]] = allScenarios.toList
     val mocks = rawMocks
     val initialErrors = hierarchyBuilder.holder.errors
@@ -146,6 +146,8 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val refer
     seal
     result
   }
+
+  lazy val decisionTree = buildDecisionTree
 
   def something = Scenario.something[R]
 

@@ -14,11 +14,10 @@ class ScenarioException[P, R](val scenario: Scenario[P, R], msg: String, cause: 
 class ReasonInvalidException[P, R](s: Scenario[P, R])
   extends ScenarioException(s, s"Scenario defined at ${s.definedInSourceCodeAt} cannot be added because the reason given isn't valid")
 
-class CannotAddScenarioException[P, R](s: Scenario[P, R], existing: Scenario[P, R], val actual: R)(implicit dp: DisplayProcessor) extends ScenarioException(
-  s, s"Scenario defined at ${s.definedInSourceCodeAt} conflicts with ${existing.definedInSourceCodeAt}\n" +
-    s"Scenario being added is ${dp.summary(s)}\n" +
-    s"Scenario already existing is ${dp.summary(existing)}\n" +
-    s"If it was added, would come to result ${dp.summary(actual)}") with HasActual[R] {
+trait ConflictingScenarioException[P, R] {
+  def scenario: Scenario[P, R]
+
+  def existing: Scenario[P, R]
 }
 
 

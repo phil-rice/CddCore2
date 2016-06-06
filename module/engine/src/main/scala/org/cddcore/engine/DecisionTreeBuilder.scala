@@ -1,6 +1,6 @@
 package org.cddcore.engine
 
-import org.cddcore.enginecomponents.{CannotAddScenarioException, EngineComponent, Scenario, ScenarioException}
+import org.cddcore.enginecomponents.{EngineComponent, Scenario}
 import org.cddcore.utilities.{ChildLifeCycle, DisplayProcessor, Monitor}
 
 
@@ -26,6 +26,7 @@ class DecisionTreeBuilder[P, R](mockEngine: P => R)(implicit monitor: Monitor, d
   } catch {
     case e: Exception => throw new ScenarioCausesExceptionInOtherScenariosWhenClause[P, R](newS, main, e)
   }
+
   def isDefinedAtNewMain(newS: Scenario[P, R], main: Scenario[P, R]) = try {
     newS.isDefinedAt(mockEngine, main.situation)
   } catch {
@@ -41,7 +42,7 @@ class DecisionTreeBuilder[P, R](mockEngine: P => R)(implicit monitor: Monitor, d
         else
           makeDecisionNode(s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios)
       }
-      case _ => withException(cn, s, new IllegalStateException("Both main scenario and S have a reason, so I should not be adding the scenario to the main conclusion. "))
+      case _ => withException(cn, s, new AddingWithRedundantReason(s, cn.mainScenario))
     }
   }
 
@@ -62,7 +63,7 @@ class DecisionTreeBuilder[P, R](mockEngine: P => R)(implicit monitor: Monitor, d
               monitor("Situation comes to correct conclusion in this condition node", addScenarioToConclusionNode(cn, s))
             else if (isDefinedAtNewMain(s, cn.mainScenario)) {
               monitor("s.isDefinedAt(cn) so the scenario cannot be added")
-              withException(cn, s, new CannotAddScenarioException(s, cn.mainScenario, actual))
+              withException(cn, s, CannotAddScenarioException(s, cn.mainScenario, actual))
             } else
               monitor("Situation comes to wrong conclusion in this condition node", makeDecisionNode(s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios))
           } else
