@@ -129,7 +129,6 @@ object CddRunner {
     }
     e
   }
-
 }
 
 class CddRunner(val clazz: Class[_]) extends AbstractCddRunner {

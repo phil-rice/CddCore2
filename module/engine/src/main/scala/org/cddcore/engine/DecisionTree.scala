@@ -12,7 +12,7 @@ object DecisionTree extends DecisionTreeValidator {
 
   def apply[P, R](mockEngine: P => R, scenarios: Seq[Scenario[P, R]], errors: Map[EngineComponent[P, R], Exception] = Map[EngineComponent[P, R], Exception]())
                  (implicit monitor: Monitor, dp: DisplayProcessor, childLifeCycle: ChildLifeCycle[EngineComponent[P, R]]): DecisionTree[P, R] = {
-    val builder = new DecisionTreeBuilder[P,R](mockEngine)
+    val builder = new DecisionTreeBuilder[P, R](mockEngine)
     type DT = DecisionTree[P, R]
     monitor[DT](s"DecisionTree.apply(count of Scenarios is ${scenarios.size}", {
       scenarios.filter(!errors.contains(_)) match {
@@ -23,7 +23,7 @@ object DecisionTree extends DecisionTreeValidator {
       }
     })
 
-}
+  }
 
 }
 
@@ -86,7 +86,15 @@ case class ConclusionNode[P, R](mainScenario: Scenario[P, R], scenarios: List[Sc
 
   def pathFor(mockEngine: P => R, situation: P) = List(this)
 
-  def apply(engine: P => R, p: P) = mainScenario(engine, p)
+  override def isDefinedAt(engine: P => R, p: P) = if (mainScenario.isDefinedAt(engine, p)) true else scenarios.exists(_.isDefinedAt(engine, p))
+
+  def apply(engine: P => R, p: P) =
+    if (mainScenario.isDefinedAt(engine, p)) mainScenario(engine, p)
+    else
+      scenarios.find(_.isDefinedAt(engine, p)) match {
+        case Some(s) => s(engine, p)
+        case _ => throw new EngineIsNotDefined
+      }
 
   def allScenarios: TraversableOnce[Scenario[P, R]] = mainScenario :: scenarios
 

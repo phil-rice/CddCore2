@@ -46,3 +46,6 @@ class AddingWithRedundantReason[P, R](s: Scenario[P, R], val existing: Scenario[
     s"   reason is ${s.reason.prettyDescription}\n" +
     s"Existing scenario is: ${displayProcessor.summary(existing)} ${existing.definedInSourceCodeAt}\n" +
     s"   reason is ${s.reason.prettyDescription}\n") with ConflictingScenarioException[P, R] with HasAdvice
+
+
+class EngineIsNotDefined extends Exception
