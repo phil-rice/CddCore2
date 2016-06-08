@@ -37,12 +37,12 @@ object CannotAddScenarioException {
 }
 
 class CannotAddScenarioException[P, R](s: Scenario[P, R], val existing: Scenario[P, R], val actual: R, msg: String, val advice: String)(implicit dp: DisplayProcessor) extends ScenarioException(
-  s, msg) with HasActual[R] with ConflictingScenarioException[P, R] with WithAdvice
+  s, msg) with HasActual[R] with ConflictingScenarioException[P, R] with HasAdvice
 
 
-class AddingWithRedundantReason[P, R](s: Scenario[P, R], val existing: Scenario[P, R])(implicit displayProcessor: DisplayProcessor) extends
+class AddingWithRedundantReason[P, R](s: Scenario[P, R], val existing: Scenario[P, R], val advice: String = "")(implicit displayProcessor: DisplayProcessor) extends
   ScenarioException(s, s"The scenario defined at ${s.definedInSourceCodeAt} comes to the same conclusion as the scenario defined at ${existing.definedInSourceCodeAt} and both scenarios have a 'reason'\n" +
     s"This scenario is: ${displayProcessor.summary(s)} ${s.definedInSourceCodeAt}\n" +
     s"   reason is ${s.reason.prettyDescription}\n" +
     s"Existing scenario is: ${displayProcessor.summary(existing)} ${existing.definedInSourceCodeAt}\n" +
-    s"   reason is ${s.reason.prettyDescription}\n") with ConflictingScenarioException[P, R]
+    s"   reason is ${s.reason.prettyDescription}\n") with ConflictingScenarioException[P, R] with HasAdvice

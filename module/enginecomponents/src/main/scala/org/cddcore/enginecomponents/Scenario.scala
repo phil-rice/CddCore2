@@ -19,7 +19,7 @@ object Scenario {
 
 }
 
-case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: DefinedInSourceCodeAt, title: String, comment: Option[String], references: List[Reference]) extends EngineComponent[P, R]  with HasComment with ToSummary{
+case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: DefinedInSourceCodeAt, title: String, comment: Option[String], references: List[Reference], canMerge: Boolean) extends EngineComponent[P, R] with HasComment with ToSummary {
   def allScenarios = Seq(this)
 
   def apply(engine: P => R, p: P) = reason(engine, p)
@@ -56,7 +56,7 @@ case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion:
 case class FromSituationScenarioBuilder[P, R](situation: P) {
 
   private def producesPrim(definedAt: DefinedInSourceCodeAt, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R])(implicit scl: ChildLifeCycle[EngineComponent[P, R]]) = {
-    val s = Scenario[P, R](situation, reason, assertion, definedAt, situation.toString, None, List())
+    val s = Scenario[P, R](situation, reason, assertion, definedAt, situation.toString, None, List(), false)
     scl.created(s)
     s
   }
@@ -146,7 +146,10 @@ case class ScenarioBuilder[P, R](scenario: Scenario[P, R])(implicit val scl: Chi
 
   def ref(document: Document) = ScenarioBuilder.changeScenario[P, R](this, s => s.copy(references = Reference(document, None) :: s.references))
 
-
   def ref(documentAndInternalRef: (Document, String)) = ScenarioBuilder.changeScenario[P, R](this, s => s.copy(references = Reference(documentAndInternalRef._1, Some(documentAndInternalRef._2)) :: s.references))
+
+  def allows(flag: Allows) = flag match {
+    case merge => ScenarioBuilder.changeScenario[P, R](this, s => s.copy(canMerge = true))
+  }
 }
 

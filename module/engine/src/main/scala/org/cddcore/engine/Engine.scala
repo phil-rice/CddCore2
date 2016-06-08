@@ -157,6 +157,7 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val refer
 
   def asUseCase = hierarchyBuilder.holder
 
+  protected def merge = Merge
 
   def validate = DecisionTree.validate(mocks, decisionTree) match {
     case Nil =>

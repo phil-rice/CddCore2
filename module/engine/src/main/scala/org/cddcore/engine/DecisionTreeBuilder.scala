@@ -42,7 +42,11 @@ class DecisionTreeBuilder[P, R](mockEngine: P => R)(implicit monitor: Monitor, d
         else
           makeDecisionNode(s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios)
       }
-      case _ => withException(cn, s, new AddingWithRedundantReason(s, cn.mainScenario))
+      case _ => (cn.mainScenario.canMerge, s.canMerge) match {
+        case (true, true) =>
+          cn.copy(scenarios = cn.scenarios :+ s)
+        case x => withException(cn, s, new AddingWithRedundantReason(s, cn.mainScenario))
+      }
     }
   }
 
