@@ -7,10 +7,11 @@ trait HasActual[R] {
   def actual: R
 }
 
-class ScenarioException[P, R](val scenario: Scenario[P, R], msg: String, cause: Exception = null) extends Exception(msg, cause) {
+class ScenarioException[P, R](val scenario: Scenario[P, R], msg: String, cause: Exception = null) extends Exception(msg, cause)
 
+trait WithAdvice{
+  def advice: String
 }
-
 class ReasonInvalidException[P, R](s: Scenario[P, R])
   extends ScenarioException(s, s"Scenario defined at ${s.definedInSourceCodeAt} cannot be added because the reason given isn't valid")
 

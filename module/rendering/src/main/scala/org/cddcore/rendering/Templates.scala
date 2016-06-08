@@ -138,7 +138,13 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
     }
   }
 
-  def exceptionMap(e: Exception) = Map("message" -> e.getMessage, "class" -> e.getClass.getSimpleName, "stack" -> e.getStackTrace.take(5).mkString("\n"))
+  def exceptionMap(e: Exception) = {
+    val raw = Map("message" -> e.getMessage, "class" -> e.getClass.getSimpleName, "stack" -> e.getStackTrace.take(5).mkString("\n"))
+    e match {
+      case wa: WithAdvice => raw + ("advice" -> wa.advice)
+      case _ => raw
+    }
+  }
 
   object renderData extends Engine2[RenderContext, EngineComponent[_, _], Map[String, _]] {
     (rc, engineWithUseCase) produces dataForEngine because { case (rc, e: Engine[_, _]) => renderRawData(rc, e) ++ Map(referencesKey -> e.references.map(referenceToMap(rc))) }
