@@ -35,8 +35,6 @@ trait DecisionTreeValidator {
       }
     })
 
-
-
   protected def scenarioValidators[P, R] = List[ScenarioValidationChecker[P, R]](ScenarioIsInCorrectConclusionNodeChecker)
 
   protected def conclusionNodeValidators[P, R] = List[ConclusionNodeValidationChecker[P, R]](scenarioComesToCorrectAnswerWhenCheckedAgainstNodeChecker)

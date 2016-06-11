@@ -57,4 +57,10 @@ class StringsSpec extends CddSpec {
     Strings.uri("../..", "./c/") shouldBe "../.././c"
   }
 
+  "The Strings.splitLines" should "split whether the newline is #10,#13 or whatever" in {
+    Strings.splitLines("") shouldBe Seq()
+    Strings.splitLines("abc") shouldBe Seq("abc")
+    Strings.splitLines("abc\ndef") shouldBe Seq("abc", "def")
+    Strings.splitLines("abc\n\r\fdef") shouldBe Seq("abc", "def")
+  }
 }

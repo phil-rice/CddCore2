@@ -1,7 +1,7 @@
 package org.cddcore.json
 
 import org.cddcore.structure.PathRoot
-import org.cddcore.utilities.{CddSpec, Display, DisplayProcessor, DontDisplay}
+import org.cddcore.utilities._
 import org.json4s.JValue
 
 class JsonSpec extends CddSpec {
@@ -27,19 +27,20 @@ class JsonSpec extends CddSpec {
     JsonForTest.cd() shouldBe 1
   }
 
-  it should "have a nice html display string" in {
-    val dp = DisplayProcessor()
-    val html = dp.html(JsonForTest)
-    html shouldBe ""
-  }
   it should "have a nice summary display string" in {
     val dp = DisplayProcessor()
     val summary: String = dp.summary(JsonForTest)
-    summary shouldBe ""
+    summary shouldBe "JsonForTest$(someVariable -> someValue)"
   }
   it should "have a nice detailed display string" in {
     val dp = DisplayProcessor()
-    val detailed: String = dp.detailed(JsonForTest)
-    detailed shouldBe ""
+    Strings.splitLines(dp.detailed(JsonForTest)) shouldBe Strings.splitLines(
+      """JsonForTest$(
+        |  aAsString -> 1
+        |  aAsInt -> 1
+        |  b -> 2
+        |  cd -> 1
+        |  someVariable -> someValue
+        |)""".stripMargin)
   }
 }

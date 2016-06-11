@@ -3,6 +3,9 @@ package org.cddcore.utilities
 
 
 object Strings {
+  def splitLines(s: String): Seq[String] = s.split("""(\r|\n|\f)""").filter(_.length>0).toSeq
+
+
   def trimChar(trim: Char)(s: String) = s.dropWhile(_ == trim).reverse.dropWhile(_ == trim).reverse
 
 
@@ -64,7 +67,6 @@ object Strings {
       case (acc: String, ((ch1: Char, ch2: Char), i: Int)) =>
         if (ch1 != ch2) acc + s"Index $i ${ch1.toInt} ${ch2.toInt}\n" else acc
     }
-
   }
 
   //  def htmlEscape(raw: String) = raw.replace("&", "&amp;").replace("\"", "&quot;").replace("\'", "&apos;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br />")
