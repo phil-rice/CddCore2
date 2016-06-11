@@ -13,12 +13,13 @@ class ConflictingScenariosSpec extends CddNonRecursiveSpec[String, String] {
   "Two conflicting scenarios without whys" should "report an error" in {
     val scenario1 = "situation1" produces "result1"
     val scenario2 = "situation2" produces "result2"
+    val Seq(definedAt1, definedAt2) = Seq(scenario1, scenario2).map(_.definedInSourceCodeAt.toString)
     lifeCycle.errors shouldBe List()
     DecisionTree(mockEngine, Seq(scenario1, scenario2))
     val Seq(onlyError) = lifeCycle.errors
-    onlyError should include("""CannotAddScenarioException/Scenario defined at (ConflictingScenariosSpec.scala:15) conflicts with (ConflictingScenariosSpec.scala:14)""")
-    onlyError should include("""Scenario being added is (ConflictingScenariosSpec.scala:15) situation2 produces result2)""")
-    onlyError should include("""Scenario already existing is (ConflictingScenariosSpec.scala:14) situation1 produces result1)""")
+    onlyError should include(s"""ConflictingScenariosException/Scenario defined at $definedAt2 conflicts with $definedAt1""")
+    onlyError should include(s"""Scenario being added is $definedAt2 situation2 produces result2)""")
+    onlyError should include(s"""Scenario already existing is $definedAt1 situation1 produces result1)""")
     onlyError should include("""If it was added, would come to result""")
     onlyError should include("""result1""")
   }

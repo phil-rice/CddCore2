@@ -192,7 +192,6 @@ object ProcessChequeXml {
       }
     }
 
-
     useCase("Cheques that will take the customer over the overdraft limit will should be rejected") {
       ChequeSituation(world, cheque("1", dodgyDaveId, richRogerId, 110)).
         produces(ProcessChequeResult(false, "processCheque.reject.noOverdraft")).

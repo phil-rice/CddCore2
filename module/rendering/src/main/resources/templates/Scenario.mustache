@@ -6,7 +6,8 @@
                     <tr><td>Expected</td><td>{{expected}}</td></tr>
                     {{#actual}}<tr><td>Actual</td><td>{{actual}}</td></tr>{{/actual}}
                     {{#selected}}
-                          {{#error}}<tr><td colspan="2">{{class}}<br /><pre>{{message}}</pre></td></tr>{{#advice}}<tr><td>Advice</td><td><pre>{{advice}}</pre></td></tr>{{/advice}}{{/error}}{{/selected}}
+                          {{#error}}<tr><td colspan="2">{{class}}<br /><pre>{{message}}</pre></td></tr>
+                              {{#advice}}<tr><td colspan="2">Advice<br /><pre>{{advice}}</pre></td></tr>{{/advice}}{{/error}}{{/selected}}
                     {{#reason}}<tr><td>Reason</td><td>{{reason}}</td></tr>{{/reason}}
                 </table>
             </div><!-- scenario -->

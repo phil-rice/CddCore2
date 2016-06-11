@@ -45,7 +45,13 @@ class DecisionTreeBuilder[P, R](mockEngine: P => R)(implicit monitor: Monitor, d
       case _ => (cn.mainScenario.canMerge, s.canMerge) match {
         case (true, true) =>
           cn.copy(scenarios = cn.scenarios :+ s)
-        case x => withException(cn, s, new AddingWithRedundantReason(s, cn.mainScenario))
+        case mainCanSCan =>
+          val rawAdvice = mainCanSCan match {
+            case (false, false) => List("Both scenarios could have 'allow merge' added to them")
+            case (false, true) => List(s"The new scenario at ${s.definedInSourceCodeAt} could have 'allow merge added to it")
+            case (true, false) => List(s"The original scenario at ${s.definedInSourceCodeAt} could have 'allow merge added to it")
+          }
+          withException(cn, s, new AddingWithRedundantReason(s, cn.mainScenario, advice = rawAdvice :+ "You could remove the reason from one of them"))
       }
     }
   }
@@ -67,7 +73,7 @@ class DecisionTreeBuilder[P, R](mockEngine: P => R)(implicit monitor: Monitor, d
               monitor("Situation comes to correct conclusion in this condition node", addScenarioToConclusionNode(cn, s))
             else if (isDefinedAtNewMain(s, cn.mainScenario)) {
               monitor("s.isDefinedAt(cn) so the scenario cannot be added")
-              withException(cn, s, CannotAddScenarioException(s, cn.mainScenario, actual))
+              withException(cn, s, ConflictingScenariosException(s, cn.mainScenario, actual))
             } else
               monitor("Situation comes to wrong conclusion in this condition node", makeDecisionNode(s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios))
           } else

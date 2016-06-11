@@ -139,10 +139,14 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
   }
 
   def exceptionMap(e: Exception) = {
-    val raw = Map("message" -> e.getMessage, "class" -> e.getClass.getSimpleName, "stack" -> e.getStackTrace.take(5).mkString("\n"))
-    e match {
+    val raw = Map("class" -> e.getClass.getSimpleName, "stack" -> e.getStackTrace.take(5).mkString("\n"))
+    val withAdvice = e match {
       case wa: HasAdvice => raw + ("advice" -> wa.advice)
       case _ => raw
+    }
+    e match {
+      case se: ScenarioException[_, _] => withAdvice + ("message" -> se.mainMessage)
+      case _ => withAdvice + ("message" -> e.getMessage)
     }
   }
 

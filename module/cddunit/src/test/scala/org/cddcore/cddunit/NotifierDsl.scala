@@ -1,7 +1,7 @@
 /** Copyright (c) 2016, Phil Rice. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 package org.cddcore.cddunit
 
-import org.cddcore.engine.CannotAddScenarioException
+import org.cddcore.engine.{ConflictingScenariosException, ConflictingScenariosException$}
 import org.cddcore.enginecomponents.ReasonInvalidException
 import org.cddcore.utilities.{CddSpec, Hierarchy, MutableHierarchyBuilderWithChildLifeCycle, Reflection}
 import org.junit.runner.notification.{Failure, RunNotifier}
@@ -106,8 +106,8 @@ class NotifierDslSpec extends CddSpec with DescriptionDslTestFramework {
         }
         testSuite("another use case") {
           scenario(3)
-          scenarioFailure(4, classOf[CannotAddScenarioException[_, _]])
-          scenarioFailure(5, classOf[CannotAddScenarioException[_, _]])
+          scenarioFailure(4, classOf[ConflictingScenariosException[_, _]])
+          scenarioFailure(5, classOf[ConflictingScenariosException[_, _]])
         }
       }
     }
@@ -127,9 +127,9 @@ class NotifierDslSpec extends CddSpec with DescriptionDslTestFramework {
       NotifierEvent("An engine/2.1", TestStarted),
       NotifierEvent("An engine/2.1", TestFinished),
       NotifierEvent("An engine/2.2", TestStarted),
-      NotifierEvent("An engine/2.2", TestFailed(classOf[CannotAddScenarioException[_, _]])),
+      NotifierEvent("An engine/2.2", TestFailed(classOf[ConflictingScenariosException[_, _]])),
       NotifierEvent("An engine/2.3", TestStarted),
-      NotifierEvent("An engine/2.3", TestFailed(classOf[CannotAddScenarioException[_, _]])),
+      NotifierEvent("An engine/2.3", TestFailed(classOf[ConflictingScenariosException[_, _]])),
       NotifierEvent("An engine/2", TestFinished),
       NotifierEvent("An engine/index", TestFinished),
       NotifierEvent("org.cddcore.cddunit.ExampleJUnit", TestRunFinished)))

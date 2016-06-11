@@ -16,7 +16,7 @@ class Sample2 extends CddContinuousIntegrationTest {
   override def engines: List[Engine[_, _]] = List(Bowling.get, Bowling.makeFrame)
 }
 
-//@RunWith(classOf[CddRunner]) //un comment to see the errors in the report
-//class SampleWithErrors extends CddContinuousIntegrationTest {
-//  override def engines: List[Engine[_, _]] = List(ExampleJUnit.engine1, ProcessChequeXml.processCheque)
-//}
+@RunWith(classOf[CddRunner]) //un comment to see the errors in the report
+class SampleWithErrors extends CddContinuousIntegrationTest {
+  override def engines: List[Engine[_, _]] = List(ExampleJUnit.engine1, ProcessChequeXml.processCheque)
+}

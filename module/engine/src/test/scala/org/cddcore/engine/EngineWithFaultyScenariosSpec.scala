@@ -37,7 +37,7 @@ class EngineWithFaultyScenariosSpec extends CddEngineSpec {
     e.hierarchyBuilder.holder.errors.size shouldBe 0
     e.decisionTree
     e.hierarchyBuilder.holder.errors.size shouldBe 5
-    val ex = intercept[CannotAddScenarioException[Int, String]](e(1))
+    val ex = intercept[ConflictingScenariosException[Int, String]](e(1))
     withClue(ex.getMessage)(ex.getMessage.contains("2 produces two") shouldBe true)
   }
 
