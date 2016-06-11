@@ -9,24 +9,20 @@ class ScenarioValidationChecker[P, R](val fn: (P => R, DecisionTree[P, R], Scena
 class ConclusionNodeValidationChecker[P, R](val fn: (P => R, DecisionTree[P, R], ConclusionNode[P, R], Scenario[P, R]) => Option[String])
 
 
-
 trait DecisionTreeValidator {
 
   object ValidationIssues {
-    val lensReportsWrongScenario = "Lens reports wrong scenario"
-    val scenarioIsNotDefinedAtConclusionNode = "Scenario not defined at conclusion node"
+    val scenarioInWrongConclusionNode = "Scenario is in the wrong conclusion node in the generated decision tree. This is almost certainly a CDD software error"
     val scenarioComesToWrongConclusionInNode = "Scenario comes to wrong conclusion in this node"
-    val scenarioComesToWrongConclusion = "Scenario comes to wrong conclusion"
   }
 
-  protected def lensValidationChecker[P, R] =
-    new ScenarioValidationChecker[P, R]((engine, dt, s) => if (dt.lensFor(engine, s).get(dt).allScenarios.toList.contains(s)) None else Some(ValidationIssues.lensReportsWrongScenario))
-
-  protected def scenarioInConclusionNodeChecker[P, R] =
-    new ConclusionNodeValidationChecker[P, R]((engine, dt, cn, s) =>
-      if (cn.isDefinedAt(engine, s.situation)) None
+  protected def ScenarioIsInCorrectConclusionNodeChecker[P, R] =
+    new ScenarioValidationChecker[P, R]((engine, dt, s) =>
+      if (dt.lensFor(engine, s).get(dt).allScenarios.toList.contains(s))
+        None
       else
-        Some(ValidationIssues.scenarioIsNotDefinedAtConclusionNode))
+        Some(ValidationIssues.scenarioInWrongConclusionNode))
+
 
   protected def scenarioComesToCorrectAnswerWhenCheckedAgainstNodeChecker[P, R] =
     new ConclusionNodeValidationChecker[P, R]((engine, dt, cn, s) => {
@@ -40,19 +36,10 @@ trait DecisionTreeValidator {
     })
 
 
-  //TODO rename this to cover asserions
-  protected def scenarioComesToCorrectAnswer[P, R] = new ScenarioValidationChecker[P, R]((engine, dt, s) => {
-    val actual = dt.apply(engine, s.situation)
-    if (s.assertion.valid(s.situation, actual)) None
-    else s.assertion match {
-      case EqualsAssertion(_) =>
-        Some(ValidationIssues.scenarioComesToWrongConclusion + "\nActual value is " + actual + "\n")
-    }
-  })
 
-  protected def scenarioValidators[P, R] = List[ScenarioValidationChecker[P, R]](lensValidationChecker, scenarioComesToCorrectAnswer)
+  protected def scenarioValidators[P, R] = List[ScenarioValidationChecker[P, R]](ScenarioIsInCorrectConclusionNodeChecker)
 
-  protected def conclusionNodeValidators[P, R] = List[ConclusionNodeValidationChecker[P, R]](scenarioInConclusionNodeChecker, scenarioComesToCorrectAnswerWhenCheckedAgainstNodeChecker)
+  protected def conclusionNodeValidators[P, R] = List[ConclusionNodeValidationChecker[P, R]](scenarioComesToCorrectAnswerWhenCheckedAgainstNodeChecker)
 
   protected def validateScenarios[P, R](engine: P => R, dt: DecisionTree[P, R], checker: ScenarioValidationChecker[P, R]) =
     dt.allScenarios.flatMap { s => checker.fn(engine, dt, s).map(msg => ValidationReport(msg, s)) }

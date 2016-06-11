@@ -50,7 +50,7 @@ case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion:
 
   override def toString = s"Scenario($situation ${assertion.prettyDescription} ${reason.prettyDescription})/$definedInSourceCodeAt"
 
-  override def toSummary(dp: DisplayProcessor): String = comment.fold(s"${dp.summary(situation)} ${dp.summary(assertion)})")(c => s"$c")
+  override def summary(implicit dp: DisplayProcessor): String = comment.fold(s"${dp.summary(situation)} ${dp.summary(assertion)})")(c => s"$c")
 }
 
 case class FromSituationScenarioBuilder[P, R](situation: P) {

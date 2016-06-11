@@ -9,19 +9,19 @@ class EngineWithFaultyScenariosSpec extends CddEngineSpec {
 
   "An Engine" should "Remember the fault scenarios - bad when" in {
     val (e, s, errors) = toErrors[Int, String](implicit clc => 1 produces "one" when (_ == 2))
-    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:13)"
+    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:11)"
     errors shouldBe Map(s -> "ReasonInvalidException")
   }
 
   it should "Remember the fault scenarios - bad because" in {
     val (e, s, errors) = toErrors[Int, String](implicit clc => 1 produces "one" because { case _ => "duff" })
-    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:19)"
+    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:17)"
     errors shouldBe Map(s -> "AssertionInvalidException")
   }
 
   it should "Handle multiple errors by only remembering the first " in {
     val (e, s, errors) = toErrors[Int, String](implicit clc => 1 produces "one" when (_ == 2) because { case _ => "duff" })
-    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:25)"
+    s.toString shouldBe "Scenario(1 produces one JustBecause)/(EngineWithFaultyScenariosSpec.scala:23)"
     errors shouldBe Map(s -> "ReasonInvalidException")
   }
 
@@ -77,11 +77,10 @@ class EngineWithFaultyScenariosSpec extends CddEngineSpec {
       exception.getCause shouldBe e
       exception.scenario shouldBe s2
       exception.originalScenario shouldBe s1
-      exception.getMessage shouldBe
-        "The scenario defined at (EngineWithFaultyScenariosSpec.scala:66) caused an exception when evaluating the condition of the scenario defined at Scenario(1 produces result because {case (s @ _) if s.==(1) => \"result\"})/(EngineWithFaultyScenariosSpec.scala:62)\n" +
-          "This scenario is Scenario(2 produces result JustBecause)/(EngineWithFaultyScenariosSpec.scala:66)\n" +
-          "Original scenario is Scenario(1 produces result because {case (s @ _) if s.==(1) => \"result\"})/(EngineWithFaultyScenariosSpec.scala:62)\n"
-
+      println(exception.getMessage)
+      exception.getMessage should include( """The scenario defined at (EngineWithFaultyScenariosSpec.scala:64) caused an exception when evaluating the condition of the scenario defined at Scenario(1 produces result because {case (s @ _) if s.==(1) => "result"})/(EngineWithFaultyScenariosSpec.scala:60)""")
+      exception.getMessage should include( """This scenario is Scenario(2 produces result JustBecause)/(EngineWithFaultyScenariosSpec.scala:64)""")
+      exception.getMessage should include( """Original scenario is Scenario(1 produces result because {case (s @ _) if s.==(1) => "result"})/(EngineWithFaultyScenariosSpec.scala:60)""")
     }
   }
 }

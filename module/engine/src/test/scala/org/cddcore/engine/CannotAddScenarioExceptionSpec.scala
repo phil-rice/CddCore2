@@ -17,8 +17,13 @@ class CannotAddScenarioExceptionSpec extends CddEngineSpec {
     cannotAdd.existing shouldBe s1
     cannotAdd.scenario shouldBe s2
     cannotAdd.actual shouldBe "one"
-
-    cannotAdd.getMessage should endWith("A reason could be added to either scenario with a 'when' or a 'because'")
+    cannotAdd.getMessage shouldBe
+      """Scenario defined at (CannotAddScenarioExceptionSpec.scala:10) conflicts with (CannotAddScenarioExceptionSpec.scala:9)
+        |Scenario being added is (CannotAddScenarioExceptionSpec.scala:10) 2 produces two)
+        |Scenario already existing is (CannotAddScenarioExceptionSpec.scala:9) 1 produces one)
+        |If it was added, would come to result
+        |  one""".stripMargin
+    cannotAdd.advice shouldBe "Neither of these scenarios has a reason. A reason could be added to either scenario with a 'when' or a 'because'"
 
   }
 

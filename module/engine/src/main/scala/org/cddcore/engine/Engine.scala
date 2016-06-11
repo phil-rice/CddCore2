@@ -174,7 +174,7 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val refer
     case x => throw new IllegalStateException(s"Somehow called last, and the last child wasn't a scenario, instead it was ${x.getClass}\n$x")
   }
 
-  def toSummary(displayProcessor: DisplayProcessor): String = title
+  def summary(implicit displayProcessor: DisplayProcessor): String = title
 }
 
 class Engine[P, R](initialTitle: String = "Untitled", references: List[Reference] = List(), definedInSourceCodeAt: DefinedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt())(implicit dp: DisplayProcessor) extends AbstractEngine[P, R](initialTitle, references, definedInSourceCodeAt) with Function[P, R] {

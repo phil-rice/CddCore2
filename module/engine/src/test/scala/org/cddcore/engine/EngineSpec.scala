@@ -25,7 +25,7 @@ class EngineSpec extends CddEngineSpec {
 
   it should "have a summary equal to its title" in {
     new Engine("someTitle") {
-    }.toSummary(DisplayProcessor()) shouldBe "someTitle"
+    }.summary(DisplayProcessor()) shouldBe "someTitle"
   }
   "An engine " should "have use cases added " in {
     val e = new Engine[Person, String] {
@@ -38,9 +38,9 @@ class EngineSpec extends CddEngineSpec {
     uc2 shouldBe UseCase[Person, String]("some usecase2", List(), Some("comment"), uc2.definedInSourceCodeAt, ListMap(), List())
     uc3 shouldBe UseCase[Person, String]("usecase3", List(), None, uc3.definedInSourceCodeAt, ListMap(), List())
 
-    uc1.definedInSourceCodeAt.toString shouldBe "(EngineSpec.scala:27)"
-    uc2.definedInSourceCodeAt.toString shouldBe "(EngineSpec.scala:28)"
-    uc3.definedInSourceCodeAt.toString shouldBe "(EngineSpec.scala:29)"
+    uc1.definedInSourceCodeAt.toString shouldBe "(EngineSpec.scala:32)"
+    uc2.definedInSourceCodeAt.toString shouldBe "(EngineSpec.scala:33)"
+    uc3.definedInSourceCodeAt.toString shouldBe "(EngineSpec.scala:34)"
   }
 
   it should "be possible to nest use cases" in {

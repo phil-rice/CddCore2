@@ -33,18 +33,18 @@ object DisplayProcessor {
       }
 
     def html(x: Any): String = x match {
-      case h: ToHtml => h.toHtml(this)
-      case _ => applyFn(htmlers, x, html(_), { case h: ToHtml => h.toHtml(this) })
+      case h: ToHtml => h.html(this)
+      case _ => applyFn(htmlers, x, html(_), { case h: ToHtml => h.html(this) })
     }
 
     def summary(x: Any): String = x match {
-      case h: ToSummary => h.toSummary(this)
-      case _ => applyFn(summarizers, x, summary(_), { case s: ToSummary => s.toSummary(this) }, defaultFn = x => x.toString.take(100))
+      case h: ToSummary => h.summary(this)
+      case _ => applyFn(summarizers, x, summary(_), { case s: ToSummary => s.summary(this) }, defaultFn = x => x.toString.take(100))
     }
 
     def detailed(x: Any): String = x match {
-      case h: ToDetailed => h.toDetailed(this)
-      case _ => applyFn(detailers, x, detailed(_), { case d: ToDetailed => d.toDetailed(this) })
+      case h: ToDetailed => h.detailed(this)
+      case _ => applyFn(detailers, x, detailed(_), { case d: ToDetailed => d.detailed(this) })
     }
 
     def withHtml(htmler: DpFunction) = copy(htmlers = htmler :: htmlers)
@@ -64,23 +64,18 @@ trait DisplayProcessor {
   def detailed(x: Any): String
 }
 
-trait Displayable {
-  def html(implicit dp: DisplayProcessor): String
-
-  def summary(implicit dp: DisplayProcessor): String
-
-  def detailed(implicit dp: DisplayProcessor): String
+trait Displayable extends ToHtml with ToDetailed with ToSummary{
 }
 
 
 trait ToHtml {
-  def toHtml(displayProcessor: DisplayProcessor): String
+  def html(implicit displayProcessor: DisplayProcessor): String
 }
 
 trait ToDetailed {
-  def toDetailed(displayProcessor: DisplayProcessor): String
+  def detailed(implicit displayProcessor: DisplayProcessor): String
 }
 
 trait ToSummary {
-  def toSummary(displayProcessor: DisplayProcessor): String
+  def summary(implicit displayProcessor: DisplayProcessor): String
 }

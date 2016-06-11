@@ -8,11 +8,11 @@ class DisplayProcessorSpec extends CddSpec {
   }
 
   case class SomeThingWithTraits(value1: String, value2: Int) extends SomeThing(value1, value2) with ToHtml with ToDetailed with ToSummary {
-    def toHtml(displayProcessor: DisplayProcessor) = s"toHtml($this)"
+    def html(implicit displayProcessor: DisplayProcessor) = s"toHtml($this)"
 
-    def toDetailed(displayProcessor: DisplayProcessor) = s"toDetailed($this)"
+    def detailed(implicit displayProcessor: DisplayProcessor) = s"toDetailed($this)"
 
-    def toSummary(displayProcessor: DisplayProcessor) = s"toSummary($this)"
+    def summary(implicit displayProcessor: DisplayProcessor) = s"toSummary($this)"
   }
 
   val st1 = new SomeThing("one", 1)

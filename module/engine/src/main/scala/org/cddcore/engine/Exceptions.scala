@@ -22,8 +22,8 @@ class ScenarioCausesExceptionInOtherScenariosWhenClause[P, R](s: Scenario[P, R],
 object CannotAddScenarioException {
   def apply[P, R](s: Scenario[P, R], existing: Scenario[P, R], actual: R)(implicit dp: DisplayProcessor) = {
     val msg = s"Scenario defined at ${s.definedInSourceCodeAt} conflicts with ${existing.definedInSourceCodeAt}\n" +
-      s"Scenario being added is ${dp.summary(s)}\n" +
-      s"Scenario already existing is ${dp.summary(existing)}\n" +
+      s"Scenario being added is ${s.definedInSourceCodeAt} ${dp.summary(s)}\n" +
+      s"Scenario already existing is ${existing.definedInSourceCodeAt} ${dp.summary(existing)}\n" +
       s"If it was added, would come to result\n  ${dp.summary(actual)}"
     val adviceSuffix = "scenario with a 'when' or a 'because'"
     val advice = (s.reason.hasWhy, existing.reason.hasWhy) match {

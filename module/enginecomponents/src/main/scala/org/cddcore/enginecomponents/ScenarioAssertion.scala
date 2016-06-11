@@ -13,7 +13,7 @@ class UnknownAssertion[P, R] extends ScenarioAssertion[P, R] {
   def valid(p: P, r: R) = true
   def prettyDescription: String = "<Unknown>"
 
-  override def toSummary(displayProcessor: DisplayProcessor): String = "<Unknown>"
+  override def summary(implicit displayProcessor: DisplayProcessor): String = "<Unknown>"
   def expectedDp: Option[Displayable] = None
 }
 
@@ -21,7 +21,7 @@ case class EqualsAssertion[P, R](expected: R) extends ScenarioAssertion[P, R] {
   def valid(p: P, r: R) = r == expected
   def prettyDescription: String = s"produces $expected"
 
-  override def toSummary(dp: DisplayProcessor): String = {
+  override def summary(implicit dp: DisplayProcessor): String = {
     s"produces ${dp.summary(expected)}"
   }
   def expectedDp = Some(new Displayable {
@@ -37,7 +37,7 @@ case class ResultAssertion[P, R](fn: R => Boolean) extends ScenarioAssertion[P, 
   def valid(p: P, r: R) = fn(r)
   def prettyDescription: String = s"produces something where ${fn}"
 
-  override def toSummary(displayProcessor: DisplayProcessor): String =s"produces something"
+  override def summary(implicit displayProcessor: DisplayProcessor): String =s"produces something"
   def expectedDp: Option[Displayable] = None
 }
 

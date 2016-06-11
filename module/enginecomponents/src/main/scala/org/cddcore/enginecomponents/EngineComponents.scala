@@ -75,5 +75,5 @@ object UseCase {
 case class UseCase[P, R](title: String, components: List[EngineComponent[P, R]] = List(), comment: Option[String], definedInSourceCodeAt: DefinedInSourceCodeAt, errors: ListMap[EngineComponent[P, R], Exception], references: List[Reference]) extends EngineComponent[P, R] with ToSummary with HasComment {
   def allScenarios = components.reverse.flatMap(_.allScenarios)
 
-  override def toSummary(displayProcessor: DisplayProcessor): String = s"UseCase($title${comment.map(c => s",$c").getOrElse("")})"
+  override def summary(implicit displayProcessor: DisplayProcessor): String = s"UseCase($title${comment.map(c => s",$c").getOrElse("")})"
 }
