@@ -18,7 +18,7 @@ val versionNos = new {
 
 lazy val baseSettings = Seq(
   organization := "org.cddcore",
-  version := "3.0.2",
+  version := "3.0.3",
   scalaVersion := versionNos.scala,
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   javaOptions ++= Seq("-Xmx4G", "-XX:+UseConcMarkSweepGC"),

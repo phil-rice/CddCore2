@@ -1,2 +1,9 @@
 3.0.1 Added LICENSE file, and a copyright notice to all scala files
-3.0.2 The expected for scenarios is now visible in the html produced by the Junit runs
+3.0.2 The expected for scenarios is now visible in the html produced by the Junit run
+3.0.3 Much improved rendering of html in the reports. Much improved error reporting, including advice. The tests can now be run from SBT using a TestFramework.
+
+Known issues
+Need to complete the 'allow merge'
+   1: The errors that have a 'reason' need to use the correct scenario in the Conclusion node, not just the main scenario
+   2: The rendering of decision tree doesn't show merged nodes
+   3: Need some good tests around html rendering
