@@ -122,7 +122,6 @@ case class ChequeSituation(world: World, cheque: Elem) extends Xml {
   lazy val chequeTo = CustomerId(chequeToId(), chequeToBank())
 
 
-
   @Display
   lazy val customerWouldBeOverDrawn = chequeAmount() > customerBalance()
   @Display
@@ -134,6 +133,56 @@ case class ChequeSituation(world: World, cheque: Elem) extends Xml {
 class ProcessChequeXml
 
 object ProcessChequeXml {
+
+  import ProcessChequeTestMother._
+
+  val processCheque = new Engine[ChequeSituation, ProcessChequeResult]("Process Cheques") {
+    useCase("Cheques that are for a different bank should be rejected") {
+      ChequeSituation(world, cheque("1", richRogerAtHsbcId, richRogerId, 1000)).
+        produces(ProcessChequeResult(false, "processCheque.reject.fromBankNotThisBank")).
+        withComment("One thousand pounds from rich roger at HSBC to rich roger at this bank. But the 'FromBank' isn't this bank")
+        .when((s: ChequeSituation) => s.chequeFromBank() != s.world.thisBank)
+    }
+    useCase("Cheques that are to a bank not on the white list should be rejected") {
+      ChequeSituation(world, cheque("1", dodgyDaveId, dodgyDaveAtDodgyBankId, 50)).
+        produces(ProcessChequeResult(false, ("processCheque.reject.toBank.notInWhiteList", BankId.dodgyBank))).
+        withComment("Dodgy Dave is moving half his funds to a bank that isn't on the accepted list").
+        when((s: ChequeSituation) => !s.world.acceptedBanks.contains(s.chequeToBank()))
+    }
+
+
+    useCase("Cheques that will take the customer over the overdraft limit will should be rejected") {
+      (ChequeSituation(world, cheque("1", dodgyDaveId, richRogerId, 110))
+        produces ProcessChequeResult(false, "processCheque.reject.noOverdraft")
+        withComment "Dodgy Dave sending more money than he has"
+        when ((s: ChequeSituation) => s.customerWouldBeOverDrawn && s.customerHasNoOverdraftLimit))
+
+      (ChequeSituation(world, cheque("1", richRogerId, richRogerAtHsbcId, 15000))
+        produces ProcessChequeResult(false, "processCheque.reject.exceedsOverdraftLimit")
+        withComment "Rich Roger sending more money than he has, taking him over his limit"
+        when ((s: ChequeSituation) => s.customerWouldExceedOverdraftLimit))
+    }
+
+    useCase("Cheques that are to to customers in an accepted bank, when the cheque writer has sufficient funds, should be allowed") {
+      ChequeSituation(world, cheque("1", dodgyDaveId, richRogerId, 50)).
+        produces(ProcessChequeResult(true, "processCheque.accept")).
+        withComment("Dodgy Dave sending an OK cheque to someone in this bank").
+        when((s: ChequeSituation) => s.world.acceptedBanks.contains(s.chequeToBank()))
+
+      ChequeSituation(world, cheque("1", dodgyDaveId, richRogerAtHsbcId, 50)).
+        produces(ProcessChequeResult(true, "processCheque.accept")).
+        withComment("Dodgy Dave sending an OK cheque to someone in an accepted bank")
+    }
+
+  }
+
+  //  def main(args: Array[String]) {
+  //    println(processCheque(ChequeSituation(world, cheque("1", dodgyDaveId, richRogerAtHsbcId, 50))))
+  //  }
+
+}
+
+object ProcessChequeXmlBroken {
 
   import ProcessChequeTestMother._
 
@@ -215,8 +264,5 @@ object ProcessChequeXml {
     }
   }
 
-  def main(args: Array[String]) {
-    println(processCheque(ChequeSituation(world, cheque("1", dodgyDaveId, richRogerAtHsbcId, 50))))
-  }
 
 }
