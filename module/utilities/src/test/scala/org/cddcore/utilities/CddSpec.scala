@@ -10,4 +10,12 @@ trait CddSpec extends FlatSpec with Matchers with Mockito {
   } catch {
     case e: Exception => e.printStackTrace(); throw e
   }
+
+  def bigStringsShouldBeEqual(expected: String)(actual: String) =
+    withClue("Expected is\n" + expected + "\nActual is\n" + actual + "\n")(
+      Strings.splitLines(expected).zip(Strings.splitLines(actual)).zipWithIndex.foreach {
+        case ((expectedLine, actualLine), i) =>
+          withClue(s"Line $i\n")(expectedLine shouldBe actualLine)
+      })
+
 }

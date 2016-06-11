@@ -77,10 +77,10 @@ class EngineWithFaultyScenariosSpec extends CddEngineSpec {
       exception.getCause shouldBe e
       exception.scenario shouldBe s2
       exception.originalScenario shouldBe s1
-      println(exception.getMessage)
-      exception.getMessage should include( """The scenario defined at (EngineWithFaultyScenariosSpec.scala:64) caused an exception when evaluating the condition of the scenario defined at Scenario(1 produces result because {case (s @ _) if s.==(1) => "result"})/(EngineWithFaultyScenariosSpec.scala:60)""")
-      exception.getMessage should include( """This scenario is Scenario(2 produces result JustBecause)/(EngineWithFaultyScenariosSpec.scala:64)""")
-      exception.getMessage should include( """Original scenario is Scenario(1 produces result because {case (s @ _) if s.==(1) => "result"})/(EngineWithFaultyScenariosSpec.scala:60)""")
+      bigStringsShouldBeEqual(exception.getMessage)(
+        """The scenario defined at (EngineWithFaultyScenariosSpec.scala:64) caused an exception when evaluating the condition of the scenario defined at Scenario(1 produces result because {case (s @ _) if s.==(1) => "result"})/(EngineWithFaultyScenariosSpec.scala:60)
+           |This scenario is Scenario(2 produces result JustBecause)/(EngineWithFaultyScenariosSpec.scala:64)
+           |Original scenario is Scenario(1 produces result because {case (s @ _) if s.==(1) => "result"})/(EngineWithFaultyScenariosSpec.scala:60)""".stripMargin)
     }
   }
 }

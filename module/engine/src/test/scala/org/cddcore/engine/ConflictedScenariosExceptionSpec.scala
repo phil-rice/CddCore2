@@ -18,13 +18,12 @@ class ConflictedScenariosExceptionSpec extends CddEngineSpec {
     cannotAdd.existing shouldBe s1
     cannotAdd.scenario shouldBe s2
     cannotAdd.actual shouldBe "one"
-    withClue("MainMessage is" + cannotAdd.mainMessage)(cannotAdd.mainMessage shouldBe
+    bigStringsShouldBeEqual(cannotAdd.mainMessage)(
       s"""Scenario defined at $definedAt2 conflicts with $definedAt1
           |Scenario being added is $definedAt2 $summary2
           |Scenario already existing is $definedAt1 $summary1
           |If it was added, would come to result
           |  one""".stripMargin)
-    cannotAdd.getMessage should startWith(cannotAdd.mainMessage)
     val advice = cannotAdd.advice
   }
 
