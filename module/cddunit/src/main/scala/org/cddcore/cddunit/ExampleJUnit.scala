@@ -12,7 +12,7 @@ class ExampleJUnit extends CddContinuousIntegrationTest {
 
 @RunWith(classOf[CddRunner])
 class ExampleJUnit2 extends CddContinuousIntegrationTest {
-  val engines = List(ExampleJUnit.engine2)
+  val engines = List(ExampleJUnit.invalidScenarios, ExampleJUnit.redundantMain)
 }
 
 @RunWith(classOf[CddRunner])
@@ -35,15 +35,85 @@ object ExampleJUnit {
     }
   }
 
-  val engine2 = new Engine[Int, String]("Engine 2") {
-    useCase("use case 3") {
-      1 produces "one"
-      2 produces "two" when (_ == 1)
+  val invalidScenarios = new Engine[String, String]("Invalid") {
+    "ref" produces "result"
+    useCase("Reason invalid") {
+      "a21" produces "result" when (_ => false)
+      "a22" produces "result" because { case "a" => "result" }
     }
-    useCase("use case 4") {
-      3 produces "three" when (_ == 3)
-      4 produces "four"
-      5 produces "five"
+    useCase("Produced value invalid invalid") {
+      "a23" produces "result" by (_ => "different")
+      "a24" produces "result" because { case "a24" => "different" }
+    }
+  }
+
+  val malformedScenarios = new Engine[String, String]("Malformed") {
+    "ref" produces "result"
+    "ref1" produces "result" when (_ == "ref1") by (_ => "result") because { case "ref1" => "result" } withComment "when by and because"
+    "ref2" produces "result" by (_ => "result") by (_ => "result") withComment ("second by")
+    "ref3" produces "result" because { case "ref3" => "result" } because { case "ref3" => "result" } withComment ("second because")
+    "ref4" produces "result" by (_ => "result")byRecursion { case (engine, "ref") => "result" } byRecursion { case (engine, "ref") => "result" } withComment("second byRecursion")
+    "ref5" produces "result" when (_ == "ref1")when (_ == "ref1") withComment("second when")
+  }
+
+  val redundantNeither = new Engine[String, String]("Redundant-neither have allow merge") {
+    useCase("Reference") {
+      "ab11" produces "result" when (_ contains "a")
+    }
+    useCase("Redundant reason") {
+      "ab31" produces "result" when (_ contains ("a"))
+      "ab32" produces "result" because { case x if x contains ("a") => "result" }
+    }
+  }
+  val redundantMain = new Engine[String, String]("Redundant-main has allow merge") {
+    useCase("Reference") {
+      "ab11" produces "result" when (_ contains "a") allows merge
+    }
+    useCase("Redundant reason") {
+      "ab31" produces "result" when (_ contains ("a"))
+      "ab32" produces "result" because { case x if x contains ("a") => "result" }
+    }
+  }
+  val redundantS = new Engine[String, String]("Redundant-new has allow merge") {
+    useCase("Reference") {
+      "ab11" produces "result" when (_ contains "a")
+    }
+    useCase("Redundant reason") {
+      "ab31" produces "result" when (_ contains ("a")) allows merge
+      "ab32" produces "result" because { case x if x contains ("a") => "result" } allows merge
+    }
+  }
+
+  val conflictingNoReasons = new Engine[String, String]("Conflicting - No Reasons") {
+    useCase("Reference") {
+      "ref" produces "result"
+    }
+    useCase("Conflict") {
+      "ref" produces "different"
+    }
+  }
+  val conflictingMainHasReasons = new Engine[String, String]("Conflicting - Main has reason") {
+    useCase("Reference") {
+      "ref" produces "result" when (_ == "ref")
+    }
+    useCase("Conflict") {
+      "ref" produces "different"
+    }
+  }
+  val conflictingNewHasReasons = new Engine[String, String]("Conflicting - New has reason") {
+    useCase("Reference") {
+      "ref" produces "result"
+    }
+    useCase("Conflict ") {
+      "ref" produces "different" when (_ == "ref")
+    }
+  }
+  val conflictingBothReasons = new Engine[String, String]("Conflicting - Both have reasons") {
+    useCase("Reference") {
+      "ref" produces "result" when (_ == "ref")
+    }
+    useCase("Conflict") {
+      "ref" produces "different" when (_ == "ref")
     }
   }
 
@@ -59,16 +129,16 @@ object ExampleJUnit {
     }
   }
 
-//  def main(args: Array[String]) {
-//    println("Starting")
-//    val result = JUnitCore.runClasses(classOf[ExampleJUnit])
-//    println("Finished")
-//    import scala.collection.JavaConversions._
-//    for (failure <- result.getFailures())
-//      println(failure)
-//    println("Sucessful: " + result.wasSuccessful())
-//    println("RunCount: " + result.getRunCount)
-//    println("FailureCount: " + result.getFailureCount)
-//
-//  }
+  //  def main(args: Array[String]) {
+  //    println("Starting")
+  //    val result = JUnitCore.runClasses(classOf[ExampleJUnit])
+  //    println("Finished")
+  //    import scala.collection.JavaConversions._
+  //    for (failure <- result.getFailures())
+  //      println(failure)
+  //    println("Sucessful: " + result.wasSuccessful())
+  //    println("RunCount: " + result.getRunCount)
+  //    println("FailureCount: " + result.getFailureCount)
+  //
+  //  }
 }

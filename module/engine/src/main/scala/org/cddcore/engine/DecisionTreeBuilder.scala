@@ -48,11 +48,17 @@ class DecisionTreeBuilder[P, R](mockEngine: P => R)(implicit monitor: Monitor, d
           cn.copy(scenarios = cn.scenarios :+ s)
         case mainCanSCan =>
           val rawAdvice = mainCanSCan match {
-            case (false, false) => List("Both scenarios could have 'allow merge' added to them")
-            case (false, true) => List(s"The new scenario at ${s.definedInSourceCodeAt} could have 'allow merge added to it")
-            case (true, false) => List(s"The original scenario at ${s.definedInSourceCodeAt} could have 'allow merge added to it")
+            case (false, false) => List("Both scenarios would need 'allows merge' adding to them")
+            case (false, true) => List(s"The original scenario ${cn.mainScenario.definedInSourceCodeAt} could have 'allows merge' added to it")
+            case (true, false) => List(s"This scenario ${s.definedInSourceCodeAt} could have 'allows merge' added to it")
           }
-          withException(cn, s, new AddingWithRedundantReason(s, cn.mainScenario, advice = rawAdvice :+ "You could remove the reason from one of them"))
+          val explanation = List(s"The creator of the engine has given a reason, but CDD doesn't need it",
+            "CDD could add the new scenario to the same place as the original one, but then",
+            "the reason given would be lost, and that could create errors later",
+            "You need to tell CDD what to do.",
+            "Using 'allows merge' means 'use the logical OR of both given reasons'")
+          val advice = rawAdvice :+ s"This scenario ${s.definedInSourceCodeAt} could have its reason removed"
+          withException(cn, s, new AddingWithRedundantReason(s, cn.mainScenario, advice = advice, explaination = explanation))
       }
     }
   }

@@ -7,7 +7,9 @@
                     {{#actual}}<tr><td>Actual</td><td>{{actual}}</td></tr>{{/actual}}
                     {{#selected}}
                           {{#error}}<tr><td colspan="2">{{class}}<br /><pre>{{message}}</pre></td></tr>
-                              {{#advice}}<tr><td colspan="2">Advice1<br />{{{advice}}}</td></tr>{{/advice}}{{/error}}{{/selected}}
-                    {{#reason}}<tr><td>Reason</td><td>{{reason}}</td></tr>{{/reason}}
+                              {{#explanation}}<tr><td colspan="2">Explanation<br />{{{explanation}}}</td></tr>{{/explanation}}
+                              {{#reason}}<tr><td>Reason</td><td>{{reason}}</td></tr>{{/reason}}
+                              {{#advice}}<tr><td colspan="2">Advice<br />{{{advice}}}</td></tr>{{/advice}}
+                          {{/error}}{{/selected}}
                 </table>
             </div><!-- scenario -->

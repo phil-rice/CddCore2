@@ -25,38 +25,47 @@ object ConflictingScenariosException {
       s"Scenario being added is ${s.definedInSourceCodeAt} ${dp.summary(s)}\n" +
       s"Scenario already existing is ${existing.definedInSourceCodeAt} ${dp.summary(existing)}\n" +
       s"If it was added, would come to result\n  ${dp.summary(actual)}"
-    val advice = (s.reason.hasWhy, existing.reason.hasWhy) match {
-      case (true, false) => List(
-        s"The reason it currently comes to that conclusion is",
-        s.reason.prettyDescription,
-        s"A reason could be added to scenario ${existing.definedInSourceCodeAt} with a 'when' or a 'because'")
-      case (false, true) => List(
-        s"The reason it currently comes to that conclusion is",
-        existing.reason.prettyDescription,
-        s"A reason could be added to scenario ${s.definedInSourceCodeAt} with a 'when' or a 'because'")
-      case (false, false) => List("Neither of these scenarios has a reason. A reason could be added to either scenario with a 'when' or a 'because'")
-      case (true, true) => List(
-        "The two scenarios come to different conclusions. Both have a reason, but both reasons are true for both scenario",
-        "One or both reasons have to be 'improved', so that they differentiate between the two scenarios")
+    val (explanation, advice) = (s.reason.hasWhy, existing.reason.hasWhy) match {
+      case (true, false) => (
+        List(s"the existing scenario ${existing.definedInSourceCodeAt} doesn't have a reason"),
+        List(s"A reason could be added to scenario ${existing.definedInSourceCodeAt} with a 'when' or a 'because'")
+        )
+      case (false, true) => (
+        List(s"this scenario doesn't have a reason"),
+        List(s"A reason could be added to scenario ${s.definedInSourceCodeAt} with a 'when' or a 'because'")
+        )
+      case (false, false) => (
+        List("neither of these scenarios has a reason, and a reason is needed to differentiate them"),
+        List("A reason could be added to either scenario with a 'when' or a 'because'")
+        )
+      case (true, true) => (
+        List("both of these scenarios have a reason, but both reasons are true for both scenarios"),
+        List("One or both reasons have to be 'improved', so that they differentiate between the two scenarios")
+        )
 
     }
-    new ConflictingScenariosException(s, existing, actual, msg, advice)
+    new ConflictingScenariosException(s, existing, actual, msg, advice, List(
+      "The scenario being added comes to the wrong conclusion in the engine being constructed",
+      "It is 'conflicting' with an existing scenario.",
+      "The 'logic' about that scenario is being applied to the one being added",
+      "CDD cannot differentiate between the two because"
+    ) ::: explanation)
   }
 }
 
-abstract class ScenarioExceptionWithAdvice[P, R](s: Scenario[P, R], msg: String, val advice: List[String]) extends ScenarioException(s, mainMessage = msg, msg = s"$msg\nAdvice\n$advice") with HasAdvice
+abstract class ScenarioExceptionWithAdvice[P, R](s: Scenario[P, R], msg: String, val advice: List[String]) extends ScenarioException(s, mainMessage = msg, msg = s"$msg\nAdvice\n${advice.mkString("\n")}") with HasAdvice
 
-class ConflictingScenariosException[P, R](s: Scenario[P, R], val existing: Scenario[P, R], val actual: R, msg: String, advice: List[String])(implicit dp: DisplayProcessor)
-  extends ScenarioExceptionWithAdvice(s, msg = msg, advice = advice) with ConflictingScenarioException[P, R]
+class ConflictingScenariosException[P, R](s: Scenario[P, R], val existing: Scenario[P, R], val actual: R, msg: String, advice: List[String], val explaination: List[String])(implicit dp: DisplayProcessor)
+  extends ScenarioExceptionWithAdvice(s, msg = msg, advice = advice) with ConflictingScenarioException[P, R] with HasActual[R] with HasExplanation
 
 
-class AddingWithRedundantReason[P, R](s: Scenario[P, R], val existing: Scenario[P, R], advice: List[String] = List())(implicit displayProcessor: DisplayProcessor) extends
+class AddingWithRedundantReason[P, R](s: Scenario[P, R], val existing: Scenario[P, R], advice: List[String] = List(), val explaination: List[String])(implicit displayProcessor: DisplayProcessor) extends
   ScenarioExceptionWithAdvice(s, advice = advice,
     msg = s"The scenario defined at ${s.definedInSourceCodeAt} comes to the same conclusion as the scenario defined at ${existing.definedInSourceCodeAt} and both scenarios have a 'reason'\n" +
       s"This scenario is: ${displayProcessor.summary(s)} ${s.definedInSourceCodeAt}\n" +
       s"   reason is ${s.reason.prettyDescription}\n" +
       s"Existing scenario is: ${displayProcessor.summary(existing)} ${existing.definedInSourceCodeAt}\n" +
-      s"   reason is ${s.reason.prettyDescription}\n") with ConflictingScenarioException[P, R]
+      s"   reason is ${s.reason.prettyDescription}\n") with ConflictingScenarioException[P, R] with HasExplanation
 
 
 class EngineIsNotDefined extends Exception

@@ -7,18 +7,26 @@ trait HasActual[R] {
   def actual: R
 }
 
-class ScenarioException[P, R](val scenario: Scenario[P, R], val mainMessage: String, msg: String = null, cause: Exception = null) extends Exception(Option(msg).getOrElse(mainMessage), cause)
-
 trait HasAdvice {
   def advice: List[String]
 }
 
+trait HasExplanation{
+  def explaination: List[String]
+}
+trait HasReason{
+  def reason: String
+}
+class ScenarioException[P, R](val scenario: Scenario[P, R], val mainMessage: String, msg: String = null, cause: Exception = null) extends Exception(Option(msg).getOrElse(mainMessage), cause)
+
 class ReasonInvalidException[P, R](s: Scenario[P, R])
-  extends ScenarioException(s, s"Scenario defined at ${s.definedInSourceCodeAt} cannot be added because the reason given isn't valid") with HasAdvice {
+  extends ScenarioException(s, s"Scenario defined at ${s.definedInSourceCodeAt} cannot be added because the reason given isn't valid") with HasAdvice with HasReason{
   override def advice = List(
     "You need to work out why the reason isn't valid",
     "Most likely the reason is just wrong and you need to change it",
     "You may decide to change the situation if it is a 'fake' situation and you know the reason is what you want")
+  def reason = s.reason.prettyDescription
+
 }
 
 trait ConflictingScenarioException[P, R] {

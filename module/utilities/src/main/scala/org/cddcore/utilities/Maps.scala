@@ -4,6 +4,12 @@ package org.cddcore.utilities
 
 object Maps {
   implicit def toMapPimper[K, V](map: Map[K, V]) = new MapPimper[K, V](map)
+
+  def addToMap[X, K, V](fns: PartialFunction[X, (K, V)]*)(map: Map[K, V], x: X) = {
+    val tuples = fns.collect { case fn if fn.isDefinedAt(x) => fn }.map(_.apply(x))
+    tuples.foldLeft(map)((acc, t) => acc + t)
+  }
+
 }
 
 object MapOfLists {

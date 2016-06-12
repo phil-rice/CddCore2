@@ -6,7 +6,7 @@ import java.util.Date
 
 import org.cddcore.engine._
 import org.cddcore.enginecomponents._
-import org.cddcore.utilities.{DisplayProcessor, Strings}
+import org.cddcore.utilities.{DisplayProcessor, Maps, Strings}
 
 trait ReferenceMapMakers {
   def documentToMap(d: Document) = Map("name" -> d.name, "ref" -> d.ref)
@@ -120,34 +120,29 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
     titleKey -> ec.title
   )
 
-  def renderScenario(rc: RenderContext, s: Scenario[_, _]) = {
-    val raw = Map(
-      idKey -> rc.idPath(s),
-      typeKey -> findTypeName(s),
-      linkKey -> makeLink(rc, s),
-      titleKey -> s.title,
-      summaryKey -> rc.displayProcessor.summary(s),
-      commentKey -> s.comment.getOrElse(""),
-      situationKey -> rc.displayProcessor.html(s.situation),
-      expectedKey -> s.expectedOption.map(expected => rc.displayProcessor.html(expected)).getOrElse("<Not Known>"),
-      referencesKey -> s.references.map(referenceToMap(rc)))
-    rc.exceptions.get(s).fold(raw) {
-      case ha: HasActual[_] => raw + ("actual" -> rc.displayProcessor.html(ha.actual))
-      case r: ReasonInvalidException[_, _] => raw + ("reason" -> r.scenario.reason.prettyDescription)
-      case _ => raw
-    }
-  }
+  def renderScenario(rc: RenderContext, s: Scenario[_, _]) = Map(
+    idKey -> rc.idPath(s),
+    typeKey -> findTypeName(s),
+    linkKey -> makeLink(rc, s),
+    titleKey -> s.title,
+    summaryKey -> rc.displayProcessor.summary(s),
+    commentKey -> s.comment.getOrElse(""),
+    situationKey -> rc.displayProcessor.html(s.situation),
+    expectedKey -> s.expectedOption.map(expected => rc.displayProcessor.html(expected)).getOrElse("<Not Known>"),
+    referencesKey -> s.references.map(referenceToMap(rc)))
 
-  def exceptionMap(e: Exception) = {
+
+  def exceptionMap(e: Exception): Map[String, Object] = {
     val raw = Map("class" -> e.getClass.getSimpleName, "stack" -> e.getStackTrace.take(5).mkString("\n"))
-    val withAdvice = e match {
-      case wa: HasAdvice => raw + ("advice" -> wa.advice.mkString("<br />"))
-      case _ => raw
+    val withMessage = e match {
+      case se: ScenarioException[_, _] => raw + ("message" -> se.mainMessage)
+      case _ => raw + ("message" -> e.getMessage)
     }
-    e match {
-      case se: ScenarioException[_, _] => withAdvice + ("message" -> se.mainMessage)
-      case _ => withAdvice + ("message" -> e.getMessage)
-    }
+    Maps.addToMap[Exception, String, Object](
+      { case ha: HasActual[_] => "actual" -> rc.displayProcessor.html(ha.actual) }, //
+      { case he: HasExplanation => "explanation" -> he.explaination.mkString("<br />") }, //
+      { case wa: HasAdvice => "advice" -> wa.advice.mkString("<br />") }, //
+      { case r: HasReason => "reason" -> r.reason })(withMessage, e)
   }
 
   object renderData extends Engine2[RenderContext, EngineComponent[_, _], Map[String, _]] {

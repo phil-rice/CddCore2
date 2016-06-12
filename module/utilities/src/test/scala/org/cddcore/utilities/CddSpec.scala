@@ -18,4 +18,12 @@ trait CddSpec extends FlatSpec with Matchers with Mockito {
           withClue(s"Line $i\n")(expectedLine shouldBe actualLine)
       })
 
+  def listShouldBeEqualTo[X](actual: List[X])(expected: X*): Unit =
+    withClue("Expected is\n" + expected + "\nActual is\n" + actual + "\n") {
+      expected.zip(actual).zipWithIndex.foreach {
+        case ((expectedItem, actualItem), i) =>
+          withClue(s"Actual Item($i)\n$actualItem\nExpected Item($i)\n$expectedItem")(actualItem shouldBe expectedItem)
+      }
+      actual.size shouldBe expected.size
+    }
 }

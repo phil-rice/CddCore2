@@ -70,8 +70,6 @@ lazy val baseSettings = Seq(
   publishArtifact in Test := false
 )
 
-testFrameworks += new TestFramework("org.cddcore.testinterface.CddFramework")
-
 lazy val commonSettings = baseSettings ++ Seq(
   testFrameworks += new TestFramework("org.cddcore.testinterface.CddFramework"),
   libraryDependencies += "org.scalatest" %% "scalatest" % versionNos.scalaTest % "test",

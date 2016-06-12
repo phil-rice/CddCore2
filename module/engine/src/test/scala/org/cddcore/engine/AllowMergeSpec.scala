@@ -4,6 +4,14 @@ package org.cddcore.engine
 
 class AllowMergeSpec extends CddEngineSpec {
 
+  def checkExplaination[P, R](e: AddingWithRedundantReason[P, R]) = {
+    listShouldBeEqualTo(e.explaination)(s"The creator of the engine has given a reason, but CDD doesn't need it",
+      "CDD could add the new scenario to the same place as the original one, but then",
+      "the reason given would be lost, and that could create errors later",
+      "You need to tell CDD what to do.",
+      "Using 'allows merge' means 'use the logical OR of both given reasons'")
+  }
+
   "Scenarios which don't allow merging" should "cause an AddingWithRedundantReason exception" in {
     val engine = new Engine[String, Int] {
       "abc" produces 1 when (_ contains "a")
@@ -18,9 +26,11 @@ class AllowMergeSpec extends CddEngineSpec {
     e.scenario shouldBe s2
     e.existing shouldBe s1
 
-    e.advice should contain theSameElementsAs List(
-      "Both scenarios could have 'allow merge' added to them",
-      "You could remove the reason from one of them")
+    checkExplaination(e)
+
+    listShouldBeEqualTo(e.advice)(
+      "Both scenarios would need 'allows merge' adding to them",
+      s"This scenario ${s2.definedInSourceCodeAt} could have its reason removed")
   }
 
   they should "still cause AddingWithRedundantReason even if existing one has allowMerge" in {
@@ -37,9 +47,12 @@ class AllowMergeSpec extends CddEngineSpec {
     }
     e.scenario shouldBe s2
     e.existing shouldBe s1
-    e.advice should contain theSameElementsAs List(
-      s"The original scenario at $definedAt2 could have 'allow merge added to it",
-      "You could remove the reason from one of them")
+
+    checkExplaination(e)
+
+    listShouldBeEqualTo(e.advice)(
+      s"This scenario $definedAt2 could have 'allows merge' added to it",
+      s"This scenario ${s2.definedInSourceCodeAt} could have its reason removed")
   }
 
   they should "still cause AddingWithRedundantReason even if new one has allowMerge" in {
@@ -58,9 +71,10 @@ class AllowMergeSpec extends CddEngineSpec {
     }
     e.scenario shouldBe s2
     e.existing shouldBe s1
-    e.advice should contain theSameElementsAs List(
-      s"The new scenario at $definedAt2 could have 'allow merge added to it",
-      "You could remove the reason from one of them")
+    checkExplaination(e)
+    listShouldBeEqualTo(e.advice)(
+      s"The original scenario $definedAt1 could have 'allows merge' added to it",
+      s"This scenario ${s2.definedInSourceCodeAt} could have its reason removed")
   }
 
   they should "merge if both scenarios allowMerge" in {

@@ -90,9 +90,5 @@ class DecisionTreeAddingToConclusionNodeSpec extends CddNonRecursiveSpec[String,
       DecisionNode(s3, falseNode = ConclusionNode(s1, List(s2)), trueNode = ConclusionNode(s3, List(s4, s5)))
   }
 
-  "A decistion three with different simple reasons, one of them with a by" should "use the by as the main scenario" in {
-    if (FutureWorkFlags.noticingScenariosWithBy) fail
-  }
-
 
 }

@@ -8,7 +8,8 @@ class RememberingLifeCycle[P, R] extends ChildLifeCycle[EngineComponent[P, R]] {
   type S = Scenario[P, R]
   var created = List[EC]()
   var modified = List[String]()
-  var errors = List[String]()
+  var errorStrings = List[String]()
+  var errors = List[Exception]()
   var last: EC = null
 
   def asString(s: EC) = s match {
@@ -31,5 +32,8 @@ class RememberingLifeCycle[P, R] extends ChildLifeCycle[EngineComponent[P, R]] {
     }
   }
 
-  def childHasException(c: EngineComponent[P, R], exception: Exception) = errors = errors :+ exception.getClass.getSimpleName + "/" + exception.getMessage
+  def childHasException(c: EngineComponent[P, R], exception: Exception) = {
+    errorStrings = errorStrings :+ exception.getClass.getSimpleName + "/" + exception.getMessage
+    errors = errors :+ exception
+  }
 }
