@@ -21,6 +21,7 @@ trait HierarchyTestFramework {
       case t: ThingHolder => t.name == name && t.getClass == getClass && t.list == list && t.errors == errors
       case _ => false
     }
+
     override def toString = s"ThingHolder($name,$list,$errors)"
 
   }
@@ -36,8 +37,8 @@ trait HierarchyTestFramework {
       case (oldHead :: tail) => h.copy(list = fn(oldHead) :: tail)
     }
 
-    def badChild(topParent: ThingHolder, child: Thing, exception: Exception): ThingHolder =
-      topParent.withErrors(topParent.errors + (child -> exception))
+    def badChild(parent: ThingHolder, child: Thing, exception: Exception): ThingHolder =
+      parent.withErrors(parent.errors + (child -> exception))
   }
 
   def holder(s: String, children: Thing*) = ThingHolder(s, children.toList, Map())
@@ -105,7 +106,7 @@ class HierarchySpec extends CddSpec with HierarchyTestFramework {
     val builder1 = new HierarchyBuilder[ThingHolder, Thing](holder1)
     val builder2 = builder1.addNewParent(holder2).addNewParent(holder3).addChild(t1)
     val builder3 = builder2.modCurrentChild(_ => throw e1).addChild(t2).modCurrentChild(_ => throw e2).addChild(t3)
-    builder3.holder shouldBe holder("useCase1", holder("useCase2", holder("useCase3", t3, t2, t1))).withErrors(Map(t1 -> e1, t2 -> e2))
+    builder3.holder shouldBe holder("useCase1", holder("useCase2", holder("useCase3", t3, t2, t1).withErrors(Map(t1 -> e1, t2 -> e2))))
   }
 
   it should "Allow exceptions to be added against children whether or not they are the current child" in {
@@ -115,8 +116,7 @@ class HierarchySpec extends CddSpec with HierarchyTestFramework {
     val builder2 = builder1.addNewParent(holder2).addNewParent(holder3).addChild(t1)
     val builder3 = builder2.addChild(t2).addChild(t3)
     val builder4 = builder3.childHasException(t2, e2).childHasException(t3, e3)
-    builder4.holder shouldBe holder("useCase1", holder("useCase2", holder("useCase3", t3, t2, t1))).withErrors(Map(t2 -> e2, t3 -> e3))
-
+    builder4.holder shouldBe holder("useCase1", holder("useCase2", holder("useCase3", t3, t2, t1).withErrors(Map(t2 -> e2, t3 -> e3))))
   }
 
 }

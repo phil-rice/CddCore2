@@ -57,23 +57,29 @@ object UseCase {
         h.copy(components = child :: h.components)
 
       def modChild(h: UseCase[P, R], fn: (EngineComponent[P, R]) => EngineComponent[P, R]) = h.components match {
-        case oldHead :: tail => h.copy(components = fn(oldHead) :: tail)
-        case _ => throw new IllegalStateException("Cannot modified child")
+        case oldChild :: tail =>
+          val newChild = fn(oldChild)
+          val errors = h.rawErrors
+          val newErrors = errors.get(oldChild).fold(errors)(e => errors - oldChild + (newChild -> e))
+          h.copy(components = fn(oldChild) :: tail, rawErrors = newErrors)
+        case _ => throw new IllegalStateException("Cannot modify child")
       }
 
       def lastAddedChild(h: UseCase[P, R]) = h.components.headOption
 
       def childToHolder(child: EngineComponent[P, R]): UseCase[P, R] = child.asInstanceOf[UseCase[P, R]]
 
-      def badChild(topParent: UseCase[P, R], child: EngineComponent[P, R], exception: Exception): UseCase[P, R] = topParent.errors.get(child) match {
-        case Some(e) => topParent
-        case _ => topParent.copy(errors = topParent.errors + (child -> exception))
+      def badChild(parent: UseCase[P, R], child: EngineComponent[P, R], exception: Exception): UseCase[P, R] = parent.rawErrors.get(child) match {
+        case Some(e) => parent
+        case _ => parent.copy(rawErrors = parent.rawErrors + (child -> exception))
       }
     }
 }
 
-case class UseCase[P, R](title: String, components: List[EngineComponent[P, R]] = List(), comment: Option[String], definedInSourceCodeAt: DefinedInSourceCodeAt, errors: ListMap[EngineComponent[P, R], Exception], references: List[Reference]) extends EngineComponent[P, R] with ToSummary with HasComment {
-  def allScenarios = components.reverse.flatMap(_.allScenarios)
+case class UseCase[P, R](title: String, components: List[EngineComponent[P, R]] = List(), comment: Option[String],
+                         definedInSourceCodeAt: DefinedInSourceCodeAt, rawErrors: ListMap[EngineComponent[P, R], Exception], references: List[Reference]) extends EngineComponent[P, R] with ToSummary with HasComment {
+  lazy val allScenarios = components.reverse.flatMap(_.allScenarios)
+  lazy val errors: ListMap[EngineComponent[P, R], Exception] = components.collect { case uc: UseCase[P, R] => uc.errors }.fold(rawErrors)((acc, errors) => acc ++ errors)
 
   override def summary(implicit displayProcessor: DisplayProcessor): String = s"UseCase($title${comment.map(c => s",$c").getOrElse("")})"
 }

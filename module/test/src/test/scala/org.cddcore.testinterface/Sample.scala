@@ -21,7 +21,7 @@ class Sample2 extends CddContinuousIntegrationTest {
 class SampleWithErrors extends CddContinuousIntegrationTest {
   override def engines: List[Engine[_, _]] = List(ExampleJUnit.engine1,
     ExampleJUnit.invalidScenarios,
-//    ExampleJUnit.malformedScenarios,
+    ExampleJUnit.malformedScenarios,
     ExampleJUnit.redundantNeither,
     ExampleJUnit.redundantMain,
     ExampleJUnit.redundantS,

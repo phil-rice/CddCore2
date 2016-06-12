@@ -12,8 +12,6 @@ trait ChildLifeCycle[C] {
   def update[X <: C](block: => X): X
 
   def childHasException(c: C, exception: Exception)
-
-
 }
 
 class NullLifeCycle[C] extends ChildLifeCycle[C] {

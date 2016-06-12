@@ -93,7 +93,7 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val refer
 
   def postSealMessage = "Cannot modify the engine after it has been constructed"
 
-  def makeRootHolder = UseCase[P, R](initialTitle, comment = None, definedInSourceCodeAt = definedInSourceCodeAt, errors = ListMap(), references = List())
+  def makeRootHolder = UseCase[P, R](initialTitle, comment = None, definedInSourceCodeAt = definedInSourceCodeAt, rawErrors = ListMap(), references = List())
 
   def title: String = hierarchyBuilder.holder.title
 
@@ -113,7 +113,7 @@ abstract class AbstractEngine[P, R](initialTitle: String = "Untitled", val refer
   protected def useCase(title: String, comment: String, references: List[Reference] = List())(blockThatScenariosAreDefinedIn: => Unit): Unit = useCase(title, Some(comment), references)(blockThatScenariosAreDefinedIn)
 
   private def useCase(title: String, comment: Option[String], references: List[Reference])(blockThatScenariosAreDefinedIn: => Unit): Unit =
-    addParentChildrenDefinedInBlock(UseCase[P, R](title, comment = comment, definedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt(7), errors = ListMap(), references = references))(blockThatScenariosAreDefinedIn)
+    addParentChildrenDefinedInBlock(UseCase[P, R](title, comment = comment, definedInSourceCodeAt = DefinedInSourceCodeAt.definedInSourceCodeAt(7), rawErrors = ListMap(), references = references))(blockThatScenariosAreDefinedIn)
 
   private def calculateMocksAndNoMocks: (Map[P, R], List[(Scenario[P, R], P)]) = {
     val mocks: Map[P, R] = allScenarios.foldLeft(Map[P, R]()) { (acc, s) => s.expectedOption.fold(acc)(expected => acc + (s.situation -> expected)) }

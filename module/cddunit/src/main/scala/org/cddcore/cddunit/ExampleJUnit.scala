@@ -53,17 +53,18 @@ object ExampleJUnit {
     "ref2" produces "result" by (_ => "result") by (_ => "result") withComment ("second by")
     "ref3" produces "result" because { case "ref3" => "result" } because { case "ref3" => "result" } withComment ("second because")
     "ref4" produces "result" by (_ => "result")byRecursion { case (engine, "ref") => "result" } byRecursion { case (engine, "ref") => "result" } withComment("second byRecursion")
-    "ref5" produces "result" when (_ == "ref1")when (_ == "ref1") withComment("second when")
+    "ref5" produces "result" when (_ == "ref5")when (_ == "ref5") withComment("second when")
   }
 
   val redundantNeither = new Engine[String, String]("Redundant-neither have allow merge") {
+    useCase("nested"){
     useCase("Reference") {
       "ab11" produces "result" when (_ contains "a")
     }
     useCase("Redundant reason") {
       "ab31" produces "result" when (_ contains ("a"))
       "ab32" produces "result" because { case x if x contains ("a") => "result" }
-    }
+    }}
   }
   val redundantMain = new Engine[String, String]("Redundant-main has allow merge") {
     useCase("Reference") {

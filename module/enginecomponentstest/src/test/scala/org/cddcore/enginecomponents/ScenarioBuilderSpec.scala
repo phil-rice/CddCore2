@@ -116,4 +116,5 @@ class ScenarioBuilderSpec extends CddSpec {
 
     sb.copy(reason = sa.reason) shouldBe sa
   }
+
 }

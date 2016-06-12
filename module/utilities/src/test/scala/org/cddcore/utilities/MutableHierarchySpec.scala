@@ -48,7 +48,7 @@ class MutableHierarchySpec extends CddSpec with HierarchyTestFramework {
     addNewParent(holder2)
     addChild(t1)
     modCurrentChild(_ => throw e)
-    hierarchyBuilder.holder shouldBe holder("useCase1", holder("useCase2", t1)).withErrors(Map(t1 -> e))
+    hierarchyBuilder.holder shouldBe holder("useCase1", holder("useCase2", t1).withErrors(Map(t1 -> e)))
   }
 
   it should "allow children to be marked as a problem with an exception" in {
@@ -58,7 +58,7 @@ class MutableHierarchySpec extends CddSpec with HierarchyTestFramework {
     addNewParent(holder2)
     addChild(t1)
     childHasException(t1, e)
-    hierarchyBuilder.holder shouldBe holder("useCase1", holder("useCase2", t1)).withErrors(Map(t1 -> e))
+    hierarchyBuilder.holder shouldBe holder("useCase1", holder("useCase2", t1).withErrors(Map(t1 -> e)))
   }
 
   it should "throw exceptions if modification methods are called after seal" in {
@@ -73,5 +73,4 @@ class MutableHierarchySpec extends CddSpec with HierarchyTestFramework {
     check("modCurrentChild", modCurrentChild(a => a))
     check("childHasException", childHasException(holder2,  new RuntimeException("Exception1")))
   }
-
 }

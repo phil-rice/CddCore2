@@ -10,8 +10,7 @@ trait Hierarchy[H <: C, C] {
 
   def modChild(h: H, fn: C => C): H
 
-  /** WARNING returns new top parent */
-  def badChild(topParent: H, child: C, exception: Exception): H
+  def badChild(h: H, child: C, exception: Exception): H
 }
 
 case class HierarchyBuilder[H <: C, C](holder: H, depth: Int = 0)(implicit hierarchy: Hierarchy[H, C]) {
@@ -34,7 +33,7 @@ case class HierarchyBuilder[H <: C, C](holder: H, depth: Int = 0)(implicit hiera
     case e: Exception => childHasException(currentChild.getOrElse(throw new RuntimeException("Somehow throw an exception modifying a child when there wasn't a child", e)), e)
   }
 
-  def childHasException(c: C, exception: Exception) = thisToHolderL.transform(this, _ => badChild(holder, c, exception))
+  def childHasException(c: C, exception: Exception) = depthToHolderL.transform(this, h => badChild(h, c, exception))
 
   def currentChild: Option[C] = depthToChildL.get(this)
 
@@ -130,7 +129,6 @@ trait MutableHierarchyBuilderWithChildLifeCycle[H <: C, C] extends MutableHierar
     }
 
     def childHasException(c: C, exception: Exception) = MutableHierarchyBuilderWithChildLifeCycle.this.childHasException(c, exception)
-
 
   }
 }
