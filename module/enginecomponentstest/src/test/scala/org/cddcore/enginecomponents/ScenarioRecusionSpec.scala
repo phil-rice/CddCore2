@@ -16,6 +16,6 @@ class ScenarioRecusionSpec extends CddSpec {
     val ByRecursionReason(ch, definedInSourceCodeAt) = s1.reason
     definedInSourceCodeAt.toString shouldBe "(ScenarioRecusionSpec.scala:14)"
     ch.fn(_ => 2, 3) shouldBe 6
-    s1.assertion shouldBe EqualsAssertion(6)
+    s1.assertions shouldBe List(EqualsAssertion(6))
   }
 }

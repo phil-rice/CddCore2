@@ -13,7 +13,7 @@ class RememberingLifeCycle[P, R] extends ChildLifeCycle[EngineComponent[P, R]] {
   var last: EC = null
 
   def asString(s: EC) = s match {
-    case s: Scenario[P, R] => s.situation + "/" + s.assertion + "/" + s.reason.getClass.getSimpleName
+    case s: Scenario[P, R] => s.situation + "/" + s.assertions.mkString(",") + "/" + s.reason.getClass.getSimpleName
   }
 
   def created(child: EC) = created = {

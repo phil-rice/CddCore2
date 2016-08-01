@@ -14,6 +14,6 @@ class ScenarioBuilderWithAssertionsSpec extends CddSpec {
   "A scenario" should "be able to express a result assertion instead of just equality" in {
     val fn = (s: String) => s.contains("result")
     val s = 1 produces something where fn
-    s.assertion shouldBe ResultAssertion(fn)
+    s.assertions shouldBe List(ResultAssertion(fn))
   }
 }

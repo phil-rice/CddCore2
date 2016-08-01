@@ -52,7 +52,7 @@ object DecisionTreeRendering extends KeysForRendering {
 
   def renderConclusionNode[P, R](rd: DecisionTreeRenderData[P, R], cn: ConclusionNode[P, R])(implicit displayProcessor: DisplayProcessor): Map[String, Any] = {
     rd.selectedAndTrueFalseMap(cn) ++ Map(
-      conclusionKey -> cn.mainScenario.assertion.summary(rd.dp),
+      conclusionKey -> cn.mainScenario.assertions.map(_.summary(rd.dp)).mkString(" and "),
       reasonKey -> cn.mainScenario.reason.prettyDescription
     )
   }

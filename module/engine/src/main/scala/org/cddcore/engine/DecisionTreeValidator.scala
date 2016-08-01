@@ -7,7 +7,7 @@ case class ValidationReport[P, R](message: String, scenario: Scenario[P, R])
 
 class ScenarioValidationChecker[P, R](val fn: (P => R, DecisionTree[P, R], Scenario[P, R]) => Option[String])
 
-class ConclusionNodeValidationChecker[P, R](val fn: (P => R, DecisionTree[P, R], ConclusionNode[P, R], Scenario[P, R]) => Option[String])
+class ConclusionNodeValidationChecker[P, R](val fn: (P => R, DecisionTree[P, R], ConclusionNode[P, R], Scenario[P, R]) => List[String])
 
 
 trait DecisionTreeValidator {
@@ -29,11 +29,13 @@ trait DecisionTreeValidator {
     new ConclusionNodeValidationChecker[P, R]((engine, dt, cn, s) => {
       //      if (cn.apply(s.situation) == s.expected) None
       val result = cn.apply(engine, s.situation)
-      if (s.assertion.valid(s.situation, result)) None
-      else s.assertion match {
-        case EqualsAssertion(_) => Some(ValidationIssues.scenarioComesToWrongConclusionInNode)
-        //TODO Need tests for other assertions
-      }
+      s.assertions.flatMap(assertion =>
+        if (assertion.valid(s.situation, result)) None
+        else
+          assertion match {
+            case EqualsAssertion(expected) => Some(ValidationIssues.scenarioComesToWrongConclusionInNode)
+          }
+      )
     })
 
   protected def scenarioValidators[P, R] = List[ScenarioValidationChecker[P, R]](ScenarioIsInCorrectConclusionNodeChecker)

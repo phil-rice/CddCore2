@@ -26,12 +26,12 @@ trait KeysForRendering {
   val linkKey = "link"
   val idKey = "id"
   val summaryKey = "summary"
-  val titleKey = "title"
+  val Title = "title"
   val referencesKey = "references"
-  val linkUrlKey = "linkUrl"
-  val iconUrlKey = "iconUrl"
+  val LinkUrl = "linkUrl"
+  val IconUrl = "iconUrl"
 
-  val definedAtKey = "definedAt"
+  val DefinedAt = "definedAt"
   val selectedPostFixKey = "selected"
   val trueFalseKey = "trueFalseKey"
 

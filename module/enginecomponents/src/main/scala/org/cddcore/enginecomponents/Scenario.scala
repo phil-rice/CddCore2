@@ -19,22 +19,20 @@ object Scenario {
 
 }
 
-case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R], definedInSourceCodeAt: DefinedInSourceCodeAt, title: String, comment: Option[String], references: List[Reference], canMerge: Boolean) extends EngineComponent[P, R] with HasComment with ToSummary {
+case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertions: List[ScenarioAssertion[P, R]], definedInSourceCodeAt: DefinedInSourceCodeAt, title: String, comment: Option[String], references: List[Reference], canMerge: Boolean) extends EngineComponent[P, R] with HasComment with ToSummary {
   def allScenarios = Seq(this)
+
+  def assertionsAllValid(p: P, r: R) = assertions.forall(_.valid(p, r))
 
   def apply(engine: P => R, p: P) = reason(engine, p)
 
   def isDefinedAt(engine: P => R, p: P) = reason.isDefinedAt(engine, p)
 
-  def expectedOption = assertion match {
-    case EqualsAssertion(expected) => Some(expected)
-    case _ => None
-  }
-
+  def expectedOption = assertions.collect{    case EqualsAssertion(expected) => expected}.headOption
 
   def calcuateAssertionFor(engine: P => R, p: P) = {
     val result = reason.apply(engine, p)
-    assertion.valid(p, result)
+    assertions.forall(_.valid(p, result))
   }
 
   def validate = {
@@ -42,21 +40,21 @@ case class Scenario[P, R](situation: P, reason: ScenarioReason[P, R], assertion:
       case sr: ScenarioReasonThatIsntRecursive[P, R] =>
         if (!sr.isDefinedAt(situation)) throw new ReasonInvalidException(this)
         val actual = sr.apply(situation)
-        if (assertion.valid(situation, actual) == false) throw AssertionInvalidException(this, actual)
+        assertions.foreach(assertion =>        if (assertion.valid(situation, actual) == false) throw AssertionInvalidException(this, assertion, actual))
 
       case _ => // can't check recursive things without the engine
     }
   }
 
-  override def toString = s"Scenario($situation ${assertion.prettyDescription} ${reason.prettyDescription})/$definedInSourceCodeAt"
+  override def toString = s"Scenario($situation ${assertions.map(_.prettyDescription).mkString(" and ")} ${reason.prettyDescription})/$definedInSourceCodeAt"
 
-  override def summary(implicit dp: DisplayProcessor): String = comment.fold(s"${dp.summary(situation)} ${dp.summary(assertion)})")(c => s"$c")
+  override def summary(implicit dp: DisplayProcessor): String = comment.fold(s"${dp.summary(situation)} ${assertions.map(dp.summary).mkString(" and ")})")(c => s"$c")
 }
 
 case class FromSituationScenarioBuilder[P, R](situation: P) {
 
   private def producesPrim(definedAt: DefinedInSourceCodeAt, reason: ScenarioReason[P, R], assertion: ScenarioAssertion[P, R])(implicit scl: ChildLifeCycle[EngineComponent[P, R]]) = {
-    val s = Scenario[P, R](situation, reason, assertion, definedAt, situation.toString, None, List(), false)
+    val s = Scenario[P, R](situation, reason, List(assertion), definedAt, situation.toString, None, List(), false)
     scl.created(s)
     s
   }
@@ -134,7 +132,7 @@ case class ScenarioBuilder[P, R](scenario: Scenario[P, R])(implicit val scl: Chi
 
   def when(when: P => Boolean): Scenario[P, R] = macro ScenarioBuilder.whenImpl[P, R]
 
-  def where(where: R => Boolean) = scl.update(scenario.copy(assertion = ResultAssertion[P, R](where)))
+  def where(where: R => Boolean) = scl.update(scenario.copy(assertions = List(ResultAssertion[P, R](where))))
 
   def by(fn: P => R): Scenario[P, R] = macro ScenarioBuilder.byImpl[P, R]
 
@@ -144,7 +142,7 @@ case class ScenarioBuilder[P, R](scenario: Scenario[P, R])(implicit val scl: Chi
 
   def withComment(comment: String) = ScenarioBuilder.changeScenario[P, R](this, _.copy(comment = Some(comment)))
 
-  def ref(document: Document) = ScenarioBuilder.changeScenario[P, R](this, s => s.copy(references = Reference(document, None) :: s.references))
+  def ref(document: Document) = ScenarioBuilder.changeScenario[P, R](this, s => s.copy(references = s.references :+ Reference(document, None)))
 
   def ref(documentAndInternalRef: (Document, String)) = ScenarioBuilder.changeScenario[P, R](this, s => s.copy(references = Reference(documentAndInternalRef._1, Some(documentAndInternalRef._2)) :: s.references))
 

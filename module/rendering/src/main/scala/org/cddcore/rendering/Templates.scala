@@ -6,6 +6,7 @@ import java.util.Date
 
 import org.cddcore.engine._
 import org.cddcore.enginecomponents._
+import org.cddcore.rendering.view.Views
 import org.cddcore.utilities.{DisplayProcessor, Maps, Strings}
 
 trait ReferenceMapMakers {
@@ -29,6 +30,10 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
   import Icons._
   import Strings.uri
 
+  val views = new Views
+
+  import views._
+
   val findIconUrl = new Engine2[RenderContext, EngineComponent[_, _], String] {
     (rc, emptyEngine) produces expectedEngineIcon because { case (rc, e: Engine[_, _]) => uri(rc.referenceFilesUrlBase, engineWithTestsIcon) }
     (rc, engineWithUseCase) produces expectedEngineIcon
@@ -40,7 +45,7 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
 
   val makeLink = new Engine2[RenderContext, EngineComponent[_, _], Map[String, _]]("Produces the maps for a link to a component") {
     (rc, engineWithUseCase) produces linkForEngine by {
-      case (rc, ec) => Map(titleKey -> ec.title, linkUrlKey -> rc.url(ec), iconUrlKey -> findIconUrl(rc, ec), definedAtKey -> ec.definedInSourceCodeAt.toString)
+      case (rc, ec) => Map(Title -> ec.title, LinkUrl -> rc.url(ec), IconUrl -> findIconUrl(rc, ec), DefinedAt -> ec.definedInSourceCodeAt.toString)
     }
     (rc, useCase1) produces linkForUseCase1
     (rc, useCase2) produces linkForUseCase2
@@ -117,14 +122,14 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
     idKey -> rc.idPath(ec),
     typeKey -> findTypeName(ec),
     summaryKey -> rc.displayProcessor.summary(ec),
-    titleKey -> ec.title
+    Title -> ec.title
   )
 
   def renderScenario(rc: RenderContext, s: Scenario[_, _]) = Map(
     idKey -> rc.idPath(s),
     typeKey -> findTypeName(s),
     linkKey -> makeLink(rc, s),
-    titleKey -> s.title,
+    Title -> s.title,
     summaryKey -> rc.displayProcessor.summary(s),
     commentKey -> s.comment.getOrElse(""),
     situationKey -> rc.displayProcessor.html(s.situation),
@@ -132,18 +137,7 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
     referencesKey -> s.references.map(referenceToMap(rc)))
 
 
-  def exceptionMap(e: Exception): Map[String, Object] = {
-    val raw = Map("class" -> e.getClass.getSimpleName, "stack" -> e.getStackTrace.take(5).mkString("\n"))
-    val withMessage = e match {
-      case se: ScenarioException[_, _] => raw + ("message" -> se.mainMessage)
-      case _ => raw + ("message" -> e.getMessage)
-    }
-    Maps.addToMap[Exception, String, Object](
-      { case ha: HasActual[_] => "actual" -> rc.displayProcessor.html(ha.actual) }, //
-      { case he: HasExplanation => "explanation" -> he.explaination.mkString("<br />") }, //
-      { case wa: HasAdvice => "advice" -> wa.advice.mkString("<br />") }, //
-      { case r: HasReason => "reason" -> r.reason })(withMessage, e)
-  }
+  def exceptionMap(e: Exception)(implicit renderContext: RenderContext): Map[String, Object] = exceptionView(e)
 
   object renderData extends Engine2[RenderContext, EngineComponent[_, _], Map[String, _]] {
     (rc, engineWithUseCase) produces dataForEngine because { case (rc, e: Engine[_, _]) => renderRawData(rc, e) ++ Map(referencesKey -> e.references.map(referenceToMap(rc))) }
@@ -151,8 +145,8 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
     (rc, useCase1) produces dataForUseCase1 because { case (rc, uc: UseCase[_, _]) => renderRawData(rc, uc) ++ Map(commentKey -> uc.comment.getOrElse(""), referencesKey -> uc.references.map(referenceToMap(rc))) }
     (rc, useCase2) produces dataForUseCase2
 
-    (rc, scenario1) produces dataForScenario1 + ("error" -> exceptionMap(rc.exceptions(scenario1))) because {
-      case (rc, s: Scenario[_, _]) if rc.exceptions.contains(s) => renderScenario(rc, s) + ("error" -> exceptionMap(rc.exceptions(s)))
+    (rc, scenario1) produces dataForScenario1 + ("error" -> exceptionMap(rc.exceptions(scenario1))(rc)) because {
+      case ( rc, s: Scenario[_, _]) if rc.exceptions.contains(s) => renderScenario(rc, s) + ("error" -> exceptionMap(rc.exceptions(s))(rc))
     }
 
     (rc, scenario2) produces dataForScenario2 because { case (rc, s: Scenario[_, _]) => renderScenario(rc, s) }
@@ -172,7 +166,7 @@ object Templates extends TestObjectsForRendering with KeysForRendering with Expe
   }
 
   def renderPath(rc: RenderContext, path: List[EngineComponent[_, _]]) =
-    Map(titleKey -> path.head.title,
+    Map(Title -> path.head.title,
       summaryKey -> rc.displayProcessor.summary(path.head),
       "definedAt" -> path.head.definedInSourceCodeAt.toString,
       "engine" -> Templates.renderFocus(rc, path.last, path))
@@ -187,7 +181,7 @@ object TraceRendering extends ExpectedForTemplates {
     }
 
     (rc, trace1) produces Map(
-      engineTypeName ->(titleKey -> trace1.engine.title, linkUrlKey -> rc.url(trace1.engine)),
+      engineTypeName ->(Title -> trace1.engine.title, LinkUrl -> rc.url(trace1.engine)),
       situationKey -> trace1.params,
       actualKey -> trace1.result,
       durationKey -> trace1.duration,
@@ -196,7 +190,7 @@ object TraceRendering extends ExpectedForTemplates {
         engineWithUseCase.decisionTree)(rc.displayProcessor)) byRecursion {
       case (engine, (rc, et: TraceEngine[_, _])) =>
         Map(
-          engineTypeName -> Map(titleKey -> et.engine.title, linkUrlKey -> rc.url(et.engine)),
+          engineTypeName -> Map(Title -> et.engine.title, LinkUrl -> rc.url(et.engine)),
           situationKey -> et.params,
           actualKey -> et.result,
           durationKey -> et.duration,

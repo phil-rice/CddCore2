@@ -25,7 +25,7 @@ object ConflictingScenariosException {
       s"Scenario being added is ${s.definedInSourceCodeAt} ${dp.summary(s)}\n" +
       s"Scenario already existing is ${existing.definedInSourceCodeAt} ${dp.summary(existing)}\n" +
       s"If it was added, would come to result\n  ${dp.summary(actual)}"
-    val (explanation, advice) = (s.reason.hasWhy, existing.reason.hasWhy) match {
+    val (explaination, advice) = (s.reason.hasWhy, existing.reason.hasWhy) match {
       case (true, false) => (
         List(s"the existing scenario ${existing.definedInSourceCodeAt} doesn't have a reason"),
         List(s"A reason could be added to scenario ${existing.definedInSourceCodeAt} with a 'when' or a 'because'")
@@ -49,14 +49,14 @@ object ConflictingScenariosException {
       "It is 'conflicting' with an existing scenario.",
       "The 'logic' about that scenario is being applied to the one being added",
       "CDD cannot differentiate between the two because"
-    ) ::: explanation)
+    ) ::: explaination)
   }
 }
 
 abstract class ScenarioExceptionWithAdvice[P, R](s: Scenario[P, R], msg: String, val advice: List[String]) extends ScenarioException(s, mainMessage = msg, msg = s"$msg\nAdvice\n${advice.mkString("\n")}") with HasAdvice
 
 class ConflictingScenariosException[P, R](s: Scenario[P, R], val existing: Scenario[P, R], val actual: R, msg: String, advice: List[String], val explaination: List[String])(implicit dp: DisplayProcessor)
-  extends ScenarioExceptionWithAdvice(s, msg = msg, advice = advice) with ConflictingScenarioException[P, R] with HasActual[R] with HasExplanation
+  extends ScenarioExceptionWithAdvice(s, msg = msg, advice = advice) with ConflictingScenarioException[P, R] with HasActual[R] with HasExplaination
 
 
 class AddingWithRedundantReason[P, R](s: Scenario[P, R], val existing: Scenario[P, R], advice: List[String] = List(), val explaination: List[String])(implicit displayProcessor: DisplayProcessor) extends
@@ -65,7 +65,7 @@ class AddingWithRedundantReason[P, R](s: Scenario[P, R], val existing: Scenario[
       s"This scenario is: ${displayProcessor.summary(s)} ${s.definedInSourceCodeAt}\n" +
       s"   reason is ${s.reason.prettyDescription}\n" +
       s"Existing scenario is: ${displayProcessor.summary(existing)} ${existing.definedInSourceCodeAt}\n" +
-      s"   reason is ${s.reason.prettyDescription}\n") with ConflictingScenarioException[P, R] with HasExplanation
+      s"   reason is ${s.reason.prettyDescription}\n") with ConflictingScenarioException[P, R] with HasExplaination
 
 
 class EngineIsNotDefined extends Exception

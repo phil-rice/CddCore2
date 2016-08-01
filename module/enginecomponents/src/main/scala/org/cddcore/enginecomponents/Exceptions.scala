@@ -11,20 +11,23 @@ trait HasAdvice {
   def advice: List[String]
 }
 
-trait HasExplanation{
+trait HasExplaination {
   def explaination: List[String]
 }
-trait HasReason{
+
+trait HasReason {
   def reason: String
 }
+
 class ScenarioException[P, R](val scenario: Scenario[P, R], val mainMessage: String, msg: String = null, cause: Exception = null) extends Exception(Option(msg).getOrElse(mainMessage), cause)
 
 class ReasonInvalidException[P, R](s: Scenario[P, R])
-  extends ScenarioException(s, s"Scenario defined at ${s.definedInSourceCodeAt} cannot be added because the reason given isn't valid") with HasAdvice with HasReason{
+  extends ScenarioException(s, s"Scenario defined at ${s.definedInSourceCodeAt} cannot be added because the reason given isn't valid") with HasAdvice with HasReason {
   override def advice = List(
     "You need to work out why the reason isn't valid",
     "Most likely the reason is just wrong and you need to change it",
     "You may decide to change the situation if it is a 'fake' situation and you know the reason is what you want")
+
   def reason = s.reason.prettyDescription
 
 }
@@ -37,15 +40,15 @@ trait ConflictingScenarioException[P, R] {
 
 
 object AssertionInvalidException {
-  def apply[P, R](s: Scenario[P, R], actualValue: R) = s.assertion match {
-    case EqualsAssertion(expected) => new AssertionInvalidException[P, R](s, actualValue, s"The scenario defined at ${s.definedInSourceCodeAt} does not come to the result it is supposed to\n" +
+  def apply[P, R](s: Scenario[P, R], assertion: ScenarioAssertion[P, R], actualValue: R) = assertion match {
+    case EqualsAssertion(expected) => new AssertionInvalidException[P, R](s, assertion, actualValue, s"The scenario defined at ${s.definedInSourceCodeAt} does not come to the result it is supposed to\n" +
       s"Expected result: ${expected}\n" +
       s"Actual result :  $actualValue")
   }
 }
 
 
-class AssertionInvalidException[P, R](s: Scenario[P, R], val actual: R, msg: String) extends ScenarioException(s, msg) with HasActual[R]
+class AssertionInvalidException[P, R](val s: Scenario[P, R], val assertion: ScenarioAssertion[P, R], val actual: R, msg: String) extends ScenarioException(s, msg) with HasActual[R]
 
 
 class CalculatorNotGivenException(scenarioDefinedAt: DefinedInSourceCodeAt) extends Exception(s"Scenario defined at $scenarioDefinedAt has not been given a way of calculating a result")

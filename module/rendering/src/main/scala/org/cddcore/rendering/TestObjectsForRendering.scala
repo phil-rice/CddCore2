@@ -61,20 +61,20 @@ trait TestObjectsForRendering {
 
 trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering with  ReferenceMapMakers {
 
-  protected val linkForScenario1 = Map(titleKey -> scenario1.title, linkUrlKey -> rc.url(scenario1), iconUrlKey -> expectedErrorScenarioIcon, definedAtKey -> scenario1.definedInSourceCodeAt.toString)
-  protected val linkForScenario2 = Map(titleKey -> scenario2.title, linkUrlKey -> rc.url(scenario2), iconUrlKey -> expectedScenarioIcon, definedAtKey -> scenario2.definedInSourceCodeAt.toString)
-  protected val linkForScenario3 = Map(titleKey -> scenario3.title, linkUrlKey -> rc.url(scenario3), iconUrlKey -> expectedScenarioIcon, definedAtKey -> scenario3.definedInSourceCodeAt.toString)
-  protected val linkForScenario4 = Map(titleKey -> scenario4.title, linkUrlKey -> rc.url(scenario4), iconUrlKey -> expectedScenarioIcon, definedAtKey -> scenario4.definedInSourceCodeAt.toString)
-  protected val linkForUseCase1 = Map(titleKey -> useCase1.title, linkUrlKey -> rc.url(useCase1), iconUrlKey -> expectedUsecaseIcon, definedAtKey -> useCase1.definedInSourceCodeAt.toString)
-  protected val linkForUseCase2 = Map(titleKey -> useCase2.title, linkUrlKey -> rc.url(useCase2), iconUrlKey -> expectedUsecaseIcon, definedAtKey -> useCase2.definedInSourceCodeAt.toString)
-  protected val linkForEngine = Map(titleKey -> engineWithUseCase.title, linkUrlKey -> rc.url(engineWithUseCase), iconUrlKey -> expectedEngineIcon, definedAtKey -> engineWithUseCase.definedInSourceCodeAt.toString)
+  protected val linkForScenario1 = Map(Title -> scenario1.title, LinkUrl -> rc.url(scenario1), IconUrl -> expectedErrorScenarioIcon, DefinedAt -> scenario1.definedInSourceCodeAt.toString)
+  protected val linkForScenario2 = Map(Title -> scenario2.title, LinkUrl -> rc.url(scenario2), IconUrl -> expectedScenarioIcon, DefinedAt -> scenario2.definedInSourceCodeAt.toString)
+  protected val linkForScenario3 = Map(Title -> scenario3.title, LinkUrl -> rc.url(scenario3), IconUrl -> expectedScenarioIcon, DefinedAt -> scenario3.definedInSourceCodeAt.toString)
+  protected val linkForScenario4 = Map(Title -> scenario4.title, LinkUrl -> rc.url(scenario4), IconUrl -> expectedScenarioIcon, DefinedAt -> scenario4.definedInSourceCodeAt.toString)
+  protected val linkForUseCase1 = Map(Title -> useCase1.title, LinkUrl -> rc.url(useCase1), IconUrl -> expectedUsecaseIcon, DefinedAt -> useCase1.definedInSourceCodeAt.toString)
+  protected val linkForUseCase2 = Map(Title -> useCase2.title, LinkUrl -> rc.url(useCase2), IconUrl -> expectedUsecaseIcon, DefinedAt -> useCase2.definedInSourceCodeAt.toString)
+  protected val linkForEngine = Map(Title -> engineWithUseCase.title, LinkUrl -> rc.url(engineWithUseCase), IconUrl -> expectedEngineIcon, DefinedAt -> engineWithUseCase.definedInSourceCodeAt.toString)
 
   protected val emptyUsecasesAndScenarios = Map(scenariosKey -> List(), useCasesKey -> List())
 
   protected val dataForScenario1 = Map(
     idKey -> rc.idPath(scenario1),
     typeKey -> scenarioTypeName,
-    titleKey -> scenario1.title,
+    Title -> scenario1.title,
     summaryKey -> rc.displayProcessor.summary(scenario1),
     linkKey -> linkForScenario1,
     commentKey -> "",
@@ -86,7 +86,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
   protected val dataForScenario2 = Map(
     idKey -> rc.idPath(scenario2),
     typeKey -> scenarioTypeName,
-    titleKey -> scenario2.title,
+    Title -> scenario2.title,
     summaryKey -> rc.displayProcessor.summary(scenario2),
     linkKey -> linkForScenario2,
     commentKey -> "",
@@ -98,7 +98,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
   protected val dataForScenario3 = Map(
     idKey -> rc.idPath(scenario3),
     typeKey -> scenarioTypeName,
-    titleKey -> scenario3.title,
+    Title -> scenario3.title,
     summaryKey -> rc.displayProcessor.summary(scenario3),
     linkKey -> linkForScenario3,
     commentKey -> "",
@@ -109,7 +109,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
   protected val dataForScenario4 = Map(
     idKey -> rc.idPath(scenario4),
     typeKey -> scenarioTypeName,
-    titleKey -> scenario4.title,
+    Title -> scenario4.title,
     summaryKey -> rc.displayProcessor.summary(scenario4),
     linkKey -> linkForScenario4,
     commentKey -> "",
@@ -120,7 +120,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
   protected val dataForUseCase1 = Map(
     idKey -> rc.idPath(useCase1),
     typeKey -> useCaseTypeName,
-    titleKey -> "someUseCase",
+    Title -> "someUseCase",
     summaryKey -> rc.displayProcessor.summary(useCase1),
     linkKey -> linkForUseCase1,
     commentKey -> "",
@@ -130,7 +130,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
   protected val dataForUseCase2 = Map(
     idKey -> rc.idPath(useCase2),
     typeKey -> useCaseTypeName,
-    titleKey -> "someOtherCase",
+    Title -> "someOtherCase",
     summaryKey -> rc.displayProcessor.summary(useCase2),
     linkKey -> linkForUseCase2,
     commentKey -> "",
@@ -141,7 +141,7 @@ trait ExpectedForTemplates extends TestObjectsForRendering with KeysForRendering
   protected val dataForEngine = Map(
     idKey -> rc.idPath(engineWithUseCase),
     typeKey -> engineTypeName,
-    titleKey -> engineWithUseCase.title,
+    Title -> engineWithUseCase.title,
     summaryKey -> rc.displayProcessor.summary(engineWithUseCase),
     linkKey -> linkForEngine,
     scenariosIconsKey -> List(linkForScenario4),

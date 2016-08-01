@@ -52,13 +52,13 @@ class DecisionTreeBuilder[P, R](mockEngine: P => R)(implicit monitor: Monitor, d
             case (false, true) => List(s"The original scenario ${cn.mainScenario.definedInSourceCodeAt} could have 'allows merge' added to it")
             case (true, false) => List(s"This scenario ${s.definedInSourceCodeAt} could have 'allows merge' added to it")
           }
-          val explanation = List(s"The creator of the engine has given a reason, but CDD doesn't need it",
+          val explaination = List(s"The creator of the engine has given a reason, but CDD doesn't need it",
             "CDD could add the new scenario to the same place as the original one, but then",
             "the reason given would be lost, and that could create errors later",
             "You need to tell CDD what to do.",
             "Using 'allows merge' means 'use the logical OR of both given reasons'")
           val advice = rawAdvice :+ s"This scenario ${s.definedInSourceCodeAt} could have its reason removed"
-          withException(cn, s, new AddingWithRedundantReason(s, cn.mainScenario, advice = advice, explaination = explanation))
+          withException(cn, s, new AddingWithRedundantReason(s, cn.mainScenario, advice = advice, explaination = explaination))
       }
     }
   }
@@ -76,7 +76,7 @@ class DecisionTreeBuilder[P, R](mockEngine: P => R)(implicit monitor: Monitor, d
             monitor("cn.isDefinedAt(s)")
             val actual = cn.mainScenario(mockEngine, s.situation)
             monitor(s"actual value was $actual")
-            if (s.assertion.valid(s.situation, actual))
+            if (s.assertionsAllValid(s.situation, actual))
               monitor("Situation comes to correct conclusion in this condition node", addScenarioToConclusionNode(cn, s))
             else if (isDefinedAtNewMain(s, cn.mainScenario)) {
               monitor("s.isDefinedAt(cn) so the scenario cannot be added")

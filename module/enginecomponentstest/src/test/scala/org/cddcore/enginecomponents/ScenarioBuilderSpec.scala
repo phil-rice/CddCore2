@@ -15,7 +15,7 @@ class ScenarioBuilderSpec extends CddSpec {
     val s = 1 produces "result"
     val expectedDefinedInSourceCodeAt = "(ScenarioBuilderSpec.scala:15)"
     s.situation shouldBe 1
-    s.assertion shouldBe EqualsAssertion("result")
+    s.assertions shouldBe List(EqualsAssertion("result"))
     s.reason shouldBe SimpleReason("result", s.definedInSourceCodeAt)
     s.title shouldBe "1"
     s.comment shouldBe None
@@ -59,7 +59,7 @@ class ScenarioBuilderSpec extends CddSpec {
   "A <situation> produces <result> because <pf>" should "make a ScenarioWithBecause" in {
     val s: Scenario[Int, String] = 1 produces "result" because { case i if i == 1 => "result" }
     s.situation shouldBe 1
-    s.assertion shouldBe EqualsAssertion("result")
+    s.assertions shouldBe List(EqualsAssertion("result"))
     s.isDefinedAt(mockEngine, 0) shouldBe false
     s.isDefinedAt(mockEngine, 1) shouldBe true
     s(mockEngine, 1) shouldBe "result"
@@ -86,7 +86,7 @@ class ScenarioBuilderSpec extends CddSpec {
   "A <situation> produces <result> when < p=> Boolean>" should "make a ScenarioWithWhen" in {
     val s: Scenario[Int, String] = 1 produces "result" when (_ == 1)
     s.situation shouldBe 1
-    s.assertion shouldBe EqualsAssertion("result")
+    s.assertions shouldBe List(EqualsAssertion("result"))
     s.isDefinedAt(mockEngine, 0) shouldBe false
     s.isDefinedAt(mockEngine, 1) shouldBe true
     s(mockEngine, 1) shouldBe "result"

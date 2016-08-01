@@ -1,8 +1,9 @@
 package org.cddcore.engine
 
+import org.cddcore.enginecomponents.{EngineComponent, Scenario}
 
-class InvalidScenariosSpec extends CddEngineSpec {
 
+trait InvalidScenariosTestFramework extends CddEngineSpec {
   val invalidScenarios = new Engine[String, String]("Invalid") {
     useCase("Reason invalid") {
       "reason1" produces "result" when (_ => false)
@@ -31,28 +32,80 @@ class InvalidScenariosSpec extends CddEngineSpec {
     }
   }
 
-  val allScenarios = invalidScenarios.allScenarios.toList
+  val conflictingNoReasons = new Engine[String, String]("Conflicting - No Reasons") {
+    useCase("Reference") {
+      "conflicting1" produces "result"
+    }
+    useCase("Conflict") {
+      "conflicting2" produces "different"
+    }
+  }
+  val conflictingMainHasReasons = new Engine[String, String]("Conflicting - Main has reason") {
+    useCase("Reference") {
+      "mainHasReason1" produces "result" when (_ contains "Reason")
+    }
+    useCase("Conflict") {
+      "mainHasReason2" produces "different"
+    }
+  }
+  val conflictingNewHasReasons = new Engine[String, String]("Conflicting - New has reason") {
+    useCase("Reference") {
+      "newHasReason1" produces "result"
+    }
+    useCase("Conflict ") {
+      "newHasReason2" produces "different" when (_ contains "Reason")
+    }
+  }
+  val conflictingBothReasons = new Engine[String, String]("Conflicting - Both have reasons") {
+    useCase("Reference") {
+      "bothHaveReasons1" produces "result" when (_ contains "Reason")
+    }
+    useCase("Conflict") {
+      "bothHaveReasons2" produces "different" when (_ contains "Reason")
+    }
+  }
 
-  def scenario(situation: String, exceptionName: String) =
+
+   val allEngines: List[Engine[String, String]] = List(invalidScenarios, conflictingNoReasons, conflictingMainHasReasons, conflictingNewHasReasons, conflictingBothReasons)
+  val allScenarios = allEngines.flatMap(_.allScenarios)
+
+  val allErrors = {
+    allEngines.foreach(_.decisionTree)
+    allEngines.map(_.errors).foldLeft(Map[EngineComponent[_, _], Exception]())((acc, errors) => acc ++ errors)
+  }
+
+  lazy val definedErrorsList = s"Errors are\n${allErrors.collect { case (k: Scenario[_, _], v) => k.situation + "/" + k.definedInSourceCodeAt -> v.getClass.getSimpleName }.mkString("\n")}"
+
+  def withErrorClue[X](block: => X) = withClue(definedErrorsList)(block)
+
+  def checkScenarioException(situation: String, exceptionName: String) =
     withClue(s"Scenario:$situation") {
-      val s = allScenarios.find(_.situation == situation).getOrElse(fail(s"Legal values are ${allScenarios.map(_.situation)}"))
-      withClue(s"Errors are ${invalidScenarios.errors.map { case (k, v) => k.definedInSourceCodeAt -> v.getClass.getSimpleName }}")(invalidScenarios.errors.get(s).map(_.getClass.getSimpleName).get shouldBe exceptionName)
+      val s = scenario(situation)
+      withErrorClue(allErrors.get(s).map(_.getClass.getSimpleName).get shouldBe exceptionName)
       s
     }
 
+  def scenario(situation: String) = allScenarios.find(_.situation == situation).getOrElse(fail(s"Legal values are ${allScenarios.map(_.situation)}"))
+
+  def exception[X](situation: String) = withErrorClue[X](allErrors(scenario(situation)).asInstanceOf[X])
+}
+
+class InvalidScenariosSpec extends CddEngineSpec with InvalidScenariosTestFramework {
   "Invalid scenarios" should "still be added" in {
-    scenario("reason1", "ReasonInvalidException")
-    scenario("reason2", "ReasonInvalidException")
-    scenario("produces1", "AssertionInvalidException")
-    scenario("produces2", "AssertionInvalidException")
-    scenario("reasonProduces1", "ReasonInvalidException")
-    scenario("reasonProduces2", "ReasonInvalidException").comment shouldBe Some("someComment2")
-    scenario("reasonProduces3", "ReasonInvalidException").comment shouldBe Some("someComment3")
-    scenario("reasonProduces4", "ReasonInvalidException").canMerge shouldBe true
-    scenario("ref1", "ScenarioCannotHaveWhenByAndBecauseException")
-    scenario("ref2", "ScenarioCannotHaveSecondByException")
-    scenario("ref3", "ScenarioCannotHaveSecondBecauseException")
-    scenario("ref4", "ScenarioCannotHaveByRecursonIfWhenByOrBecauseAlreadyDefinedException")
-    scenario("ref5", "ScenarioCannotHaveSecondWhenException")
+    checkScenarioException("reason1", "ReasonInvalidException")
+    checkScenarioException("reason2", "ReasonInvalidException")
+    checkScenarioException("produces1", "AssertionInvalidException")
+    checkScenarioException("produces2", "AssertionInvalidException")
+    checkScenarioException("reasonProduces1", "ReasonInvalidException")
+    checkScenarioException("reasonProduces2", "ReasonInvalidException").comment shouldBe Some("someComment2")
+    checkScenarioException("reasonProduces3", "ReasonInvalidException").comment shouldBe Some("someComment3")
+    checkScenarioException("reasonProduces4", "ReasonInvalidException").canMerge shouldBe true
+    checkScenarioException("ref1", "ScenarioCannotHaveWhenByAndBecauseException")
+    checkScenarioException("ref2", "ScenarioCannotHaveSecondByException")
+    checkScenarioException("ref3", "ScenarioCannotHaveSecondBecauseException")
+    checkScenarioException("ref4", "ScenarioCannotHaveByRecursonIfWhenByOrBecauseAlreadyDefinedException")
+    checkScenarioException("ref5", "ScenarioCannotHaveSecondWhenException")
+    checkScenarioException("ref5", "ScenarioCannotHaveSecondWhenException")
+    checkScenarioException("ref5", "ScenarioCannotHaveSecondWhenException")
   }
 }
