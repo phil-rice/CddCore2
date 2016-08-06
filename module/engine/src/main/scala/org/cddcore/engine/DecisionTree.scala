@@ -93,7 +93,7 @@ case class ConclusionNode[P, R](mainScenario: Scenario[P, R], scenarios: List[Sc
     else
       scenarios.find(_.isDefinedAt(engine, p)) match {
         case Some(s) => s(engine, p)
-        case _ => throw new EngineIsNotDefined
+        case _ => throw  EngineIsNotDefined(p)
       }
 
   def allScenarios: TraversableOnce[Scenario[P, R]] = mainScenario :: scenarios

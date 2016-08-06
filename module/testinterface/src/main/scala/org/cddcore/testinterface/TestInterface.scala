@@ -128,7 +128,7 @@ class CddRunnerForTestInterface(testClassLoader: ClassLoader, runnerTracker: Run
     runNotifier.addListener(new CddRunListener(eventHandler, runnerTracker, cddLogger)(testStructure.makeFiles))
     runner.run(runNotifier)
 
-//    testStructure.makeFiles
+    testStructure.makeFiles
   }
 }
 

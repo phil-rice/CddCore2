@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{title}}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="Expires" content="-1"/>
+    <meta http-equiv="Pragma" content="no-cache"/>
+    <link href="{{refBase}}/stylesheets/css.css" rel="stylesheet"/>
+</head>
+<body>
+<a  href="{{iconLinkUrl}}"><img class="mainIcon" src="{{refBase}}/images/cdd.png" /></a>
+{{#decisionTreeBuildTrace}}
+<div class="engineAndDecisionTreeHolder">
+    <div class="engineHolder">
+        <h1>{{summary}} {{definedAt}}</h1>
+        {{#engine}}{{>Engine}}{{/engine}}
+    </div> <!--engineHolder -->
+    <div class="decisionTreeHolder">
+        {{#decisionTree}}{{>DecisionTree}}{{/decisionTree}}
+    </div><!--decisionTreeHolder -->
+</div> <!--engineAndDecisionTreeHolder -->
+    <hr />
+{{/decisionTreeBuildTrace}}
+<h1>Json</h1>
+<pre>{{json}}</pre>
+</body>
+</html>

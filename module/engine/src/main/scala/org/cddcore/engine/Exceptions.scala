@@ -68,4 +68,3 @@ class AddingWithRedundantReason[P, R](s: Scenario[P, R], val existing: Scenario[
       s"   reason is ${s.reason.prettyDescription}\n") with ConflictingScenarioException[P, R] with HasExplaination
 
 
-class EngineIsNotDefined extends Exception

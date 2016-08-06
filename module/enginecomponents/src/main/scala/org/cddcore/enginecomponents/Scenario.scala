@@ -121,8 +121,8 @@ object ScenarioBuilder {
     }
   }
 
-  protected def changeReason[P, R](scenarioBuilder: ScenarioBuilder[P, R], fn: ScenarioReason[P, R] => ScenarioReason[P, R]): Scenario[P, R] =
-    changeScenario(scenarioBuilder, s => s.copy(reason = fn(s.reason)))
+  protected def changeReason[P, R](scenarioBuilder: ScenarioBuilder[P, R], fn: BuildableScenarioReason[P, R] => BuildableScenarioReason[P, R]): Scenario[P, R] =
+    changeScenario(scenarioBuilder, s => s.reason match { case  b: BuildableScenarioReason[P,R] => s.copy(reason = fn(b))})
 
 }
 

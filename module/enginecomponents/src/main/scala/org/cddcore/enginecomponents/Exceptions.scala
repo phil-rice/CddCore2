@@ -47,6 +47,10 @@ object AssertionInvalidException {
   }
 }
 
+object EngineIsNotDefined{
+  def apply[P](p: P) = new EngineIsNotDefined(s"Value was $p")
+}
+class EngineIsNotDefined(msg: String) extends Exception(msg)
 
 class AssertionInvalidException[P, R](val s: Scenario[P, R], val assertion: ScenarioAssertion[P, R], val actual: R, msg: String) extends ScenarioException(s, msg) with HasActual[R]
 

@@ -36,16 +36,16 @@ class DecisionTreeBuilder[P, R](mockEngine: P => R)(implicit monitor: Monitor, d
 
   private def addScenarioToConclusionNode(cn: ConclusionNode[P, R], s: Scenario[P, R]): DecisionTree[P, R] = {
     (cn.mainScenario.reason.hasWhy, s.reason.hasWhy) match {
-      case (_, false) => cn.copy(scenarios = cn.scenarios :+ s)
+      case (_, false) => monitor("Adding scenario as supporting evidence for existing scenario",  cn.copy(scenarios = cn.scenarios :+ s))
       case (false, true) => {
         if (cn.scenarios.forall(os => isDefinedAtMainNew(s, os)))
-          cn.copy(mainScenario = s, scenarios = cn.mainScenario :: cn.scenarios)
+          monitor("Making this scenario the main scenario, and the existing one supporting evidence", cn.copy(mainScenario = s, scenarios = cn.mainScenario :: cn.scenarios))
         else
-          makeDecisionNode(s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios)
+          monitor("Making a decision node with this scenario the decision and existing the false node", makeDecisionNode(s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios))
       }
       case _ => (cn.mainScenario.canMerge, s.canMerge) match {
         case (true, true) =>
-          cn.copy(scenarios = cn.scenarios :+ s)
+          monitor("Adding scenario as supporting evidence for existing scenario, because can merge is true", cn.copy(scenarios = cn.scenarios :+ s))
         case mainCanSCan =>
           val rawAdvice = mainCanSCan match {
             case (false, false) => List("Both scenarios would need 'allows merge' adding to them")
@@ -58,6 +58,7 @@ class DecisionTreeBuilder[P, R](mockEngine: P => R)(implicit monitor: Monitor, d
             "You need to tell CDD what to do.",
             "Using 'allows merge' means 'use the logical OR of both given reasons'")
           val advice = rawAdvice :+ s"This scenario ${s.definedInSourceCodeAt} could have its reason removed"
+          monitor(s"Cannot add scenario because of ${explaination(0)}")
           withException(cn, s, new AddingWithRedundantReason(s, cn.mainScenario, advice = advice, explaination = explaination))
       }
     }
@@ -79,12 +80,12 @@ class DecisionTreeBuilder[P, R](mockEngine: P => R)(implicit monitor: Monitor, d
             if (s.assertionsAllValid(s.situation, actual))
               monitor("Situation comes to correct conclusion in this condition node", addScenarioToConclusionNode(cn, s))
             else if (isDefinedAtNewMain(s, cn.mainScenario)) {
-              monitor("s.isDefinedAt(cn) so the scenario cannot be added")
+              monitor("s.isDefinedAt(cn) so the scenario cannot be added: raising 'ConflictingScenariosException'")
               withException(cn, s, ConflictingScenariosException(s, cn.mainScenario, actual))
             } else
-              monitor("Situation comes to wrong conclusion in this condition node", makeDecisionNode(s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios))
+              monitor("Situation comes to wrong conclusion in this condition node: making new decision node, with this scenario the decision, and old scenario the false node", makeDecisionNode(s, trueAnchor = s, falseAnchor = cn.mainScenario, otherScenarios = cn.scenarios))
           } else
-            monitor("cn.isNOTDefinedAt(situation)", makeDecisionNode(cn.mainScenario, trueAnchor = cn.mainScenario, falseAnchor = s, otherScenarios = cn.scenarios))
+            monitor("cn.isNOTDefinedAt(situation): making new decision node, with the old scneario the decision and this scenario the false node", makeDecisionNode(cn.mainScenario, trueAnchor = cn.mainScenario, falseAnchor = s, otherScenarios = cn.scenarios))
         })
       })
     })

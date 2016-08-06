@@ -16,18 +16,18 @@ class Sample extends CddContinuousIntegrationTest {
 class Sample2 extends CddContinuousIntegrationTest {
   override def engines: List[Engine[_, _]] = List(Bowling.get, Bowling.makeFrame, ProcessChequeXml.processCheque)
 }
-
-@RunWith(classOf[CddRunner]) //un comment to see the errors in the report
-class SampleWithErrors extends CddContinuousIntegrationTest {
-  override def engines: List[Engine[_, _]] = List(ExampleJUnit.engine1,
-    ExampleJUnit.invalidScenarios,
-    ExampleJUnit.malformedScenarios,
-    ExampleJUnit.redundantNeither,
-    ExampleJUnit.redundantMain,
-    ExampleJUnit.redundantS,
-    ExampleJUnit.conflictingNoReasons,
-    ExampleJUnit.conflictingNewHasReasons,
-    ExampleJUnit.conflictingMainHasReasons,
-    ExampleJUnit.conflictingBothReasons
-  )
-}
+//
+//@RunWith(classOf[CddRunner]) //un comment to see the errors in the report
+//class SampleWithErrors extends CddContinuousIntegrationTest {
+//  override def engines: List[Engine[_, _]] = List(ExampleJUnit.engine1,
+//    ExampleJUnit.invalidScenarios,
+//    ExampleJUnit.malformedScenarios,
+//    ExampleJUnit.redundantNeither,
+//    ExampleJUnit.redundantMain,
+//    ExampleJUnit.redundantS,
+//    ExampleJUnit.conflictingNoReasons,
+//    ExampleJUnit.conflictingNewHasReasons,
+//    ExampleJUnit.conflictingMainHasReasons,
+//    ExampleJUnit.conflictingBothReasons
+//  )
+//}

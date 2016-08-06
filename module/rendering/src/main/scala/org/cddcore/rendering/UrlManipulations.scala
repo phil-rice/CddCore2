@@ -58,7 +58,7 @@ class FileUrlManipulations extends UrlManipulations {
 
   def makeFile(url: String, text: String): Unit = {
     val file = new File(url)
-    //    println("Make file: " + file.getAbsoluteFile)
+//        println("Make file: " + file.getAbsoluteFile)
     file.getParentFile.mkdirs()
     val writer = new FileWriter(file)
     try {

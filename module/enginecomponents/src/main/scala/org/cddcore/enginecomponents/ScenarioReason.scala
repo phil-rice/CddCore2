@@ -7,22 +7,27 @@ import org.cddcore.utilities.CodeHolder
 sealed trait ScenarioReason[P, R] extends HasDefinedInSourceCodeAt {
   def prettyDescription: String
 
-  def hasWhy: Boolean
-
-  def withBecause(because: CodeHolder[PartialFunction[P, R]]): ScenarioReason[P, R]
-
-  def withBy(by: CodeHolder[P => R]): ScenarioReason[P, R]
-
-  def withWhen(when: CodeHolder[P => Boolean]): ScenarioReason[P, R]
-
-  def withByRecursion(by: CodeHolder[PartialFunction[(P => R, P), R]]): ScenarioReason[P, R]
-
   def isDefinedAt(engine: P => R, p: P): Boolean
 
   def apply(engine: P => R, p: P): R
+
+  def hasWhy: Boolean
+
 }
 
-trait ScenarioReasonThatIsntRecursive[P, R] extends ScenarioReason[P, R] {
+trait BuildableScenarioReason[P, R] extends ScenarioReason[P, R] {
+  def hasWhy: Boolean
+
+  def withBecause(because: CodeHolder[PartialFunction[P, R]]): BuildableScenarioReason[P, R]
+
+  def withBy(by: CodeHolder[P => R]): BuildableScenarioReason[P, R]
+
+  def withWhen(when: CodeHolder[P => Boolean]): BuildableScenarioReason[P, R]
+
+  def withByRecursion(by: CodeHolder[PartialFunction[(P => R, P), R]]): BuildableScenarioReason[P, R]
+}
+
+trait ScenarioReasonThatIsntRecursive[P, R] extends BuildableScenarioReason[P, R] {
   def isDefinedAt(p: P): Boolean
 
   def apply(p: P): R
@@ -34,19 +39,19 @@ trait ScenarioReasonThatIsntRecursive[P, R] extends ScenarioReason[P, R] {
 
 }
 
-case class NotYetValid[P, R](definedInSourceCodeAt: DefinedInSourceCodeAt) extends ScenarioReason[P, R] {
+case class NotYetValid[P, R](definedInSourceCodeAt: DefinedInSourceCodeAt) extends BuildableScenarioReason[P, R] {
   def hasWhy = false
 
 
   def prettyDescription: String = "NotYetValid"
 
-  def withBecause(because: CodeHolder[PartialFunction[P, R]]): ScenarioReason[P, R] = ???
+  def withBecause(because: CodeHolder[PartialFunction[P, R]]): BuildableScenarioReason[P, R] = ???
 
-  def withBy(by: CodeHolder[(P) => R]): ScenarioReason[P, R] = ???
+  def withBy(by: CodeHolder[(P) => R]): BuildableScenarioReason[P, R] = ???
 
-  def withByRecursion(by: CodeHolder[PartialFunction[(P => R, P), R]]): ScenarioReason[P, R] = ???
+  def withByRecursion(by: CodeHolder[PartialFunction[(P => R, P), R]]): BuildableScenarioReason[P, R] = ???
 
-  def withWhen(when: CodeHolder[(P) => Boolean]): ScenarioReason[P, R] = ???
+  def withWhen(when: CodeHolder[(P) => Boolean]): BuildableScenarioReason[P, R] = ???
 
   def apply(engine: P => R, p: P): R = throw new CalculatorNotGivenException(definedInSourceCodeAt)
 
@@ -66,11 +71,30 @@ case class SimpleReason[P, R](result: R, definedInSourceCodeAt: DefinedInSourceC
 
   def withBecause(because: CodeHolder[PartialFunction[P, R]]) = new BecauseReason(because, definedInSourceCodeAt)
 
-  def withBy(by: CodeHolder[P => R]): ScenarioReason[P, R] = new WhenByReason(None, Left(by), definedInSourceCodeAt)
+  def withBy(by: CodeHolder[P => R]) = new WhenByReason(None, Left(by), definedInSourceCodeAt)
 
   def withWhen(when: CodeHolder[P => Boolean]) = new WhenByReason(Some(when), Right(result), definedInSourceCodeAt)
 
-  def withByRecursion(by: CodeHolder[PartialFunction[(P => R, P), R]]): ScenarioReason[P, R] = new ByRecursionReason(by, definedInSourceCodeAt)
+  def withByRecursion(by: CodeHolder[PartialFunction[(P => R, P), R]]) = new ByRecursionReason(by, definedInSourceCodeAt)
+}
+
+case class OrScenarioReason[P, R](reasons: List[ScenarioReason[P, R]]) extends ScenarioReason[P, R] {
+
+  override def hasWhy: Boolean = true
+
+  override def prettyDescription: String = reasons.map(_.prettyDescription).mkString(" or ")
+
+
+  override def isDefinedAt(engine: (P) => R, p: P): Boolean = reasons.exists(_.isDefinedAt(engine, p))
+
+  def apply(engine: P => R, p: P): R = {
+    reasons.find(_.isDefinedAt(engine, p)) match {
+      case Some(r) => r(engine, p)
+      case _ => throw EngineIsNotDefined(p)
+    }
+  }
+
+  override def definedInSourceCodeAt: DefinedInSourceCodeAt = ???
 }
 
 case class WhenByReason[P, R](when: Option[CodeHolder[P => Boolean]], byOrResult: Either[CodeHolder[P => R], R], definedInSourceCodeAt: DefinedInSourceCodeAt) extends ScenarioReasonThatIsntRecursive[P, R] {
@@ -88,7 +112,7 @@ case class WhenByReason[P, R](when: Option[CodeHolder[P => Boolean]], byOrResult
 
   def withBecause(because: CodeHolder[PartialFunction[P, R]]) = throw new ScenarioCannotHaveWhenByAndBecauseException(definedInSourceCodeAt)
 
-  def withBy(by: CodeHolder[P => R]): ScenarioReason[P, R] = byOrResult match {
+  def withBy(by: CodeHolder[P => R]) = byOrResult match {
     case Left(oldBy) => throw new ScenarioCannotHaveSecondByException(definedInSourceCodeAt)
     case Right(_) => copy(byOrResult = Left(by))
   }
@@ -112,14 +136,14 @@ case class BecauseReason[P, R](because: CodeHolder[PartialFunction[P, R]], defin
 
   def withBecause(because: CodeHolder[PartialFunction[P, R]]) = throw new ScenarioCannotHaveSecondBecauseException(definedInSourceCodeAt)
 
-  def withBy(by: CodeHolder[P => R]): ScenarioReason[P, R] = throw new ScenarioCannotHaveWhenByAndBecauseException(definedInSourceCodeAt)
+  def withBy(by: CodeHolder[P => R]) = throw new ScenarioCannotHaveWhenByAndBecauseException(definedInSourceCodeAt)
 
-  def withWhen(when: CodeHolder[P => Boolean]): ScenarioReason[P, R] = throw new ScenarioCannotHaveWhenByAndBecauseException(definedInSourceCodeAt)
+  def withWhen(when: CodeHolder[P => Boolean]) = throw new ScenarioCannotHaveWhenByAndBecauseException(definedInSourceCodeAt)
 
   def withByRecursion(by: CodeHolder[PartialFunction[(P => R, P), R]]) = throw new ScenarioCannotHaveByRecursonIfWhenByOrBecauseAlreadyDefinedException(definedInSourceCodeAt)
 }
 
-case class ByRecursionReason[P, R](byRecursion: CodeHolder[PartialFunction[(P => R, P), R]], definedInSourceCodeAt: DefinedInSourceCodeAt) extends ScenarioReason[P, R] {
+case class ByRecursionReason[P, R](byRecursion: CodeHolder[PartialFunction[(P => R, P), R]], definedInSourceCodeAt: DefinedInSourceCodeAt) extends BuildableScenarioReason[P, R] {
   def prettyDescription: String = "byRecursion " + byRecursion.prettyDescription
 
   def hasWhy: Boolean = true
@@ -130,9 +154,9 @@ case class ByRecursionReason[P, R](byRecursion: CodeHolder[PartialFunction[(P =>
 
   def withBecause(because: CodeHolder[PartialFunction[P, R]]) = throw new ScenarioCannotHaveByRecursonIfWhenByOrBecauseAlreadyDefinedException(definedInSourceCodeAt)
 
-  def withBy(by: CodeHolder[P => R]): ScenarioReason[P, R] = throw new ScenarioCannotHaveByRecursonIfWhenByOrBecauseAlreadyDefinedException(definedInSourceCodeAt)
+  def withBy(by: CodeHolder[P => R]) = throw new ScenarioCannotHaveByRecursonIfWhenByOrBecauseAlreadyDefinedException(definedInSourceCodeAt)
 
-  def withWhen(when: CodeHolder[P => Boolean]): ScenarioReason[P, R] = throw new ScenarioCannotHaveByRecursonIfWhenByOrBecauseAlreadyDefinedException(definedInSourceCodeAt)
+  def withWhen(when: CodeHolder[P => Boolean]) = throw new ScenarioCannotHaveByRecursonIfWhenByOrBecauseAlreadyDefinedException(definedInSourceCodeAt)
 
   def withByRecursion(by: CodeHolder[PartialFunction[(P => R, P), R]]) = throw new ScenarioCannotHaveSeconByRecursionException(definedInSourceCodeAt)
 }

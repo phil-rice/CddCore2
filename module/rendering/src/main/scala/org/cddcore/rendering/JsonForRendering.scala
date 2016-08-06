@@ -6,9 +6,10 @@ import org.json4s.jackson.Serialization
 
 object JsonForRendering {
 
-  def pretty(map: Map[String, Any]) = {
-    implicit val formats = DefaultFormats
-    Serialization.writePretty(map)
+  implicit val formats = DefaultFormats
 
-  }
+  def pretty(map: Map[String, Any]) = Serialization.writePretty(map)
+
+  def pretty(list: List[Any]) = Serialization.writePretty(list)
+
 }
